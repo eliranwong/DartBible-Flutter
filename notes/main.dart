@@ -2,14 +2,14 @@
 
 import 'package:flutter/material.dart';
 
-void main() => runApp(UniqueBibleApp());
+void main() => runApp(MyApp());
 
-class UniqueBibleApp extends StatelessWidget {
+class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-        title: 'Unique Bible App',
-        home: UniqueBibleApp(),
+      title: 'Unique Bible App',
+      home: UniqueBible(),
     );
   }
 }
@@ -20,7 +20,7 @@ class UniqueBible extends StatefulWidget {
 }
 
 class UniqueBibleState extends State<UniqueBible> {
-  final _fetchResults = [
+  final List<dynamic>_fetchResults = [
     {
       "bNo": 0,
       "cNo": 0,
@@ -74,7 +74,7 @@ class UniqueBibleState extends State<UniqueBible> {
     return ListView.builder(
         padding: const EdgeInsets.all(16.0),
         itemBuilder: (context, i) {
-          return _buildRow(_fetchResults[i]);
+          if (i < _fetchResults.length) return _buildRow(_fetchResults[i]["vText"]);
         });
   }
 
