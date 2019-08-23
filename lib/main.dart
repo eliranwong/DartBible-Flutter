@@ -1,6 +1,7 @@
 // Copyright 2019 Eliran Wong. All rights reserved.
 
 import 'package:flutter/material.dart';
+import 'package:indexed_list_view/indexed_list_view.dart';
 import 'config.dart' as config;
 import 'Bibles.dart';
 
@@ -26,12 +27,14 @@ class UniqueBibleState extends State<UniqueBible> {
   final _bibleFont = const TextStyle(fontSize: 18.0);
   List<dynamic> _data = [];
   Bibles bibles;
+  int _scrollIndex;
 
   Future _startup() async {
     if (!config.startup) {
       bibles = Bibles();
       var fetchResults = await bibles.openBible(config.bible1, config.lastReference);
       _data = fetchResults;
+      _scrollIndex = 16;
       config.startup = true;
       setState(() {
         print("new data loaded!");
@@ -74,8 +77,18 @@ class UniqueBibleState extends State<UniqueBible> {
   }
 
   Widget _buildVerses() {
-    return ListView.builder(
+    var scrollController;
+    if (_scrollIndex == null) {
+      scrollController = IndexedScrollController();
+    } else {
+      scrollController = IndexedScrollController(
+          initialIndex: _scrollIndex,
+          initialScrollOffset: 0.0
+      );
+    }
+    return IndexedListView.builder(
         padding: const EdgeInsets.all(16.0),
+        controller: scrollController,
         itemCount: _data.length,
         itemBuilder: (context, i) {
           return _buildRow(i);

@@ -95,27 +95,22 @@ class Bibles {
     return [];
   }
 
-  // TODO; correct return value
   Future compareVerses(List listOfBcvList, List bibleList) async {
-    String versesFound = "";
+    List<dynamic> versesFound = [];
 
     for (var bcvList in listOfBcvList) {
-      versesFound += "[Compare ${BibleParser().bcvToVerseReference(bcvList)}]\n";
+      versesFound.add([[], "[Compare ${BibleParser().bcvToVerseReference(bcvList)}]"]);
       for (var bible in bibleList) {
         var verseText = await Bible(bible).openSingleVerse(bcvList);
-        versesFound += "[$bible] $verseText\n";
+        versesFound.add([bcvList, "[$bible] $verseText", bible]);
       }
-      versesFound += "\n";
     }
-    print("$versesFound\n");
 
-    // TODO; correct return value
-    return [];
+    return versesFound;
   }
 
-  // TODO; correct return value
   Future parallelBibles(String bibleString, String referenceString, [int bibleID = 1]) async {
-    String versesFound = "";
+    List<dynamic> versesFound = [];
 
     var bibleList = await this.getValidBibleList(bibleString.split("_"));
     if (bibleList.length >= 2) {
@@ -126,7 +121,7 @@ class Bibles {
           var referenceList = BibleParser().extractAllReferences(referenceString);
           if (referenceList.length >= 1) {
             var bcvList = referenceList[0];
-            versesFound += "[${BibleParser().bcvToChapterReference(bcvList)}]\n";
+            versesFound.add([[], "[${BibleParser().bcvToChapterReference(bcvList)}]"]);
 
             var b = bcvList[0];
             var c = bcvList[1];
@@ -145,24 +140,23 @@ class Bibles {
             (ve1 >= ve2) ? ve = ve1 : ve = ve2;
 
             for (var i = vs; i <= ve; i++) {
-              var verseText1 = await this.bible1.openSingleVerse([b, c, i]);
-              var verseText2 = await this.bible2.openSingleVerse([b, c, i]);
+              var ibcv = [b, c, i];
+              var verseText1 = await this.bible1.openSingleVerse(ibcv);
+              var verseText2 = await this.bible2.openSingleVerse(ibcv);
               if (i == v) {
-                versesFound += "**********\n[$i] [${this.bible1.module}] $verseText1\n";
-                versesFound += "[$i] [${this.bible2.module}] $verseText2\n**********";
+                versesFound.add([ibcv, "**********\n[$i] [${this.bible1.module}] $verseText1", this.bible1.module]);
+                versesFound.add([ibcv, "[$i] [${this.bible2.module}] $verseText2\n**********", this.bible2.module]);
               } else {
-                versesFound += "\n[$i] [${this.bible1.module}] $verseText1\n";
-                versesFound += "[$i] [${this.bible2.module}] $verseText2\n";
+                versesFound.add([ibcv, "[$i] [${this.bible1.module}] $verseText1", this.bible1.module]);
+                versesFound.add([ibcv, "[$i] [${this.bible2.module}] $verseText2", this.bible2.module]);
               }
             }
           }
         }
       }
     }
-    print(versesFound);
 
-    // TODO; correct return value
-    return [];
+    return versesFound;
   }
 
   Future crossReference(String bibleString, String referenceString, [int bibleID = 1]) async {
