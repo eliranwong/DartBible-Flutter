@@ -71,6 +71,26 @@ class UniqueBibleState extends State<UniqueBible> {
     return Scaffold(
       appBar: AppBar(
         title: Text('Unique Bible App'),
+
+        actions: <Widget>[
+          IconButton(
+            tooltip: 'Search',
+            icon: const Icon(Icons.search),
+            onPressed: () async {
+              showSearch(
+                context: context,
+                delegate: CustomSearchDelegate(bibles.bible1),
+              );
+              /*
+              if (selected != null && selected != _lastIntegerSelected) {
+                setState(() {
+                  _lastIntegerSelected = selected;
+                });
+              }
+              */
+            },
+          ),
+        ],
       ),
       body: _buildVerses(),
     );
@@ -91,7 +111,7 @@ class UniqueBibleState extends State<UniqueBible> {
         controller: scrollController,
         itemCount: _data.length,
         itemBuilder: (context, i) {
-          return _buildRow(i);
+          if ((i >= 0) && (i < _data.length)) return _buildRow(i);
         });
   }
 
@@ -115,6 +135,108 @@ class UniqueBibleState extends State<UniqueBible> {
           print("Long tap; index = $i");
         });
       },
+    );
+  }
+
+}
+
+class CustomSearchDelegate extends SearchDelegate {
+
+  Bible _bible;
+
+  final _bibleFont = const TextStyle(fontSize: 18.0);
+  List<dynamic> _data = ["1", "2", "3"];
+  Bibles bibles;
+  int _scrollIndex;
+
+  CustomSearchDelegate(Bible bible) {
+    _bible = bible;
+  }
+
+  @override
+  ThemeData appBarTheme(BuildContext context) {
+    assert(context != null);
+    final ThemeData theme = Theme.of(context);
+    assert(theme != null);
+    return theme;
+  }
+
+  @override
+  List<Widget> buildActions(BuildContext context) {
+    return [
+      IconButton(
+        icon: Icon(Icons.clear),
+        onPressed: () {
+          query = '';
+        },
+      ),
+    ];
+  }
+
+  @override
+  Widget buildLeading(BuildContext context) {
+    return IconButton(
+      icon: Icon(Icons.arrow_back),
+      onPressed: () {
+        close(context, null);
+      },
+    );
+  }
+
+  @override
+  Widget buildResults(BuildContext context) {
+    // does not search item less than 2 letters
+    /*
+    if (query.length < 3) {
+      return Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: <Widget>[
+          Center(
+            child: Text(
+              "Search term must be longer than two letters.",
+            ),
+          )
+        ],
+      );
+    } else {
+      return _buildVerses();
+    }
+    */
+    var test = _bible.openSingleVerse2([43, 3, 16]);
+    _data.add(test);
+    return _buildVerses();
+  }
+
+  @override
+  Widget buildSuggestions(BuildContext context) {
+    return Column();
+  }
+
+  Widget _buildVerses() {
+    var scrollController;
+    if (_scrollIndex == null) {
+      scrollController = IndexedScrollController();
+    } else {
+      scrollController = IndexedScrollController(
+          initialIndex: _scrollIndex,
+          initialScrollOffset: 0.0
+      );
+    }
+    return IndexedListView.builder(
+        padding: const EdgeInsets.all(16.0),
+        controller: scrollController,
+        itemCount: _data.length,
+        itemBuilder: (context, i) {
+          if ((i >= 0) && (i < _data.length)) return _buildRow(i);
+        });
+  }
+
+  Widget _buildRow(int i) {
+    return ListTile(
+      title: Text(
+        _data[i],
+        style: _bibleFont,
+      ),
     );
   }
 
