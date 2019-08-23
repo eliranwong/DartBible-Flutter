@@ -1,3 +1,6 @@
+import 'Bibles.dart';
+import 'BibleParser.dart';
+
 class BibleSearchDelegate extends SearchDelegate {
 
   Bible _bible;
@@ -12,7 +15,8 @@ class BibleSearchDelegate extends SearchDelegate {
 
   List _fetch(query) {
     List<dynamic> fetchResults =[];
-    // TODO, fill up search functions here.
+    var verseReferenceList = BibleParser().extractAllReferences(query);
+    (verseReferenceList.isEmpty) ? fetchResults = _bible.directSearch(query): fetchResults = _bible.directOpenMultipleVerses(query);
     return fetchResults;
   }
 
@@ -69,7 +73,7 @@ class BibleSearchDelegate extends SearchDelegate {
   Widget _buildRow(int i) {
     return ListTile(
       title: Text(
-        _data[i],
+        _data[i][1],
         style: _bibleFont,
       ),
     );

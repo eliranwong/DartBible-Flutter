@@ -333,7 +333,7 @@ class Bible {
       var c = found["cNo"];
       var v = found["vNo"];
       var verseText = found["vText"].trim();
-      (v == bcvList[2]) ? versesFound.add([[b, c, v], "**********\n[$v] $verseText\n**********"]) : versesFound.add([[b, c, v], "[$v] $verseText"]);
+      (v == bcvList[2]) ? versesFound.add([[b, c, v], "**********\n[$v] $verseText\n**********", this.module]) : versesFound.add([[b, c, v], "[$v] $verseText", this.module]);
   }
     return versesFound;
   }
@@ -347,10 +347,10 @@ class Bible {
       var referenceString = "[${BibleParser().bcvToVerseReference(bcvList)}]";
       if (bcvList.length == 5) {
         var verse = await openSingleVerseRange(bcvList);
-        versesFound.add([bcvList, "$referenceString $verse"]);
+        versesFound.add([bcvList, "$referenceString $verse", this.module]);
       } else {
         var verse = await openSingleVerse(bcvList);
-        versesFound.add([bcvList, "$referenceString $verse"]);
+        versesFound.add([bcvList, "$referenceString $verse", this.module]);
       }
     }
     return versesFound;
@@ -370,7 +370,125 @@ class Bible {
       var v = found["vNo"];
       var bcvRef = BibleParser().bcvToVerseReference([b, c, v]);
       var verseText = found["vText"];
-      versesFound.add([[b, c, v], "[$bcvRef] $verseText"]);
+      versesFound.add([[b, c, v], "[$bcvRef] $verseText", this.module]);
+    }
+    return versesFound;
+  }
+
+  // TO DO - clear duplicated codes later
+  // 
+  // 
+
+  String openSingleVerse(List bcvList) {
+
+    String versesFound = "";
+
+    var b = bcvList[0];
+    var c = bcvList[1];
+    var v = bcvList[2];
+
+    var fetchResults = this.data.where((i) => ((i["bNo"] == b) && (i["cNo"] == c) && (i["vNo"] == v))).toList();
+    for (var found in fetchResults) {
+      var verseText = found["vText"].trim();
+      versesFound += "$verseText ";
+    }
+
+    return versesFound.trimRight();
+  }
+
+  String directOpenSingleVerseRange(List bcvList) {
+
+    String versesFound = "";
+
+    var b = bcvList[0];
+    var c = bcvList[1];
+    var v = bcvList[2];
+    var c2 = bcvList[3];
+    var v2 = bcvList[4];
+
+    var check, fetchResults;
+
+    if ((c2 == c) && (v2 > v)) {
+      check = v;
+      while (check <= v2) {
+        fetchResults = this.data.where((i) => ((i["bNo"] == b) && (i["cNo"] == c) && (i["vNo"] == check))).toList();
+        for (var found in fetchResults) {
+          var verseText = "[${found["vNo"]}] ${found["vText"].trim()}";
+          versesFound += "$verseText ";
+        }
+        check += 1;
+      }
+    } else if (c2 > c) {
+      check = c;
+      while (check < c2) {
+        fetchResults = this.data.where((i) => ((i["bNo"] == b) && (i["cNo"] == check))).toList();
+        for (var found in fetchResults) {
+          var verseText = found["vText"].trim();
+          versesFound += "$verseText ";
+        }
+        check += 1;
+      }
+      check = 0; // some bible versions may have chapters starting with verse 0.
+      while (check <= v2) {
+        fetchResults = this.data.where((i) => ((i["bNo"] == b) && (i["cNo"] == c) && (i["vNo"] == check))).toList();
+        for (var found in fetchResults) {
+          var verseText = found["vText"].trim();
+          versesFound += "$verseText ";
+        }
+        check += 1;
+      }
+    }
+
+    return versesFound.trimRight();
+  }
+
+  List directOpenSingleChapter(List bcvList) {
+
+    List<dynamic> versesFound = [];
+    versesFound.add([[], "[${BibleParser().bcvToChapterReference(bcvList)}]"]);
+    var fetchResults = this.data.where((i) => ((i["bNo"] == bcvList[0]) && (i["cNo"] == bcvList[1]))).toList();
+    for (var found in fetchResults) {
+      var b = found["bNo"];
+      var c = found["cNo"];
+      var v = found["vNo"];
+      var verseText = found["vText"].trim();
+      (v == bcvList[2]) ? versesFound.add([[b, c, v], "**********\n[$v] $verseText\n**********", this.module]) : versesFound.add([[b, c, v], "[$v] $verseText", this.module]);
+  }
+    return versesFound;
+  }
+
+  List directOpenMultipleVerses(List listOfBcvList) {
+
+    List<dynamic> versesFound = [];
+    versesFound.add([[], "[Multiple verses]"]);
+
+    for (var bcvList in listOfBcvList) {
+      var referenceString = "[${BibleParser().bcvToVerseReference(bcvList)}]";
+      if (bcvList.length == 5) {
+        var verse = directOpenSingleVerseRange(bcvList);
+        versesFound.add([bcvList, "$referenceString $verse", this.module]);
+      } else {
+        var verse = directOpenSingleVerse(bcvList);
+        versesFound.add([bcvList, "$referenceString $verse", this.module]);
+      }
+    }
+    return versesFound;
+  }
+
+  List directSearch(String searchString) {
+
+    var fetchResults = this.data.where((i) => (i["vText"].contains(RegExp(searchString)) as bool)).toList();
+
+    List<dynamic> versesFound = [];
+    versesFound.add([[], "[$searchString is found in ${fetchResults.length} verse(s).]"]);
+
+    for (var found in fetchResults) {
+      var b = found["bNo"];
+      var c = found["cNo"];
+      var v = found["vNo"];
+      var bcvRef = BibleParser().bcvToVerseReference([b, c, v]);
+      var verseText = found["vText"];
+      versesFound.add([[b, c, v], "[$bcvRef] $verseText", this.module]);
     }
     return versesFound;
   }
