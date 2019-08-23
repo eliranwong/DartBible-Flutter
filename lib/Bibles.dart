@@ -108,7 +108,7 @@ class Bibles {
       versesFound += "\n";
     }
     print("$versesFound\n");
-    
+
     // TODO; correct return value
     return [];
   }
@@ -149,7 +149,7 @@ class Bibles {
               var verseText2 = await this.bible2.openSingleVerse([b, c, i]);
               if (i == v) {
                 versesFound += "**********\n[$i] [${this.bible1.module}] $verseText1\n";
-                versesFound += "[$i] [${this.bible2.module}] $verseText2\n**********";    
+                versesFound += "[$i] [${this.bible2.module}] $verseText2\n**********";
               } else {
                 versesFound += "\n[$i] [${this.bible1.module}] $verseText1\n";
                 versesFound += "[$i] [${this.bible2.module}] $verseText2\n";
@@ -177,7 +177,7 @@ class Bibles {
         return versesFound;
       }
     }
-    return []
+    return [];
   }
 
   Future getCrossReference(List bcvList) async {
@@ -339,8 +339,8 @@ class Bible {
       var c = found["cNo"];
       var v = found["vNo"];
       var verseText = found["vText"].trim();
-      (v == bcvList[2]) ? versesFound.add([[b, c, v], "**********\n[$v] $verseText\n**********"]) : versesFound.add([[b, c, v], "[$v] $verseText"]));
-    }
+      (v == bcvList[2]) ? versesFound.add([[b, c, v], "**********\n[$v] $verseText\n**********"]) : versesFound.add([[b, c, v], "[$v] $verseText"]);
+  }
     return versesFound;
   }
 
@@ -369,7 +369,7 @@ class Bible {
 
     List<dynamic> versesFound = [];
     versesFound.add([[], "[$searchString is found in ${fetchResults.length} verse(s).]"]);
-    
+
     for (var found in fetchResults) {
       var b = found["bNo"];
       var c = found["cNo"];

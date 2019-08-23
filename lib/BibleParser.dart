@@ -1817,6 +1817,7 @@ class BibleParser {
     return verseReferenceList;
   }
 
+  /*
   Future tagFiles(List filePaths) async {
     var fileIO = FileIOHelper();
     for (var filePath in filePaths) {
@@ -1833,5 +1834,6 @@ class BibleParser {
     var fileList = await FileIOHelper().getFileListInFolder(folderPath);
     this.tagFiles(fileList);
   }
+  */
 
 }

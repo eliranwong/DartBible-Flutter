@@ -4,4 +4,4 @@ var assets = "assets";
 var abbreviations = "ENG";
 var bible1 = "KJV";
 var bible2 = "NET";
-var lastReference = "John 3:16"
+var lastReference = "John 3:16";

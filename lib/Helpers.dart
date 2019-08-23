@@ -8,11 +8,11 @@ import 'config.dart' as config;
 class FileIOHelper {
 
   String getDataPath(String dataType, [String module]) {
-    return "${config.assets}/${dataType}/${module}.json"
+    return "${config.assets}/${dataType}/${module}.json";
   }
 
-  // File: https://api.dart.dev/stable/2.4.1/dart-io/File-class.html
-  // Directory: https://api.dart.dev/stable/2.4.1/dart-io/Directory-class.html
+// File: https://api.dart.dev/stable/2.4.1/dart-io/File-class.html
+// Directory: https://api.dart.dev/stable/2.4.1/dart-io/Directory-class.html
 
 /* original written for command-line version
   String getDataPath(String dataType, [String module]) {
@@ -87,7 +87,7 @@ class FileIOHelper {
       var existingFile = await this.isFile(actionFilePath);
       if (existingFile) await outputFile.delete();
     }
-    
+
     var textFile = File(filePath);
     Stream<List<int>> inputStream = textFile.openRead();
 
@@ -115,7 +115,7 @@ class FileIOHelper {
     await sink.flush();
     await sink.close();
   }
-  
+
   Future appendTextFile(String content, String filePath) async {
     var textFile = File(filePath);
     var sink = textFile.openWrite(mode: FileMode.append);
@@ -133,7 +133,7 @@ class JsonHelper {
     // command-line version:
     // var fileIO = FileIOHelper();
     // var jsonString = await fileIO.readTextFile(filePath);
-    
+
     var jsonString = await rootBundle.loadString(filePath);
     var jsonObject = jsonDecode(jsonString);
     return jsonObject;
@@ -146,7 +146,7 @@ class RegexHelper {
   var searchReplace;
 
   var searchPattern;
-  
+
   var patternString;
 
   String Function(Match) replacement(String pattern) => (Match match) => pattern.replaceAllMapped(new RegExp(r'\\(\d+)'), (m) => match[int.parse(m[1])]);
