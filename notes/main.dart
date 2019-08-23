@@ -1,6 +1,9 @@
 // Copyright 2019 Eliran Wong. All rights reserved.
 
 import 'package:flutter/material.dart';
+import 'package:indexed_list_view/indexed_list_view.dart';
+import 'config.dart' as config;
+import 'Bibles.dart';
 
 void main() => runApp(MyApp());
 
@@ -20,70 +23,223 @@ class UniqueBible extends StatefulWidget {
 }
 
 class UniqueBibleState extends State<UniqueBible> {
-  final List<dynamic>_fetchResults = [
-    {
-      "bNo": 0,
-      "cNo": 0,
-      "vNo": 0,
-      "vText": "King James Version"
-    },
-    {
-      "bNo": 1,
-      "cNo": 1,
-      "vNo": 1,
-      "vText": "In the beginning God created the heaven and the earth."
-    },
-    {
-      "bNo": 1,
-      "cNo": 1,
-      "vNo": 2,
-      "vText": "And the earth was without form, and void; and darkness [was] upon the face of the deep. And the Spirit of God moved upon the face of the waters."
-    },
-    {
-      "bNo": 1,
-      "cNo": 1,
-      "vNo": 3,
-      "vText": "And God said, Let there be light: and there was light."
-    },
-    {
-      "bNo": 1,
-      "cNo": 1,
-      "vNo": 4,
-      "vText": "And God saw the light, that [it was] good: and God divided the light from the darkness."
-    },
-    {
-      "bNo": 1,
-      "cNo": 1,
-      "vNo": 5,
-      "vText": "And God called the light Day, and the darkness he called Night. And the evening and the morning were the first day."
-    }
-  ];
+
   final _bibleFont = const TextStyle(fontSize: 18.0);
+  List<dynamic> _data = [];
+  Bibles bibles;
+  int _scrollIndex;
+
+  Future _startup() async {
+    if (!config.startup) {
+      bibles = Bibles();
+      var fetchResults = await bibles.openBible(config.bible1, config.lastReference);
+      _data = fetchResults;
+      _scrollIndex = 16;
+      config.startup = true;
+      setState(() {
+        print("new data loaded!");
+      });
+    }
+
+    /* original main function in command-line version:
+    if ((arguments.isNotEmpty) && (arguments.length >= 3)) {
+      var actions = {
+        "open": bibles.openBible,
+        "search": bibles.searchBible,
+        "compare": bibles.compareBibles,
+        "parallel": bibles.parallelBibles,
+        "reference": bibles.crossReference,
+      };
+      var action = arguments[0];
+      if (actions.keys.contains(action.toLowerCase())) {
+        var module = arguments[1];
+        var entry = arguments.sublist(2).join(" ");
+        actions[action](module, entry);
+      } else {
+        bibles.openBible(config.bible1, arguments.join(" "));
+      }
+    } else {
+      bibles.openBible(config.bible1, arguments.join(" "));
+    }
+    */
+
+  }
 
   @override
-  Widget build(BuildContext context) {
+  build(BuildContext context) {
+    _startup();
     return Scaffold(
       appBar: AppBar(
         title: Text('Unique Bible App'),
+
+        actions: <Widget>[
+          IconButton(
+            tooltip: 'Search',
+            icon: const Icon(Icons.search),
+            onPressed: () async {
+              showSearch(
+                context: context,
+                delegate: CustomSearchDelegate(),
+              );
+              /*
+              if (selected != null && selected != _lastIntegerSelected) {
+                setState(() {
+                  _lastIntegerSelected = selected;
+                });
+              }
+              */
+            },
+          ),
+        ],
       ),
       body: _buildVerses(),
     );
   }
 
   Widget _buildVerses() {
-    return ListView.builder(
+    var scrollController;
+    if (_scrollIndex == null) {
+      scrollController = IndexedScrollController();
+    } else {
+      scrollController = IndexedScrollController(
+          initialIndex: _scrollIndex,
+          initialScrollOffset: 0.0
+      );
+    }
+    return IndexedListView.builder(
         padding: const EdgeInsets.all(16.0),
+        controller: scrollController,
+        itemCount: _data.length,
         itemBuilder: (context, i) {
-          if (i < _fetchResults.length) return _buildRow(_fetchResults[i]["vText"]);
+          return _buildRow(i);
         });
   }
 
-  Widget _buildRow(String verseText) {
+  Widget _buildRow(int i) {
     return ListTile(
       title: Text(
-        verseText,
+        _data[i][1],
         style: _bibleFont,
       ),
+
+      onTap: () {
+        setState(() {
+          // TODO open a chapter on this verse
+          print("Tap; index = $i");
+        });
+      },
+
+      onLongPress: () {
+        setState(() {
+          // TODO open cross-references
+          print("Long tap; index = $i");
+        });
+      },
+    );
+  }
+
+}
+
+class CustomSearchDelegate extends SearchDelegate {
+
+  final _bibleFont = const TextStyle(fontSize: 18.0);
+  List<dynamic> _data = [];
+  Bibles bibles;
+  int _scrollIndex;
+
+  @override
+  ThemeData appBarTheme(BuildContext context) {
+    assert(context != null);
+    final ThemeData theme = Theme.of(context);
+    assert(theme != null);
+    return theme;
+  }
+
+  @override
+  List<Widget> buildActions(BuildContext context) {
+    return [
+      IconButton(
+        icon: Icon(Icons.clear),
+        onPressed: () {
+          query = '';
+        },
+      ),
+    ];
+  }
+
+  @override
+  Widget buildLeading(BuildContext context) {
+    return IconButton(
+      icon: Icon(Icons.arrow_back),
+      onPressed: () {
+        close(context, null);
+      },
+    );
+  }
+
+  @override
+  Widget buildResults(BuildContext context) {
+    // does not search item less than 2 letters
+    if (query.length < 3) {
+      return Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: <Widget>[
+          Center(
+            child: Text(
+              "Search term must be longer than two letters.",
+            ),
+          )
+        ],
+      );
+    } else {
+      return _buildVerses();  
+    }
+  }
+
+  @override
+  Widget buildSuggestions(BuildContext context) {
+    return Column();
+  }
+  
+  Widget _buildVerses() {
+    var scrollController;
+    if (_scrollIndex == null) {
+      scrollController = IndexedScrollController();
+    } else {
+      scrollController = IndexedScrollController(
+          initialIndex: _scrollIndex,
+          initialScrollOffset: 0.0
+      );
+    }
+    return IndexedListView.builder(
+        padding: const EdgeInsets.all(16.0),
+        controller: scrollController,
+        itemCount: _data.length,
+        itemBuilder: (context, i) {
+          return _buildRow(i);
+        });
+  }
+
+  Widget _buildRow(int i) {
+    return ListTile(
+      title: Text(
+        _data[i][1],
+        style: _bibleFont,
+      ),
+
+      onTap: () {
+        setState(() {
+          // TODO open a chapter on this verse
+          print("Tap; index = $i");
+        });
+      },
+
+      onLongPress: () {
+        setState(() {
+          // TODO open cross-references
+          print("Long tap; index = $i");
+        });
+      },
     );
   }
 
