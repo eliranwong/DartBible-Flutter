@@ -31,13 +31,13 @@ class UniqueBibleState extends State<UniqueBible> {
   List<dynamic> _data = [];
 
   int _scrollIndex;
-
+  List _lastListSelected;
   Future _startup() async {
     if (!config.startup) {
       bibles = Bibles();
       var fetchResults = await bibles.openBible(config.bible1, config.lastReference);
       _data = fetchResults;
-      _scrollIndex = 16;
+      _scrollIndex = config.lastVerseNo;
       config.startup = true;
       setState(() {
         print("new data loaded!");
@@ -57,10 +57,17 @@ class UniqueBibleState extends State<UniqueBible> {
             tooltip: 'Search',
             icon: const Icon(Icons.search),
             onPressed: () async {
-              showSearch(
+              final List selected = await showSearch(
                 context: context,
                 delegate: BibleSearchDelegate(bibles.bible1),
               );
+              if (selected != null && selected != _lastListSelected) {
+                setState(() {
+                  _lastListSelected = selected;
+                  _scrollIndex = selected[2];
+                  _data = bibles.bible1.directOpenSingleChapter(selected);
+                });
+              }
             },
           ),
         ],
