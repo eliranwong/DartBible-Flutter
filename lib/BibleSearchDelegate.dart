@@ -16,7 +16,7 @@ class BibleSearchDelegate extends SearchDelegate {
   List _fetch(query) {
     List<dynamic> fetchResults =[];
     var verseReferenceList = BibleParser().extractAllReferences(query);
-    (verseReferenceList.isEmpty) ? fetchResults = _bible.directSearch(query): fetchResults = _bible.directOpenMultipleVerses(query);
+    (verseReferenceList.isEmpty) ? fetchResults = _bible.directSearch(query) : fetchResults = _bible.directOpenMultipleVerses(query);
     return fetchResults;
   }
 
