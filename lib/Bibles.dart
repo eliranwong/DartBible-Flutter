@@ -334,7 +334,7 @@ class Bible {
       var v = found["vNo"];
       var verseText = found["vText"].trim();
       (v == bcvList[2]) ? versesFound.add([[b, c, v], "**********\n[$v] $verseText\n**********", this.module]) : versesFound.add([[b, c, v], "[$v] $verseText", this.module]);
-  }
+    }
     return versesFound;
   }
 
@@ -376,10 +376,10 @@ class Bible {
   }
 
   // TO DO - clear duplicated codes later
-  // 
-  // 
+  //
+  //
 
-  String openSingleVerse(List bcvList) {
+  String directOpenSingleVerse(List bcvList) {
 
     String versesFound = "";
 
@@ -453,14 +453,14 @@ class Bible {
       var v = found["vNo"];
       var verseText = found["vText"].trim();
       (v == bcvList[2]) ? versesFound.add([[b, c, v], "**********\n[$v] $verseText\n**********", this.module]) : versesFound.add([[b, c, v], "[$v] $verseText", this.module]);
-  }
+    }
     return versesFound;
   }
 
   List directOpenMultipleVerses(List listOfBcvList) {
 
     List<dynamic> versesFound = [];
-    versesFound.add([[], "[Multiple verses]"]);
+    //versesFound.add([[], "[Multiple verses]"]);
 
     for (var bcvList in listOfBcvList) {
       var referenceString = "[${BibleParser().bcvToVerseReference(bcvList)}]";

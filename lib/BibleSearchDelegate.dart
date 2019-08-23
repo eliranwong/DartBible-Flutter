@@ -1,3 +1,4 @@
+import 'package:flutter/material.dart';
 import 'Bibles.dart';
 import 'BibleParser.dart';
 
@@ -8,7 +9,7 @@ class BibleSearchDelegate extends SearchDelegate {
   final _bibleFont = const TextStyle(fontSize: 18.0);
   List<dynamic> _data = [];
 
-  CustomSearchDelegate(Bible bible, [List startupData]) {
+  BibleSearchDelegate(Bible bible, [List startupData]) {
     _bible = bible;
     if (startupData != null) _data = startupData;
   }
@@ -16,7 +17,7 @@ class BibleSearchDelegate extends SearchDelegate {
   List _fetch(query) {
     List<dynamic> fetchResults =[];
     var verseReferenceList = BibleParser().extractAllReferences(query);
-    (verseReferenceList.isEmpty) ? fetchResults = _bible.directSearch(query) : fetchResults = _bible.directOpenMultipleVerses(query);
+    (verseReferenceList.isEmpty) ? fetchResults = _bible.directSearch(query) : fetchResults = _bible.directOpenMultipleVerses(verseReferenceList);
     return fetchResults;
   }
 

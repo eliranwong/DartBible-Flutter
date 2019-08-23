@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:indexed_list_view/indexed_list_view.dart';
 import 'config.dart' as config;
 import 'Bibles.dart';
+import 'BibleSearchDelegate.dart';
 
 void main() => runApp(MyApp());
 
