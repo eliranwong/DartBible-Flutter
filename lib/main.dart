@@ -24,9 +24,11 @@ class UniqueBible extends StatefulWidget {
 
 class UniqueBibleState extends State<UniqueBible> {
 
+  Bibles bibles;
+
   final _bibleFont = const TextStyle(fontSize: 18.0);
   List<dynamic> _data = [];
-  Bibles bibles;
+
   int _scrollIndex;
 
   Future _startup() async {
@@ -40,29 +42,6 @@ class UniqueBibleState extends State<UniqueBible> {
         print("new data loaded!");
       });
     }
-
-    /* original main function in command-line version:
-    if ((arguments.isNotEmpty) && (arguments.length >= 3)) {
-      var actions = {
-        "open": bibles.openBible,
-        "search": bibles.searchBible,
-        "compare": bibles.compareBibles,
-        "parallel": bibles.parallelBibles,
-        "reference": bibles.crossReference,
-      };
-      var action = arguments[0];
-      if (actions.keys.contains(action.toLowerCase())) {
-        var module = arguments[1];
-        var entry = arguments.sublist(2).join(" ");
-        actions[action](module, entry);
-      } else {
-        bibles.openBible(config.bible1, arguments.join(" "));
-      }
-    } else {
-      bibles.openBible(config.bible1, arguments.join(" "));
-    }
-    */
-
   }
 
   @override
@@ -79,15 +58,8 @@ class UniqueBibleState extends State<UniqueBible> {
             onPressed: () async {
               showSearch(
                 context: context,
-                delegate: CustomSearchDelegate(bibles.bible1),
+                delegate: BibleSearchDelegate(bibles.bible1),
               );
-              /*
-              if (selected != null && selected != _lastIntegerSelected) {
-                setState(() {
-                  _lastIntegerSelected = selected;
-                });
-              }
-              */
             },
           ),
         ],
@@ -111,6 +83,8 @@ class UniqueBibleState extends State<UniqueBible> {
         controller: scrollController,
         itemCount: _data.length,
         itemBuilder: (context, i) {
+          // the following condition is added to avoid errors with using IndexedListView:
+          // it is not necessary for using standard ListView
           if ((i >= 0) && (i < _data.length)) return _buildRow(i);
         });
   }
@@ -140,104 +114,3 @@ class UniqueBibleState extends State<UniqueBible> {
 
 }
 
-class CustomSearchDelegate extends SearchDelegate {
-
-  Bible _bible;
-
-  final _bibleFont = const TextStyle(fontSize: 18.0);
-  List<dynamic> _data = ["1", "2", "3"];
-  Bibles bibles;
-  int _scrollIndex;
-
-  CustomSearchDelegate(Bible bible) {
-    _bible = bible;
-  }
-
-  @override
-  ThemeData appBarTheme(BuildContext context) {
-    assert(context != null);
-    final ThemeData theme = Theme.of(context);
-    assert(theme != null);
-    return theme;
-  }
-
-  @override
-  List<Widget> buildActions(BuildContext context) {
-    return [
-      IconButton(
-        icon: Icon(Icons.clear),
-        onPressed: () {
-          query = '';
-        },
-      ),
-    ];
-  }
-
-  @override
-  Widget buildLeading(BuildContext context) {
-    return IconButton(
-      icon: Icon(Icons.arrow_back),
-      onPressed: () {
-        close(context, null);
-      },
-    );
-  }
-
-  @override
-  Widget buildResults(BuildContext context) {
-    // does not search item less than 2 letters
-    /*
-    if (query.length < 3) {
-      return Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: <Widget>[
-          Center(
-            child: Text(
-              "Search term must be longer than two letters.",
-            ),
-          )
-        ],
-      );
-    } else {
-      return _buildVerses();
-    }
-    */
-    var test = _bible.openSingleVerse2([43, 3, 16]);
-    _data.add(test);
-    return _buildVerses();
-  }
-
-  @override
-  Widget buildSuggestions(BuildContext context) {
-    return Column();
-  }
-
-  Widget _buildVerses() {
-    var scrollController;
-    if (_scrollIndex == null) {
-      scrollController = IndexedScrollController();
-    } else {
-      scrollController = IndexedScrollController(
-          initialIndex: _scrollIndex,
-          initialScrollOffset: 0.0
-      );
-    }
-    return IndexedListView.builder(
-        padding: const EdgeInsets.all(16.0),
-        controller: scrollController,
-        itemCount: _data.length,
-        itemBuilder: (context, i) {
-          if ((i >= 0) && (i < _data.length)) return _buildRow(i);
-        });
-  }
-
-  Widget _buildRow(int i) {
-    return ListTile(
-      title: Text(
-        _data[i],
-        style: _bibleFont,
-      ),
-    );
-  }
-
-}
