@@ -4,5 +4,4 @@ var assets = "assets";
 var abbreviations = "ENG";
 var bible1 = "KJV";
 var bible2 = "CUV";
-var lastReference = "John 3:16";
-var lastVerseNo = 16;
+var lastBcvList = [43, 3, 16];

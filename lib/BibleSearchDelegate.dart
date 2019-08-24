@@ -79,7 +79,6 @@ class BibleSearchDelegate extends SearchDelegate<List> {
       ),
 
       onTap: () {
-        print(_data[i][0]);
         close(context, _data[i][0]);
       },
 

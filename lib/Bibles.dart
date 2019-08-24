@@ -4,7 +4,7 @@ import 'config.dart' as config;
 
 class Bibles {
 
-  var bible1, bible2;
+  var bible1, bible2, bible3;
 
   Map getBibles() => {1: this.bible1, 2: this.bible1};
 
@@ -57,25 +57,11 @@ class Bibles {
     }
   }
 
-  Future openBible(String bibleModule, String referenceString, [int bibleID = 1]) async {
-    if (referenceString.isNotEmpty) {
+  Future openBible(String bibleModule, List bcvList, [int bibleID = 1]) async {
+    if (bcvList.isNotEmpty) {
       var bibleIsLoaded = await this.loadBible(bibleModule, bibleID);
       if (bibleIsLoaded) {
-        var referenceList = BibleParser().extractAllReferences(referenceString);
-        if (referenceList.isNotEmpty) {
-          var versesFound = await this.getBibles()[bibleID].open(referenceList);
-          return versesFound;
-        }
-      }
-    }
-    return [];
-  }
-
-  Future searchBible(String bibleModule, String searchString, [int bibleID = 1]) async {
-    if (searchString.isNotEmpty) {
-      var bibleIsLoaded = await this.loadBible(bibleModule, bibleID);
-      if (bibleIsLoaded) {
-        var versesFound = await this.getBibles()[bibleID].search(searchString);
+        var versesFound = await this.getBibles()[bibleID].open([bcvList]);
         return versesFound;
       }
     }
@@ -109,49 +95,38 @@ class Bibles {
     return versesFound;
   }
 
-  Future parallelBibles(String bibleString, String referenceString, [int bibleID = 1]) async {
+  List<dynamic> parallelBibles(List bcvList) {
     List<dynamic> versesFound = [];
 
-    var bibleList = await this.getValidBibleList(bibleString.split("_"));
-    if (bibleList.length >= 2) {
-      var bible1IsLoaded = await this.loadBible(bibleList[0], 1);
-      if (bible1IsLoaded) {
-        var bible2IsLoaded = await this.loadBible(bibleList[1], 2);
-        if (bible2IsLoaded) {
-          var referenceList = BibleParser().extractAllReferences(referenceString);
-          if (referenceList.length >= 1) {
-            var bcvList = referenceList[0];
-            versesFound.add([[], "[${BibleParser().bcvToChapterReference(bcvList)}]"]);
+    if (bcvList.isNotEmpty) {
+      versesFound.add([[], "[${BibleParser().bcvToChapterReference(bcvList)}]"]);
 
-            var b = bcvList[0];
-            var c = bcvList[1];
-            var v = bcvList[2];
+      var b = bcvList[0];
+      var c = bcvList[1];
+      var v = bcvList[2];
 
-            var bible1VerseList = await this.bible1.getVerseList(b, c);
-            var vs1 = bible1VerseList[0];
-            var ve1 = bible1VerseList[(bible1VerseList.length - 1)];
+      var bible1VerseList = this.bible1.directGetVerseList(b, c);
+      var vs1 = bible1VerseList[0];
+      var ve1 = bible1VerseList[(bible1VerseList.length - 1)];
 
-            var bible2VerseList = await this.bible2.getVerseList(b, c);
-            var vs2 = bible2VerseList[0];
-            var ve2 = bible2VerseList[(bible2VerseList.length - 1)];
+      var bible2VerseList = this.bible2.directGetVerseList(b, c);
+      var vs2 = bible2VerseList[0];
+      var ve2 = bible2VerseList[(bible2VerseList.length - 1)];
 
-            var vs, ve;
-            (vs1 <= vs2) ? vs = vs1 : vs = vs2;
-            (ve1 >= ve2) ? ve = ve1 : ve = ve2;
+      var vs, ve;
+      (vs1 <= vs2) ? vs = vs1 : vs = vs2;
+      (ve1 >= ve2) ? ve = ve1 : ve = ve2;
 
-            for (var i = vs; i <= ve; i++) {
-              var ibcv = [b, c, i];
-              var verseText1 = await this.bible1.openSingleVerse(ibcv);
-              var verseText2 = await this.bible2.openSingleVerse(ibcv);
-              if (i == v) {
-                versesFound.add([ibcv, "**********\n[$i] [${this.bible1.module}] $verseText1", this.bible1.module]);
-                versesFound.add([ibcv, "[$i] [${this.bible2.module}] $verseText2\n**********", this.bible2.module]);
-              } else {
-                versesFound.add([ibcv, "[$i] [${this.bible1.module}] $verseText1", this.bible1.module]);
-                versesFound.add([ibcv, "[$i] [${this.bible2.module}] $verseText2", this.bible2.module]);
-              }
-            }
-          }
+      for (var i = vs; i <= ve; i++) {
+        var ibcv = [b, c, i];
+        var verseText1 = this.bible1.directOpenSingleVerse(ibcv);
+        var verseText2 = this.bible2.directOpenSingleVerse(ibcv);
+        if (i == v) {
+          versesFound.add([ibcv, "**********\n[$i] [${this.bible1.module}] $verseText1", this.bible1.module]);
+          versesFound.add([ibcv, "[$i] [${this.bible2.module}] $verseText2\n**********", this.bible2.module]);
+        } else {
+          versesFound.add([ibcv, "[$i] [${this.bible1.module}] $verseText1", this.bible1.module]);
+          versesFound.add([ibcv, "[$i] [${this.bible2.module}] $verseText2", this.bible2.module]);
         }
       }
     }
@@ -159,17 +134,12 @@ class Bibles {
     return versesFound;
   }
 
-  Future crossReference(String bibleString, String referenceString, [int bibleID = 1]) async {
-    var referenceList = BibleParser().extractAllReferences(referenceString);
-
+  Future crossReference(List bcvList) async {
     var xRefList;
-    if (referenceList.isNotEmpty) xRefList = await this.getCrossReference(referenceList[0]);
+    if (bcvList.isNotEmpty) xRefList = await this.getCrossReference(bcvList);
     if (xRefList.isNotEmpty) {
-      var bibleIsLoaded = await this.loadBible(bibleString, 1);
-      if (bibleIsLoaded) {
-        var versesFound = await this.bible1.openMultipleVerses(xRefList);
-        return versesFound;
-      }
+      var versesFound = await this.bible1.openMultipleVerses(xRefList);
+      return versesFound;
     }
     return [];
   }
@@ -378,6 +348,19 @@ class Bible {
   // TO DO - clear duplicated codes later
   //
   //
+
+  List directGetVerseList(int b, int c) {
+
+    Set verses = {};
+    var fetchResults = this.data.where((i) => ((i["bNo"] == b) && (i["cNo"] == c))).toList();
+    for (var i in fetchResults) {
+      verses.add(i["vNo"]);
+    }
+    return verses.toList();
+    var verseList = verses.toList();
+    verseList.sort();
+    return verseList;
+  }
 
   String directOpenSingleVerse(List bcvList) {
 
