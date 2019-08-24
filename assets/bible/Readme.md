@@ -6,5 +6,7 @@ https://github.com/eliranwong/UniqueBible/blob/master/ThirdParty.py
 usage, e.g.:
 
 python
+
 from ThirdParty import Converter
+
 Converter().exportJsonBible("KJV")
