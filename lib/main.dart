@@ -29,27 +29,26 @@ class UniqueBibleState extends State<UniqueBible> {
 
   final _verseFont = const TextStyle(fontSize: config.fontSize);
   final _activeVerseFont = const TextStyle(fontSize: config.fontSize, fontWeight: FontWeight.bold);
-  List<dynamic> _data = [];
+  List<dynamic> _data = [[[0, 0, 0], "... loading ...", ""]];
 
-  List _lastBcvList;
+  List _lastBcvList = [0, 0, 0];
   bool _parallelBibles = false;
 
   var scrollController;
 
   Future _startup() async {
     if (!config.startup) {
-
-      setState(() async {
-        bibles = Bibles();
-        // load bible1
-        bibles.bible1 = Bible(config.bible1);
-        await bibles.bible1.loadData();
-        _data = bibles.bible1.directOpenSingleChapter(config.lastBcvList);
-        _lastBcvList = config.lastBcvList;
+      bibles = Bibles();
+      // load bible1
+      bibles.bible1 = Bible(config.bible1);
+      await bibles.bible1.loadData();
+      _data = bibles.bible1.directOpenSingleChapter(config.lastBcvList);
+      _lastBcvList = config.lastBcvList;
+      setState(() {
         // pre-load bible2
         bibles.bible2 = Bible(config.bible2);
         bibles.bible2.loadData();
-        // make sure this process runs once only
+        // make sure these function runs on startup only
         config.startup = true;
       });
     }
@@ -165,7 +164,7 @@ class UniqueBibleState extends State<UniqueBible> {
     } else {
       scrollController = IndexedScrollController(
           initialIndex: initialIndex,
-          initialScrollOffset: 0.0
+          initialScrollOffset: 0.0,
       );
     }
     return IndexedListView.builder(

@@ -9,7 +9,7 @@ class Bibles {
   Map getBibles() => {1: this.bible1, 2: this.bible1};
 
   Future getALLBibleList() async {
-    return config.allBibleList;
+    return config.allBibleList..sort();
   }
 
   Future getValidBibleList(List bibleList) async {
