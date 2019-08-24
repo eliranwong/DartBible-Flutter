@@ -31,7 +31,7 @@ SCREEN 2 - search screen
 3. search for a verse reference in order to open a chapter on bible chapter reading screen.  For example, search "John 3:16", and tap on the result to open the whole chapter of John chapter 3 with verse 16 highlighted.
 4. search multiple references with a single search, e.g. Rm 3:23; 5:8; 6:23; 10:9, 13; Gen 1:1-2; John 3:1-16. please note that common abbreviations and verse range(s) is supported.
 
-4 common questions:
+# Five common questions:
 
 at the moment, the interface is yet to be fully-built, but users can still get access of available features, via the 1 search field, 2 major screens and 3 buttons mentioned above.  don't forget the "tap" and "long-tap" actions ...
 
@@ -60,4 +60,10 @@ welcome suggestions at support@marvel.bible
 <img src="screenshot/screenshot7.png">
 <img src="screenshot/screenshot8.png">
 
+# other platforms
 
+Full-featured desktop version: https://github.com/eliranwong/UniqueBible
+
+Command-line version: visit https://github.com/eliranwong/DartBible.
+
+For more, visit BibleTools.app
