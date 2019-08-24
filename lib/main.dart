@@ -1,5 +1,6 @@
 // Copyright 2019 Eliran Wong. All rights reserved.
 
+import 'package:flutter/services.dart' show Clipboard, ClipboardData;
 import 'package:flutter/material.dart';
 import 'package:indexed_list_view/indexed_list_view.dart';
 import 'config.dart' as config;
@@ -204,10 +205,14 @@ class UniqueBibleState extends State<UniqueBible> {
         ),
 
         onTap: () {
+          final snackBar = SnackBar(content: Text('running cross-references ...'));
+          Scaffold.of(context).showSnackBar(snackBar);
           _loadXRef(context, _data[i][0]);
         },
 
         onLongPress: () {
+          final snackBar = SnackBar(content: Text('running comparison ...'));
+          Scaffold.of(context).showSnackBar(snackBar);
           _loadCompare(context, _data[i][0]);
         },
       );
@@ -220,6 +225,12 @@ class UniqueBibleState extends State<UniqueBible> {
 
         onTap: () {
           setActiveVerse(_data[i][0]);
+        },
+
+        onLongPress: () {
+          Clipboard.setData(ClipboardData(text: _data[i][1]));
+          final snackBar = SnackBar(content: Text('Copied to clipboard!'));
+          Scaffold.of(context).showSnackBar(snackBar);
         },
       );
     } else {

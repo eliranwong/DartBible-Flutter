@@ -1,3 +1,4 @@
+import 'package:flutter/services.dart' show Clipboard, ClipboardData;
 import 'package:flutter/material.dart';
 import 'config.dart' as config;
 import 'Bibles.dart';
@@ -83,6 +84,12 @@ class BibleSearchDelegate extends SearchDelegate<List> {
 
       onTap: () {
         close(context, _data[i]);
+      },
+
+      onLongPress: () {
+        Clipboard.setData(ClipboardData(text: _data[i][1]));
+        final snackBar = SnackBar(content: Text('Copied to clipboard!'));
+        Scaffold.of(context).showSnackBar(snackBar);
       },
 
     );
