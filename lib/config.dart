@@ -1,3 +1,4 @@
+const fontSize = 18.0;
 var startup = false;
 var allBibleList = ["CUV", "KJV", "ISV", "LEB", "NET", "WEB"];
 var assets = "assets";

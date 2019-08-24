@@ -27,7 +27,8 @@ class UniqueBibleState extends State<UniqueBible> {
 
   Bibles bibles;
 
-  final _bibleFont = const TextStyle(fontSize: 18.0);
+  final _verseFont = const TextStyle(fontSize: config.fontSize);
+  final _activeVerseFont = const TextStyle(fontSize: config.fontSize, fontWeight: FontWeight.bold);
   List<dynamic> _data = [];
 
   List _lastBcvList;
@@ -37,18 +38,59 @@ class UniqueBibleState extends State<UniqueBible> {
 
   Future _startup() async {
     if (!config.startup) {
-      bibles = Bibles();
-      var fetchResults = await bibles.openBible(config.bible1, config.lastBcvList);
-      _data = fetchResults;
-      _lastBcvList = config.lastBcvList;
-      config.startup = true;
-      setState(() {
+
+      setState(() async {
+        bibles = Bibles();
+        // load bible1
+        bibles.bible1 = Bible(config.bible1);
+        await bibles.bible1.loadData();
+        _data = bibles.bible1.directOpenSingleChapter(config.lastBcvList);
+        _lastBcvList = config.lastBcvList;
+        // pre-load bible2
         bibles.bible2 = Bible(config.bible2);
         bibles.bible2.loadData();
+        // make sure this process runs once only
+        config.startup = true;
       });
     }
   }
 
+  void _searchResultSelected(List selected) async {
+    var selectedBcvList = selected[0];
+    var selectedBible = selected[2];
+    if (selectedBcvList != null && selectedBcvList.isNotEmpty) {
+      if ((selectedBcvList != _lastBcvList) || ((selectedBcvList == _lastBcvList) && (selectedBible != bibles.bible1.module))) {
+        if (selectedBible != bibles.bible1.module) {
+          bibles.bible1 = Bible(selectedBible);
+          await bibles.bible1.loadData();
+        }
+        setState(() {
+          _data = bibles.bible1.directOpenSingleChapter(selectedBcvList);
+          _lastBcvList = selectedBcvList;
+          _parallelBibles = false;
+        });
+      }
+    }
+  }
+
+  void setActiveVerse(List bcvList) {
+    if (bcvList.isNotEmpty) {
+      _lastBcvList = bcvList;
+      (_parallelBibles) ? scrollController.jumpToIndex(bcvList[2] * 2 - 1) : scrollController.jumpToIndex(bcvList[2]);
+    }
+  }
+
+  Future _loadXRef (BuildContext context, List bcvList) async {
+    var xRefData = await bibles.crossReference(bcvList);
+    final List selected = await showSearch(context: context, delegate: BibleSearchDelegate(context, bibles.bible1, xRefData));
+    _searchResultSelected(selected);
+  }
+
+  Future _loadCompare (BuildContext context, List bcvList) async {
+    var compareData = await bibles.compareBibles("ALL", bcvList);
+    final List selected = await showSearch(context: context, delegate: BibleSearchDelegate(context, bibles.bible1, compareData));
+    _searchResultSelected(selected);
+  }
   bool _toggleParallelBibles() {
     if ((_parallelBibles) && (bibles.bible1.data != null)) {
       _data = bibles.bible1.directOpenSingleChapter(_lastBcvList);
@@ -71,16 +113,6 @@ class UniqueBibleState extends State<UniqueBible> {
     (_parallelBibles) ? _data = bibles.parallelBibles(_lastBcvList) : _data = bibles.bible1.directOpenSingleChapter(_lastBcvList);
   }
 
-  void _searchResultSelected(List selected) {
-    if (selected != null && selected != _lastBcvList) {
-      setState(() {
-        _data = bibles.bible1.directOpenSingleChapter(selected);
-        _lastBcvList = selected;
-        _parallelBibles = false;
-      });
-    }
-  }
-
   @override
   build(BuildContext context) {
     _startup();
@@ -96,7 +128,7 @@ class UniqueBibleState extends State<UniqueBible> {
             onPressed: () async {
               final List selected = await showSearch(
                 context: context,
-                delegate: BibleSearchDelegate(bibles.bible1),
+                delegate: BibleSearchDelegate(context, bibles.bible1),
               );
               _searchResultSelected(selected);
             },
@@ -112,7 +144,7 @@ class UniqueBibleState extends State<UniqueBible> {
           ),
         ],
       ),
-      body: _buildVerses(),
+      body: _buildVerses(context),
       floatingActionButton: FloatingActionButton(
         onPressed: () {
           setState(() {
@@ -125,7 +157,7 @@ class UniqueBibleState extends State<UniqueBible> {
     );
   }
 
-  Widget _buildVerses() {
+  Widget _buildVerses(BuildContext context) {
     var initialIndex;
     (_parallelBibles) ? initialIndex = _lastBcvList[2] * 2 - 1 : initialIndex = _lastBcvList[2];
     if (_lastBcvList == null) {
@@ -139,59 +171,63 @@ class UniqueBibleState extends State<UniqueBible> {
     return IndexedListView.builder(
         padding: const EdgeInsets.all(16.0),
         controller: scrollController,
+        // workaround of finite list with IndexedListView:
+        // build empty rows with embedded actions
+        // do not use itemCount in this case
         //itemCount: _data.length,
         itemBuilder: (context, i) {
-          // the following condition is added to avoid errors with using IndexedListView:
-          // it is not necessary for using standard ListView
-          return _buildRow(i);
-          //if ((i >= 0) && (i < _data.length)) return _buildRow(i);
-          //return _buildEmptyRow(i);
+          return _buildVerseRow(context, i);
         });
   }
 
-  Widget _buildEmptyRow(int i) {
-    return ListTile(
+  Widget _buildVerseRow(BuildContext context, int i) {
+    // if (_data[i][0] == _lastBcvList) {
+    if ((i < 0) && (i >= _data.length)) {
+      return ListTile(
         title: Text(
-        "",
-        style: _bibleFont,
+          "",
+          style: _verseFont,
         ),
 
         onTap: () {
-          if ((_data.isEmpty) && (i < 0)) {
+          if (i < 0) {
             scrollController.jumpToIndex(0);
-            print(0);
+          } else if (i > _data.length) {
+            scrollController.jumpToIndex(_data.length - 1);
           }
-        }
-    );
-  }
-
-  Widget _buildRow(int i) {
-    if ((i >= 0) && (i < _data.length)) {
+        },
+      );
+    } else if (((!_parallelBibles) && (i == _lastBcvList[2])) || ((_parallelBibles) && ((i == _lastBcvList[2] * 2) || (i == _lastBcvList[2] * 2 - 1)))) {
       return ListTile(
         title: Text(
           _data[i][1],
-          style: _bibleFont,
+          style: _activeVerseFont,
         ),
 
         onTap: () {
-          setState(() {
-            // TODO open a chapter on this verse
-            print("Tap; index = $i");
-          });
+          _loadXRef(context, _data[i][0]);
         },
 
         onLongPress: () {
-          setState(() {
-            // TODO open cross-references
-            print("Long tap; index = $i");
-          });
+          _loadCompare(context, _data[i][0]);
+        },
+      );
+    } else if ((i >= 0) && (i < _data.length)) {
+      return ListTile(
+        title: Text(
+          _data[i][1],
+          style: _verseFont,
+        ),
+
+        onTap: () {
+          setActiveVerse(_data[i][0]);
         },
       );
     } else {
       return ListTile(
         title: Text(
           "",
-          style: _bibleFont,
+          style: _verseFont,
         ),
 
         onTap: () {

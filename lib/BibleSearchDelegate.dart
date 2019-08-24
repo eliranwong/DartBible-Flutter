@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'config.dart' as config;
 import 'Bibles.dart';
 import 'BibleParser.dart';
 
@@ -6,12 +7,14 @@ class BibleSearchDelegate extends SearchDelegate<List> {
 
   Bible _bible;
 
-  final _bibleFont = const TextStyle(fontSize: 18.0);
+  final _bibleFont = const TextStyle(fontSize: config.fontSize);
   List<dynamic> _data = [];
 
-  BibleSearchDelegate(Bible bible, [List startupData]) {
+  BibleSearchDelegate(BuildContext context, Bible bible, [List startupData]) {
     _bible = bible;
-    if (startupData != null) _data = startupData;
+    if (startupData != null) {
+      _data = startupData; // startup data to be displayed via suggestions
+    }
   }
 
   List _fetch(query) {
@@ -59,7 +62,7 @@ class BibleSearchDelegate extends SearchDelegate<List> {
 
   @override
   Widget buildSuggestions(BuildContext context) {
-    return Column();
+    return _buildVerses(context);
   }
 
   Widget _buildVerses(BuildContext context) {
@@ -67,11 +70,11 @@ class BibleSearchDelegate extends SearchDelegate<List> {
         padding: const EdgeInsets.all(16.0),
         itemCount: _data.length,
         itemBuilder: (context, i) {
-          return _buildRow(i, context);
+          return _buildVerseRow(i, context);
         });
   }
 
-  Widget _buildRow(int i, BuildContext context) {
+  Widget _buildVerseRow(int i, BuildContext context) {
     return ListTile(
       title: Text(
         _data[i][1],
@@ -79,7 +82,7 @@ class BibleSearchDelegate extends SearchDelegate<List> {
       ),
 
       onTap: () {
-        close(context, _data[i][0]);
+        close(context, _data[i]);
       },
 
     );
