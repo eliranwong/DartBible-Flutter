@@ -3,9 +3,10 @@
 import 'package:flutter/services.dart' show Clipboard, ClipboardData;
 import 'package:flutter/material.dart';
 import 'package:indexed_list_view/indexed_list_view.dart';
-import 'config.dart' as config;
+import 'config.dart';
 import 'Bibles.dart';
 import 'BibleSearchDelegate.dart';
+import 'BibleSettings.dart';
 
 void main() => runApp(MyApp());
 
@@ -26,36 +27,54 @@ class UniqueBible extends StatefulWidget {
 
 class UniqueBibleState extends State<UniqueBible> {
 
-  Bibles bibles;
-
-  final _verseFont = const TextStyle(fontSize: config.fontSize);
-  final _activeVerseFont = const TextStyle(fontSize: config.fontSize, fontWeight: FontWeight.bold);
-  List<dynamic> _data = [[[0, 0, 0], "... loading ...", ""]];
-
-  List _lastBcvList = [0, 0, 0];
+  bool _startup = false;
   bool _parallelBibles = false;
+  List<dynamic> _data = [[[0, 0, 0], "... loading ...", ""]];
+  List _lastBcvList = [0, 0, 0];
 
+  Bibles bibles;
   var scrollController;
+  var config;
+  var _verseFont;
+  var _activeVerseFont;
 
-  Future _startup() async {
-    if (!config.startup) {
+  UniqueBibleState() {
+    config = Config();
+    _verseFont = TextStyle(fontSize: config.fontSize);
+    _activeVerseFont = TextStyle(fontSize: config.fontSize, fontWeight: FontWeight.bold);
+  }
+
+  Future _setup() async {
+    if (!this._startup) {
+      var check = await config.setDefault();
+      if (check) {
+        _verseFont = TextStyle(fontSize: config.fontSize);
+        _activeVerseFont = TextStyle(fontSize: config.fontSize, fontWeight: FontWeight.bold);
+      }
       bibles = Bibles();
       // load bible1
       bibles.bible1 = Bible(config.bible1);
       await bibles.bible1.loadData();
       _data = bibles.bible1.directOpenSingleChapter(config.lastBcvList);
       _lastBcvList = config.lastBcvList;
+      // make sure these function runs on startup only
+      this._startup = true;
       setState(() {
         // pre-load bible2
         bibles.bible2 = Bible(config.bible2);
         bibles.bible2.loadData();
-        // make sure these function runs on startup only
-        config.startup = true;
       });
     }
   }
 
-  void _searchResultSelected(List selected) async {
+  void setActiveVerse(List bcvList) {
+    if (bcvList.isNotEmpty) {
+      _lastBcvList = bcvList;
+      (_parallelBibles) ? scrollController.jumpToIndex(bcvList[2] * 2 - 1) : scrollController.jumpToIndex(bcvList[2]);
+    }
+  }
+
+  void _newVerseSelected(List selected) async {
     var selectedBcvList = selected[0];
     var selectedBible = selected[2];
     if (selectedBcvList != null && selectedBcvList.isNotEmpty) {
@@ -73,23 +92,26 @@ class UniqueBibleState extends State<UniqueBible> {
     }
   }
 
-  void setActiveVerse(List bcvList) {
-    if (bcvList.isNotEmpty) {
-      _lastBcvList = bcvList;
-      (_parallelBibles) ? scrollController.jumpToIndex(bcvList[2] * 2 - 1) : scrollController.jumpToIndex(bcvList[2]);
-    }
+  void _openBibleSettings(BuildContext context) async {
+    final newBibleSettings = await Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => BibleSettings(bibles.bible1, _lastBcvList)),
+    );
+    var newVerseString = "${newBibleSettings[1]} ${newBibleSettings[3]}:${newBibleSettings[4]}";
+    var newVerse = [[int.parse(newBibleSettings[2]), int.parse(newBibleSettings[3]), int.parse(newBibleSettings[4])], newVerseString, newBibleSettings[0]];
+    _newVerseSelected(newVerse);
   }
 
   Future _loadXRef (BuildContext context, List bcvList) async {
     var xRefData = await bibles.crossReference(bcvList);
     final List selected = await showSearch(context: context, delegate: BibleSearchDelegate(context, bibles.bible1, xRefData));
-    _searchResultSelected(selected);
+    _newVerseSelected(selected);
   }
 
   Future _loadCompare (BuildContext context, List bcvList) async {
     var compareData = await bibles.compareBibles("ALL", bcvList);
     final List selected = await showSearch(context: context, delegate: BibleSearchDelegate(context, bibles.bible1, compareData));
-    _searchResultSelected(selected);
+    _newVerseSelected(selected);
   }
   bool _toggleParallelBibles() {
     if ((_parallelBibles) && (bibles.bible1.data != null)) {
@@ -99,6 +121,7 @@ class UniqueBibleState extends State<UniqueBible> {
       _data = bibles.parallelBibles(_lastBcvList);
       return true;
     }
+    return _parallelBibles;
   }
 
   void _swapBibles() {
@@ -115,13 +138,55 @@ class UniqueBibleState extends State<UniqueBible> {
 
   @override
   build(BuildContext context) {
-    _startup();
+    _setup();
     return Scaffold(
-      appBar: AppBar(
+      drawer: Drawer(
+        // Add a ListView to the drawer. This ensures the user can scroll
+        // through the options in the drawer if there isn't enough vertical
+        // space to fit everything.
+        child: ListView(
+          // Important: Remove any padding from the ListView.
+          padding: EdgeInsets.zero,
+          children: <Widget>[
+            DrawerHeader(
+              child: Text('History'),
+              decoration: BoxDecoration(
+                color: Colors.blue,
+              ),
+            ),
+            ListTile(
+              title: Text('Item 1'),
+              onTap: () {
+                // Update the state of the app
+                // ...
+                // Then close the drawer
+                Navigator.pop(context);
+              },
+            ),
+            ListTile(
+              title: Text('Item 2'),
+              onTap: () {
+                // Update the state of the app
+                // ...
+                // Then close the drawer
+                Navigator.pop(context);
+              },
+            ),
+          ],
+        ),
+      ),
+        appBar: AppBar(
         title: Text('Unique Bible App'),
-
+        leading: Builder(
+          builder: (BuildContext context) {
+            return IconButton(
+              icon: const Icon(Icons.menu),
+              onPressed: () { Scaffold.of(context).openDrawer(); },
+              tooltip: MaterialLocalizations.of(context).openAppDrawerTooltip,
+            );
+          },
+        ),
         actions: <Widget>[
-          //swap_calls
           IconButton(
             tooltip: 'Search',
             icon: const Icon(Icons.search),
@@ -130,7 +195,7 @@ class UniqueBibleState extends State<UniqueBible> {
                 context: context,
                 delegate: BibleSearchDelegate(context, bibles.bible1),
               );
-              _searchResultSelected(selected);
+              _newVerseSelected(selected);
             },
           ),
           IconButton(
@@ -140,6 +205,13 @@ class UniqueBibleState extends State<UniqueBible> {
               setState(() {
                 _swapBibles();
               });
+            },
+          ),
+          IconButton(
+            tooltip: 'Settings',
+            icon: const Icon(Icons.more_vert),
+            onPressed: () {
+              _openBibleSettings(context);
             },
           ),
         ],
@@ -205,13 +277,14 @@ class UniqueBibleState extends State<UniqueBible> {
         ),
 
         onTap: () {
-          final snackBar = SnackBar(content: Text('running cross-references ...'));
+          final snackBar = SnackBar(content: Text('Loading cross-references ...'));
           Scaffold.of(context).showSnackBar(snackBar);
           _loadXRef(context, _data[i][0]);
         },
 
         onLongPress: () {
-          final snackBar = SnackBar(content: Text('running comparison ...'));
+          Clipboard.setData(ClipboardData(text: _data[i][1]));
+          final snackBar = SnackBar(content: Text('Text copied to clipboard!\nLoading comparison ...'));
           Scaffold.of(context).showSnackBar(snackBar);
           _loadCompare(context, _data[i][0]);
         },
@@ -229,7 +302,7 @@ class UniqueBibleState extends State<UniqueBible> {
 
         onLongPress: () {
           Clipboard.setData(ClipboardData(text: _data[i][1]));
-          final snackBar = SnackBar(content: Text('Copied to clipboard!'));
+          final snackBar = SnackBar(content: Text('Text copied to clipboard!'));
           Scaffold.of(context).showSnackBar(snackBar);
         },
       );

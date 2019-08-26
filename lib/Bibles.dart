@@ -1,6 +1,6 @@
 import 'Helpers.dart';
 import 'BibleParser.dart';
-import 'config.dart' as config;
+import 'config.dart';
 
 class Bibles {
 
@@ -8,13 +8,14 @@ class Bibles {
 
   Map getBibles() => {1: this.bible1, 2: this.bible1};
 
-  Future getALLBibleList() async {
+  List getALLBibleList() {
+    var config = Config();
     return config.allBibleList..sort();
   }
 
-  Future getValidBibleList(List bibleList) async {
+  List getValidBibleList(List bibleList) {
     var validBibleList = [];
-    var allBibleList = await this.getALLBibleList();
+    var allBibleList = this.getALLBibleList();
     for (var bible in bibleList) {
       if (allBibleList.contains(bible)) validBibleList.add(bible);
     }
@@ -24,7 +25,7 @@ class Bibles {
 
   Future compareBibles(String bibleString, List bcvList) async {
     var bibleList;
-    (bibleString == "ALL") ? bibleList = await this.getALLBibleList() : bibleList = await this.getValidBibleList(bibleString.split("_"));
+    (bibleString == "ALL") ? bibleList = this.getALLBibleList() : bibleList = this.getValidBibleList(bibleString.split("_"));
     if (bibleList.isNotEmpty) {
       if (bcvList.isNotEmpty) {
         var versesFound = await this.compareVerses([bcvList], bibleList);
@@ -62,7 +63,7 @@ class Bibles {
 
       var b = bcvList[0];
       var c = bcvList[1];
-      var v = bcvList[2];
+      //var v = bcvList[2];
 
       var bible1VerseList = this.bible1.directGetVerseList(b, c);
       var vs1 = bible1VerseList[0];
@@ -122,17 +123,19 @@ class Bibles {
 
 class Bible {
 
-  var biblePath;
   var module;
+  var biblePath;
   var data;
+  var bookList;
 
   Bible(String bible) {
-    this.biblePath = FileIOHelper().getDataPath("bible", bible);
     this.module = bible;
+    this.biblePath = FileIOHelper().getDataPath("bible", bible);
   }
 
   Future loadData() async {
     this.data = await JsonHelper().getJsonObject(this.biblePath);
+    this.bookList = directGetBookList();
   }
 
   Future openSingleVerse(List bcvList) async {
@@ -156,10 +159,9 @@ class Bible {
   List directGetBookList() {
     Set books = {};
     for (var i in this.data) {
-      books.add(i["bNo"]);
+      if (i["bNo"] != 0) books.add(i["bNo"]);
     }
     var bookList = books.toList();
-    bookList.sort();
     return bookList;
   }
 
@@ -174,11 +176,6 @@ class Bible {
     return chapterList;
   }
 
-
-
-  //
-  //
-
   List directGetVerseList(int b, int c) {
 
     Set verses = {};
@@ -186,7 +183,6 @@ class Bible {
     for (var i in fetchResults) {
       verses.add(i["vNo"]);
     }
-    return verses.toList();
     var verseList = verses.toList();
     verseList.sort();
     return verseList;

@@ -1,4 +1,4 @@
-import 'config.dart' as config;
+import 'config.dart';
 import 'Helpers.dart';
 
 class BibleParser {
@@ -280,7 +280,7 @@ class BibleParser {
   };
 
   // mapping bible book abbreviation / bible book name to book number
-  Map<String, String> marvelBibleBookNo = {
+  Map<String, String> bibleBookNo = {
     "Ge.": "1",
     "Gen.": "1",
     "GEN.": "1",
@@ -1663,6 +1663,7 @@ class BibleParser {
       "TC": this.standardAbbreviationTC,
       "SC": this.standardAbbreviationSC,
     };
+    var config = Config();
     this.standardAbbreviation = standardAbbreviations[config.abbreviations];
   }
 
@@ -1723,7 +1724,7 @@ class BibleParser {
 
     // search for books; mark them with book numbers, used by https://marvel.bible
     // sorting books by alphabet
-    var sortedBooks = this.marvelBibleBookNo.keys.toList()..sort();
+    var sortedBooks = this.bibleBookNo.keys.toList()..sort();
     // sorting books by length
     sortedBooks.sort((a, b) => b.length.compareTo(a.length));
 
@@ -1740,11 +1741,11 @@ class BibleParser {
       bookString = regex.doSearchReplace(bookString);
 
       // get assigned book number from dictionary
-      var booknumber = this.marvelBibleBookNo[book];
+      var bookNumber = this.bibleBookNo[book];
 
       // search & replace for marking book
       regex.searchReplace = [
-        ['($bookString) ([0-9])', '『$booknumber｜\\1』 \\2'],
+        ['($bookString) ([0-9])', '『$bookNumber｜\\1』 \\2'],
       ];
       taggedText = regex.doSearchReplace(taggedText, multiLine: true);
     }

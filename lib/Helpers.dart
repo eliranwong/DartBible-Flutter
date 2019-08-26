@@ -1,6 +1,6 @@
 import 'package:flutter/services.dart' show rootBundle;
 import 'dart:convert';
-import 'config.dart' as config;
+import 'config.dart';
 
 //import 'package:path/path.dart' as p; // required by "FileIOHelper"
 //import 'dart:io'; // required by "FileIOHelper"
@@ -8,7 +8,8 @@ import 'config.dart' as config;
 class FileIOHelper {
 
   String getDataPath(String dataType, [String module]) {
-    return "${config.assets}/${dataType}/${module}.json";
+    var config = Config();
+    return "${config.assets}/$dataType/$module.json";
   }
 
 // File: https://api.dart.dev/stable/2.4.1/dart-io/File-class.html

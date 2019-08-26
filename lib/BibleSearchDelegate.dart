@@ -1,18 +1,18 @@
 import 'package:flutter/services.dart' show Clipboard, ClipboardData;
 import 'package:flutter/material.dart';
-import 'config.dart' as config;
-import 'Bibles.dart';
+import 'config.dart';
 import 'BibleParser.dart';
 
 class BibleSearchDelegate extends SearchDelegate<List> {
 
-  Bible _bible;
+  final _bible;
 
-  final _bibleFont = const TextStyle(fontSize: config.fontSize);
+  var _bibleFont;
   List<dynamic> _data = [];
 
-  BibleSearchDelegate(BuildContext context, Bible bible, [List startupData]) {
-    _bible = bible;
+  BibleSearchDelegate(BuildContext context, this._bible, [List startupData]) {
+    var config = Config();
+    this._bibleFont = TextStyle(fontSize: config.fontSize);
     if (startupData != null) {
       _data = startupData; // startup data to be displayed via suggestions
     }
@@ -88,7 +88,7 @@ class BibleSearchDelegate extends SearchDelegate<List> {
 
       onLongPress: () {
         Clipboard.setData(ClipboardData(text: _data[i][1]));
-        final snackBar = SnackBar(content: Text('Copied to clipboard!'));
+        final snackBar = SnackBar(content: Text('Text copied to clipboard!'));
         Scaffold.of(context).showSnackBar(snackBar);
       },
 
