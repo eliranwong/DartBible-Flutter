@@ -5,23 +5,29 @@ import 'Bibles.dart';
 class BibleSettings extends StatefulWidget {
   final _bible;
   final _bcvList;
+  final _fontSize;
 
-  BibleSettings(this._bible, this._bcvList);
+  BibleSettings(this._bible, this._bcvList, this._fontSize);
 
   @override
-  BibleSettingsState createState() => BibleSettingsState(_bible, _bcvList);
+  BibleSettingsState createState() => BibleSettingsState(_bible, _bcvList, _fontSize);
 }
 
 class BibleSettingsState extends State<BibleSettings> {
 
+  var config;
   Bible _bible;
 
   BibleParser _parser;
   Map _abbreviations;
   List _bookList, _chapterList, _verseList;
-  String _moduleValue, _bookValue, _chapterValue, _verseValue;
+  String _moduleValue, _bookValue, _chapterValue, _verseValue, _fontSizeValue;
 
-  BibleSettingsState(Bible bible, List bcvList) {
+  List fontSizeList = ["7", "8", "9", "10", "11", "12", "13", "14", "15", "16", "17", "18", "19", "20", "21", "22", "23", "24", "25", "26", "27", "28", "29", "30"];
+
+  BibleSettingsState(Bible bible, List bcvList, double fontSize) {
+    this._fontSizeValue = fontSize.toString().substring(0, (fontSize.toString().length - 2));
+
     this._parser = BibleParser();
     this._abbreviations = this._parser.standardAbbreviation;
 
@@ -85,7 +91,7 @@ class BibleSettingsState extends State<BibleSettings> {
             tooltip: 'Go',
             icon: const Icon(Icons.check),
             onPressed: () {
-              Navigator.pop(context, [this._moduleValue, this._bookValue, getBookNo(), this._chapterValue, this._verseValue]);
+              Navigator.pop(context, [this._moduleValue, this._bookValue, getBookNo(), this._chapterValue, this._verseValue, this._fontSizeValue]);
             },
           ),
         ],
@@ -173,6 +179,25 @@ class BibleSettingsState extends State<BibleSettings> {
                 }
               },
               items: <String>[...this._verseList].map<DropdownMenuItem<String>>((String value) {
+                return DropdownMenuItem<String>(
+                  value: value,
+                  child: Text(value),
+                );
+              }).toList(),
+            ),
+          ),
+          ListTile(
+            title: const Text('Font size'),
+            trailing: DropdownButton<String>(
+              value: this._fontSizeValue,
+              onChanged: (String newValue) {
+                if (this._verseValue != newValue) {
+                  setState(() {
+                    this._fontSizeValue = newValue;
+                  });
+                }
+              },
+              items: <String>[...fontSizeList].map<DropdownMenuItem<String>>((String value) {
                 return DropdownMenuItem<String>(
                   value: value,
                   child: Text(value),

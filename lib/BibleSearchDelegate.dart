@@ -1,6 +1,5 @@
 import 'package:flutter/services.dart' show Clipboard, ClipboardData;
 import 'package:flutter/material.dart';
-import 'config.dart';
 import 'BibleParser.dart';
 
 class BibleSearchDelegate extends SearchDelegate<List> {
@@ -10,9 +9,8 @@ class BibleSearchDelegate extends SearchDelegate<List> {
   var _bibleFont;
   List<dynamic> _data = [];
 
-  BibleSearchDelegate(BuildContext context, this._bible, [List startupData]) {
-    var config = Config();
-    this._bibleFont = TextStyle(fontSize: config.fontSize);
+  BibleSearchDelegate(BuildContext context, this._bible, double fontSize, [List startupData]) {
+    this._bibleFont = TextStyle(fontSize: fontSize);
     if (startupData != null) {
       _data = startupData; // startup data to be displayed via suggestions
     }

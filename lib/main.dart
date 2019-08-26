@@ -39,9 +39,7 @@ class UniqueBibleState extends State<UniqueBible> {
   var _activeVerseFont;
 
   UniqueBibleState() {
-    config = Config();
-    _verseFont = TextStyle(fontSize: config.fontSize);
-    _activeVerseFont = TextStyle(fontSize: config.fontSize, fontWeight: FontWeight.bold);
+    this.config = Config();
   }
 
   Future _setup() async {
@@ -74,7 +72,7 @@ class UniqueBibleState extends State<UniqueBible> {
     }
   }
 
-  void _newVerseSelected(List selected) async {
+  Future _newVerseSelected(List selected) async {
     var selectedBcvList = selected[0];
     var selectedBible = selected[2];
     if (selectedBcvList != null && selectedBcvList.isNotEmpty) {
@@ -92,25 +90,28 @@ class UniqueBibleState extends State<UniqueBible> {
     }
   }
 
-  void _openBibleSettings(BuildContext context) async {
+  Future _openBibleSettings(BuildContext context) async {
     final newBibleSettings = await Navigator.push(
       context,
-      MaterialPageRoute(builder: (context) => BibleSettings(bibles.bible1, _lastBcvList)),
+      MaterialPageRoute(builder: (context) => BibleSettings(bibles.bible1, _lastBcvList, this.config.fontSize)),
     );
     var newVerseString = "${newBibleSettings[1]} ${newBibleSettings[3]}:${newBibleSettings[4]}";
     var newVerse = [[int.parse(newBibleSettings[2]), int.parse(newBibleSettings[3]), int.parse(newBibleSettings[4])], newVerseString, newBibleSettings[0]];
+    var newFontSizeValue = double.parse(newBibleSettings[5]);
+    this.config.fontSize = newFontSizeValue;
+    this.config.save("fontSize", newFontSizeValue);
     _newVerseSelected(newVerse);
   }
 
   Future _loadXRef (BuildContext context, List bcvList) async {
     var xRefData = await bibles.crossReference(bcvList);
-    final List selected = await showSearch(context: context, delegate: BibleSearchDelegate(context, bibles.bible1, xRefData));
+    final List selected = await showSearch(context: context, delegate: BibleSearchDelegate(context, bibles.bible1, this.config.fontSize, xRefData));
     _newVerseSelected(selected);
   }
 
   Future _loadCompare (BuildContext context, List bcvList) async {
     var compareData = await bibles.compareBibles("ALL", bcvList);
-    final List selected = await showSearch(context: context, delegate: BibleSearchDelegate(context, bibles.bible1, compareData));
+    final List selected = await showSearch(context: context, delegate: BibleSearchDelegate(context, bibles.bible1, this.config.fontSize, compareData));
     _newVerseSelected(selected);
   }
   bool _toggleParallelBibles() {
@@ -139,6 +140,8 @@ class UniqueBibleState extends State<UniqueBible> {
   @override
   build(BuildContext context) {
     _setup();
+    _verseFont = TextStyle(fontSize: this.config.fontSize);
+    _activeVerseFont = TextStyle(fontSize: this.config.fontSize, fontWeight: FontWeight.bold);
     return Scaffold(
       drawer: Drawer(
         // Add a ListView to the drawer. This ensures the user can scroll
@@ -193,7 +196,7 @@ class UniqueBibleState extends State<UniqueBible> {
             onPressed: () async {
               final List selected = await showSearch(
                 context: context,
-                delegate: BibleSearchDelegate(context, bibles.bible1),
+                delegate: BibleSearchDelegate(context, bibles.bible1, this.config.fontSize),
               );
               _newVerseSelected(selected);
             },
