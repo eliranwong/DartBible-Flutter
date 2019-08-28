@@ -71,11 +71,11 @@ class BibleSettingsState extends State<BibleSettings> {
 
     var bookNoString = getBookNo();
 
-    this._chapterList = this._bible.directGetChapterList(int.parse(bookNoString));
+    this._chapterList = this._bible.getChapterList(int.parse(bookNoString));
     this._chapterList = this._chapterList.map((i) => (i).toString()).toList();
     if (!(this._chapterList.contains(this._chapterValue))) this._chapterValue = this._chapterList[0];
 
-    this._verseList = this._bible.directGetVerseList(int.parse(bookNoString), int.parse(this._chapterValue));
+    this._verseList = this._bible.getVerseList(int.parse(bookNoString), int.parse(this._chapterValue));
     this._verseList = this._verseList.map((i) => (i).toString()).toList();
     if (!(this._verseList.contains(this._verseValue))) this._verseValue = this._verseList[0];
   }
@@ -174,7 +174,11 @@ class BibleSettingsState extends State<BibleSettings> {
                 if (this._bookValue != newValue) {
                   setState(() {
                     this._bookValue = newValue;
+                    this._chapterList = this._bible.getChapterList(int.parse(getBookNo()));
+                    this._chapterList = this._chapterList.map((i) => (i).toString()).toList();
                     this._chapterValue = "1";
+                    this._verseList = this._bible.getVerseList(int.parse(getBookNo()), int.parse(this._chapterValue));
+                    this._verseList = this._verseList.map((i) => (i).toString()).toList();
                     this._verseValue = "1";
                   });
                 }
@@ -195,6 +199,8 @@ class BibleSettingsState extends State<BibleSettings> {
                 if (this._chapterValue != newValue) {
                   setState(() {
                     this._chapterValue = newValue;
+                    this._verseList = this._bible.getVerseList(int.parse(getBookNo()), int.parse(this._chapterValue));
+                    this._verseList = this._verseList.map((i) => (i).toString()).toList();
                     this._verseValue = "1";
                   });
                 }

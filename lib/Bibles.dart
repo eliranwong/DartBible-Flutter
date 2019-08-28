@@ -48,11 +48,11 @@ class Bibles {
       for (var bible in bibleList) {
         var verseText;
         if (bible == this.bible1.module) {
-          verseText = this.bible1.directOpenSingleVerse(bcvList);
+          verseText = this.bible1.openSingleVerse(bcvList);
         } else if (bible == this.bible2.module) {
-          verseText = this.bible2.directOpenSingleVerse(bcvList);
+          verseText = this.bible2.openSingleVerse(bcvList);
         } else {
-          verseText = await Bible(bible, this.abbreviations).openSingleVerse(bcvList);
+          verseText = await Bible(bible, this.abbreviations).openCompareSingleVerse(bcvList);
         }
         versesFound.add([bcvList, "[$bible] $verseText", bible]);
       }
@@ -70,11 +70,11 @@ class Bibles {
       var c = bcvList[1];
       //var v = bcvList[2];
 
-      var bible1VerseList = this.bible1.directGetVerseList(b, c);
+      var bible1VerseList = this.bible1.getVerseList(b, c);
       var vs1 = bible1VerseList[0];
       var ve1 = bible1VerseList[(bible1VerseList.length - 1)];
 
-      var bible2VerseList = this.bible2.directGetVerseList(b, c);
+      var bible2VerseList = this.bible2.getVerseList(b, c);
       var vs2 = bible2VerseList[0];
       var ve2 = bible2VerseList[(bible2VerseList.length - 1)];
 
@@ -84,8 +84,8 @@ class Bibles {
 
       for (var i = vs; i <= ve; i++) {
         var ibcv = [b, c, i];
-        var verseText1 = this.bible1.directOpenSingleVerse(ibcv);
-        var verseText2 = this.bible2.directOpenSingleVerse(ibcv);
+        var verseText1 = this.bible1.openSingleVerse(ibcv);
+        var verseText2 = this.bible2.openSingleVerse(ibcv);
         versesFound.add([ibcv, "[$i] [${this.bible1.module}] $verseText1", this.bible1.module]);
         versesFound.add([ibcv, "[$i] [${this.bible2.module}] $verseText2", this.bible2.module]);
       }
@@ -99,7 +99,7 @@ class Bibles {
     if (bcvList.isNotEmpty) xRefList = await this.getCrossReference(bcvList);
     if (xRefList.isNotEmpty) {
       xRefList = [bcvList, ...xRefList]; // include the original verse
-      var versesFound = this.bible1.directOpenMultipleVerses(xRefList, "[Cross-references]");
+      var versesFound = this.bible1.openMultipleVerses(xRefList, "[Cross-references]");
       return versesFound;
     }
     return [];
@@ -113,16 +113,6 @@ class Bibles {
     var referenceString = fetchResults[0]["xref"];
     return BibleParser(this.abbreviations).extractAllReferences(referenceString);
   }
-
-  /*
-  Future parallelVerses(List bcvList) async {
-    print("pending");
-  }
-
-  Future parallelChapters(List bcvList) async {
-    print("pending");
-  }
-   */
 
 }
 
@@ -142,10 +132,10 @@ class Bible {
 
   Future loadData() async {
     this.data = await JsonHelper().getJsonObject(this.biblePath);
-    this.bookList = directGetBookList();
+    this.bookList = getBookList();
   }
 
-  Future openSingleVerse(List bcvList) async {
+  Future openCompareSingleVerse(List bcvList) async {
     if (this.data == null) await this.loadData();
 
     String versesFound = "";
@@ -163,7 +153,7 @@ class Bible {
     return versesFound.trimRight();
   }
 
-  List directGetBookList() {
+  List getBookList() {
     Set books = {};
     for (var i in this.data) {
       if (i["bNo"] != 0) books.add(i["bNo"]);
@@ -172,7 +162,7 @@ class Bible {
     return bookList;
   }
 
-  List directGetChapterList(int b) {
+  List getChapterList(int b) {
     Set chapters = {};
     var fetchResults = this.data.where((i) => (i["bNo"] == b)).toList();
     for (var i in fetchResults) {
@@ -183,7 +173,7 @@ class Bible {
     return chapterList;
   }
 
-  List directGetVerseList(int b, int c) {
+  List getVerseList(int b, int c) {
 
     Set verses = {};
     var fetchResults = this.data.where((i) => ((i["bNo"] == b) && (i["cNo"] == c))).toList();
@@ -195,7 +185,7 @@ class Bible {
     return verseList;
   }
 
-  String directOpenSingleVerse(List bcvList) {
+  String openSingleVerse(List bcvList) {
 
     String versesFound = "";
 
@@ -212,7 +202,7 @@ class Bible {
     return versesFound.trimRight();
   }
 
-  String directOpenSingleVerseRange(List bcvList) {
+  String openSingleVerseRange(List bcvList) {
 
     String versesFound = "";
 
@@ -258,7 +248,7 @@ class Bible {
     return versesFound.trimRight();
   }
 
-  List directOpenSingleChapter(List bcvList) {
+  List openSingleChapter(List bcvList) {
 
     List<dynamic> versesFound = [];
     versesFound.add([[], "[${BibleParser(this.abbreviations).bcvToChapterReference(bcvList)}, ${this.module}]", this.module]);
@@ -273,7 +263,7 @@ class Bible {
     return versesFound;
   }
 
-  List directOpenMultipleVerses(List listOfBcvList, [String featureString]) {
+  List openMultipleVerses(List listOfBcvList, [String featureString]) {
 
     List<dynamic> versesFound = [];
     if (featureString != null) versesFound.add([[], featureString, this.module]);
@@ -281,17 +271,17 @@ class Bible {
     for (var bcvList in listOfBcvList) {
       var referenceString = "[${BibleParser(this.abbreviations).bcvToVerseReference(bcvList)}]";
       if (bcvList.length == 5) {
-        var verse = directOpenSingleVerseRange(bcvList);
+        var verse = openSingleVerseRange(bcvList);
         versesFound.add([bcvList, "$referenceString $verse", this.module]);
       } else {
-        var verse = directOpenSingleVerse(bcvList);
+        var verse = openSingleVerse(bcvList);
         versesFound.add([bcvList, "$referenceString $verse", this.module]);
       }
     }
     return versesFound;
   }
 
-  List directSearch(String searchString) {
+  List search(String searchString) {
 
     var fetchResults = this.data.where((i) => (i["vText"].contains(RegExp(searchString)) as bool)).toList();
 

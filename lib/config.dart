@@ -15,11 +15,13 @@ class Config {
   // var allBibleList = ["ASV", "BSB", "CUV", "CUVs", "KJV", "ISV", "LEB", "NET", "ULT", "UST", "WEB"];
   List allBibleList = ["CUV", "CSB", "NIV", "KJV", "ISV", "LEB", "NET", "WEB"];
 
+  // variables linked with shared preferences
   double fontSize = 18.0;
   var abbreviations = "ENG";
   var bible1 = "KJV";
   var bible2 = "NET";
   var historyActiveVerse = [[43, 3, 16]];
+  var favouriteVerse = [[43, 3, 16]];
 
   Future setDefault() async {
     this.prefs = await SharedPreferences.getInstance();
@@ -53,6 +55,15 @@ class Config {
         this.historyActiveVerse.add(i.map((i) => int.parse(i)).toList());
       }
     }
+    if (prefs.getStringList("favouriteVerse") == null) {
+      prefs.setStringList("favouriteVerse", ["43.3.16"]);
+    } else {
+      var tempFavouriteVerse = prefs.getStringList("favouriteVerse").map((i) => i.split(".")).toList();
+      this.favouriteVerse = [];
+      for (var i in tempFavouriteVerse) {
+        this.favouriteVerse.add(i.map((i) => int.parse(i)).toList());
+      }
+    }
 
     return true;
   }
@@ -69,6 +80,13 @@ class Config {
       this.historyActiveVerse = [];
       for (var i in tempHistoryActiveVerse) {
         this.historyActiveVerse.add(i.map((i) => int.parse(i)).toList());
+      }
+    }
+    if (prefs.getStringList("favouriteVerse") != null) {
+      var tempFavouriteVerse = prefs.getStringList("favouriteVerse").map((i) => i.split(".")).toList();
+      this.favouriteVerse = [];
+      for (var i in tempFavouriteVerse) {
+        this.favouriteVerse.add(i.map((i) => int.parse(i)).toList());
       }
     }
 
@@ -98,10 +116,37 @@ class Config {
     switch (feature) {
       case "historyActiveVerse":
         var tempHistoryActiveVerse = prefs.getStringList("historyActiveVerse");
-        tempHistoryActiveVerse.insert(0, newItem.join("."));
-        if (tempHistoryActiveVerse.length > 20) tempHistoryActiveVerse.removeAt(tempHistoryActiveVerse.length - 1);
-        await prefs.setStringList("historyActiveVerse", tempHistoryActiveVerse);
+        var newAddition = newItem.join(".");
+        if (tempHistoryActiveVerse[0] != newAddition) {
+          tempHistoryActiveVerse.insert(0, newAddition);
+          // set limitations for the number of history records
+          if (tempHistoryActiveVerse.length > 20) tempHistoryActiveVerse = tempHistoryActiveVerse.sublist(0, 20);
+          await prefs.setStringList("historyActiveVerse", tempHistoryActiveVerse);
+        }
         break;
+      case "favouriteVerse":
+        var tempFavouriteVerse = prefs.getStringList("favouriteVerse");
+        var newAddition = newItem.join(".");
+        if (tempFavouriteVerse[0] != newAddition) {
+          // avoid duplication in favourite records:
+          var check = tempFavouriteVerse.indexOf(newAddition);
+          if (check != -1) tempFavouriteVerse.removeAt(check);
+          tempFavouriteVerse.insert(0, newAddition);
+          // set limitations for the number of history records
+          if (tempFavouriteVerse.length > 20) tempFavouriteVerse = tempFavouriteVerse.sublist(0, 20);
+          await prefs.setStringList("favouriteVerse", tempFavouriteVerse);
+        }
+        break;
+    }
+  }
+
+  Future remove(feature, newItem) async {
+    if (feature == "favouriteVerse") {
+      var newAddition = newItem.join(".");
+      var tempFavouriteVerse = prefs.getStringList("favouriteVerse");
+      var check = tempFavouriteVerse.indexOf(newAddition);
+      if (check != -1) tempFavouriteVerse.removeAt(check);
+      await prefs.setStringList("favouriteVerse", tempFavouriteVerse);
     }
   }
 
