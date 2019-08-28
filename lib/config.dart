@@ -4,6 +4,12 @@ class Config {
 
   SharedPreferences prefs;
 
+  Map interfaceBibleSettings = {
+    "ENG": ["Settings", "Interface", "Bible", "Book", "Chapter", "Verse", "Font Size"],
+    "TC": ["設定", "介面語言", "聖經", "書卷", "章", "節", "字體大小"],
+    "SC": ["设定", "接口语言", "圣经", "书卷", "章", "节", "字体大小"],
+  };
+
   String assets = "assets";
   // var allBibleList = ["CUV", "KJV", "ISV", "LEB", "NET", "WEB"];
   // var allBibleList = ["ASV", "BSB", "CUV", "CUVs", "KJV", "ISV", "LEB", "NET", "ULT", "UST", "WEB"];
@@ -13,7 +19,7 @@ class Config {
   var abbreviations = "ENG";
   var bible1 = "KJV";
   var bible2 = "NET";
-  var lastBcvList = [43, 3, 16];
+  var historyActiveVerse = [[43, 3, 16]];
 
   Future setDefault() async {
     this.prefs = await SharedPreferences.getInstance();
@@ -38,11 +44,14 @@ class Config {
     } else {
       this.bible2 = prefs.getString("bible2");
     }
-    if (prefs.getStringList("lastBcvList") == null) {
-      prefs.setStringList("lastBcvList", ["43", "3", "16"]);
+    if (prefs.getStringList("historyActiveVerse") == null) {
+      prefs.setStringList("historyActiveVerse", ["43.3.16"]);
     } else {
-      var bcvList = prefs.getStringList("lastBcvList") ?? ["43", "3", "16"];
-      this.lastBcvList = bcvList.map((i) => int.parse(i)).toList();
+      var tempHistoryActiveVerse = prefs.getStringList("historyActiveVerse").map((i) => i.split(".")).toList();
+      this.historyActiveVerse = [];
+      for (var i in tempHistoryActiveVerse) {
+        this.historyActiveVerse.add(i.map((i) => int.parse(i)).toList());
+      }
     }
 
     return true;
@@ -55,9 +64,12 @@ class Config {
     if (prefs.getString("abbreviations") != null) this.abbreviations = prefs.getString("abbreviations");
     if (prefs.getString("bible1") != null) this.bible1 = prefs.getString("bible1");
     if (prefs.getString("bible2") != null) this.bible2 = prefs.getString("bible2");
-    if (prefs.getStringList("lastBcvList") != null) {
-      var bcvList = prefs.getStringList("lastBcvList") ?? ["43", "3", "16"];
-      this.lastBcvList = bcvList.map((i) => int.parse(i)).toList();
+    if (prefs.getStringList("historyActiveVerse") != null) {
+      var tempHistoryActiveVerse = prefs.getStringList("historyActiveVerse").map((i) => i.split(".")).toList();
+      this.historyActiveVerse = [];
+      for (var i in tempHistoryActiveVerse) {
+        this.historyActiveVerse.add(i.map((i) => int.parse(i)).toList());
+      }
     }
 
     return true;
@@ -77,16 +89,20 @@ class Config {
       case "bible2":
         await prefs.setString(feature, newSetting as String);
         break;
-      case "lastBcvList":
-        await prefs.setStringList(feature, newSetting as List<String>);
-        break;
     }
 
     return true;
   }
 
-  void add() {
-    // TO DO
+  Future add(feature, newItem) async {
+    switch (feature) {
+      case "historyActiveVerse":
+        var tempHistoryActiveVerse = prefs.getStringList("historyActiveVerse");
+        tempHistoryActiveVerse.insert(0, newItem.join("."));
+        if (tempHistoryActiveVerse.length > 20) tempHistoryActiveVerse.removeAt(tempHistoryActiveVerse.length - 1);
+        await prefs.setStringList("historyActiveVerse", tempHistoryActiveVerse);
+        break;
+    }
   }
 
 }

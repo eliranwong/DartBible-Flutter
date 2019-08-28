@@ -5,12 +5,14 @@ import 'BibleParser.dart';
 class BibleSearchDelegate extends SearchDelegate<List> {
 
   final _bible;
+  String abbreviations;
 
   var _bibleFont;
   List<dynamic> _data = [];
 
-  BibleSearchDelegate(BuildContext context, this._bible, double fontSize, [List startupData]) {
+  BibleSearchDelegate(BuildContext context, this._bible, double fontSize, abbreviations, [List startupData]) {
     this._bibleFont = TextStyle(fontSize: fontSize);
+    this.abbreviations = abbreviations;
     if (startupData != null) {
       _data = startupData; // startup data to be displayed via suggestions
     }
@@ -18,7 +20,7 @@ class BibleSearchDelegate extends SearchDelegate<List> {
 
   List _fetch(query) {
     List<dynamic> fetchResults =[];
-    var verseReferenceList = BibleParser().extractAllReferences(query);
+    var verseReferenceList = BibleParser(this.abbreviations).extractAllReferences(query);
     (verseReferenceList.isEmpty) ? fetchResults = _bible.directSearch(query) : fetchResults = _bible.directOpenMultipleVerses(verseReferenceList);
     return fetchResults;
   }

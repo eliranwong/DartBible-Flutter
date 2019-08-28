@@ -5,8 +5,13 @@ import 'config.dart';
 class Bibles {
 
   var bible1, bible2, bible3;
+  String abbreviations;
 
   Map getBibles() => {1: this.bible1, 2: this.bible1};
+
+  Bibles(String abbreviations) {
+    this.abbreviations = abbreviations;
+  }
 
   List getALLBibleList() {
     var config = Config();
@@ -39,7 +44,7 @@ class Bibles {
     List<dynamic> versesFound = [];
 
     for (var bcvList in listOfBcvList) {
-      versesFound.add([[], "[Compare ${BibleParser().bcvToVerseReference(bcvList)}]"]);
+      versesFound.add([[], "[Compare ${BibleParser(this.abbreviations).bcvToVerseReference(bcvList)}]"]);
       for (var bible in bibleList) {
         var verseText;
         if (bible == this.bible1.module) {
@@ -47,7 +52,7 @@ class Bibles {
         } else if (bible == this.bible2.module) {
           verseText = this.bible2.directOpenSingleVerse(bcvList);
         } else {
-          verseText = await Bible(bible).openSingleVerse(bcvList);
+          verseText = await Bible(bible, this.abbreviations).openSingleVerse(bcvList);
         }
         versesFound.add([bcvList, "[$bible] $verseText", bible]);
       }
@@ -59,7 +64,7 @@ class Bibles {
     List<dynamic> versesFound = [];
 
     if (bcvList.isNotEmpty) {
-      versesFound.add([[], "[${BibleParser().bcvToChapterReference(bcvList)}]"]);
+      versesFound.add([[], "[${BibleParser(this.abbreviations).bcvToChapterReference(bcvList)}]"]);
 
       var b = bcvList[0];
       var c = bcvList[1];
@@ -106,7 +111,7 @@ class Bibles {
     var bcvString = bcvList.join(".");
     var fetchResults = jsonObject.where((i) => (i["bcv"] == bcvString)).toList();
     var referenceString = fetchResults[0]["xref"];
-    return BibleParser().extractAllReferences(referenceString);
+    return BibleParser(this.abbreviations).extractAllReferences(referenceString);
   }
 
   /*
@@ -123,14 +128,16 @@ class Bibles {
 
 class Bible {
 
-  var module;
-  var biblePath;
-  var data;
-  var bookList;
+  String module;
+  String biblePath;
+  List data;
+  List bookList;
+  String abbreviations;
 
-  Bible(String bible) {
+  Bible(String bible, String abbreviations) {
     this.module = bible;
     this.biblePath = FileIOHelper().getDataPath("bible", bible);
+    this.abbreviations = abbreviations;
   }
 
   Future loadData() async {
@@ -254,7 +261,7 @@ class Bible {
   List directOpenSingleChapter(List bcvList) {
 
     List<dynamic> versesFound = [];
-    versesFound.add([[], "[${BibleParser().bcvToChapterReference(bcvList)}, ${this.module}]", this.module]);
+    versesFound.add([[], "[${BibleParser(this.abbreviations).bcvToChapterReference(bcvList)}, ${this.module}]", this.module]);
     var fetchResults = this.data.where((i) => ((i["bNo"] == bcvList[0]) && (i["cNo"] == bcvList[1]))).toList();
     for (var found in fetchResults) {
       var b = found["bNo"];
@@ -272,7 +279,7 @@ class Bible {
     if (featureString != null) versesFound.add([[], featureString, this.module]);
 
     for (var bcvList in listOfBcvList) {
-      var referenceString = "[${BibleParser().bcvToVerseReference(bcvList)}]";
+      var referenceString = "[${BibleParser(this.abbreviations).bcvToVerseReference(bcvList)}]";
       if (bcvList.length == 5) {
         var verse = directOpenSingleVerseRange(bcvList);
         versesFound.add([bcvList, "$referenceString $verse", this.module]);
@@ -295,7 +302,7 @@ class Bible {
       var b = found["bNo"];
       var c = found["cNo"];
       var v = found["vNo"];
-      var bcvRef = BibleParser().bcvToVerseReference([b, c, v]);
+      var bcvRef = BibleParser(this.abbreviations).bcvToVerseReference([b, c, v]);
       var verseText = found["vText"];
       versesFound.add([[b, c, v], "[$bcvRef] $verseText", this.module]);
     }

@@ -49,25 +49,32 @@ class UniqueBibleState extends State<UniqueBible> {
         _verseFont = TextStyle(fontSize: config.fontSize);
         _activeVerseFont = TextStyle(fontSize: config.fontSize, fontWeight: FontWeight.bold);
       }
-      bibles = Bibles();
+      bibles = Bibles(this.config.abbreviations);
+      _lastBcvList = this.config.historyActiveVerse[0];
       // load bible1
-      bibles.bible1 = Bible(config.bible1);
+      bibles.bible1 = Bible(config.bible1, this.config.abbreviations);
       await bibles.bible1.loadData();
-      _data = bibles.bible1.directOpenSingleChapter(config.lastBcvList);
-      _lastBcvList = config.lastBcvList;
+      _data = bibles.bible1.directOpenSingleChapter(_lastBcvList);
       // make sure these function runs on startup only
       this._startup = true;
       setState(() {
         // pre-load bible2
-        bibles.bible2 = Bible(config.bible2);
+        bibles.bible2 = Bible(config.bible2, this.config.abbreviations);
         bibles.bible2.loadData();
       });
     }
   }
 
+  void updateHistoryActiveVerse() {
+    List<int> tempList = this._lastBcvList.map((i) => i as int).toList();
+    this.config.historyActiveVerse.add(tempList);
+    this.config.add("historyActiveVerse", (this._lastBcvList));
+  }
+
   void setActiveVerse(List bcvList) {
     if (bcvList.isNotEmpty) {
       _lastBcvList = bcvList;
+      this.updateHistoryActiveVerse();
       (_parallelBibles) ? scrollController.jumpToIndex(bcvList[2] * 2 - 1) : scrollController.jumpToIndex(bcvList[2]);
     }
   }
@@ -78,12 +85,15 @@ class UniqueBibleState extends State<UniqueBible> {
     if (selectedBcvList != null && selectedBcvList.isNotEmpty) {
       if ((selectedBcvList != _lastBcvList) || ((selectedBcvList == _lastBcvList) && (selectedBible != bibles.bible1.module))) {
         if (selectedBible != bibles.bible1.module) {
-          bibles.bible1 = Bible(selectedBible);
+          bibles.bible1 = Bible(selectedBible, this.config.abbreviations);
           await bibles.bible1.loadData();
         }
         setState(() {
+          this.config.bible1 = bibles.bible1.module;
+          this.config.save("bible1", bibles.bible1.module);
           _data = bibles.bible1.directOpenSingleChapter(selectedBcvList);
           _lastBcvList = selectedBcvList;
+          this.updateHistoryActiveVerse();
           _parallelBibles = false;
         });
       }
@@ -93,27 +103,38 @@ class UniqueBibleState extends State<UniqueBible> {
   Future _openBibleSettings(BuildContext context) async {
     final newBibleSettings = await Navigator.push(
       context,
-      MaterialPageRoute(builder: (context) => BibleSettings(bibles.bible1, _lastBcvList, this.config.fontSize)),
+      MaterialPageRoute(builder: (context) => BibleSettings(bibles.bible1, _lastBcvList, this.config.fontSize, this.config.abbreviations)),
     );
     var newVerseString = "${newBibleSettings[1]} ${newBibleSettings[3]}:${newBibleSettings[4]}";
     var newVerse = [[int.parse(newBibleSettings[2]), int.parse(newBibleSettings[3]), int.parse(newBibleSettings[4])], newVerseString, newBibleSettings[0]];
     var newFontSizeValue = double.parse(newBibleSettings[5]);
     this.config.fontSize = newFontSizeValue;
     this.config.save("fontSize", newFontSizeValue);
+    var newAbbreviationValue = newBibleSettings[6];
+    this.config.abbreviations = newAbbreviationValue;
+    this.updateBibleAbbreviations(newAbbreviationValue);
+    this.config.save("abbreviations", newAbbreviationValue);
     _newVerseSelected(newVerse);
+  }
+
+  void updateBibleAbbreviations(String abbreviations) {
+    this.bibles.abbreviations = abbreviations;
+    this.bibles.bible1.abbreviations = abbreviations;
+    this.bibles.bible2.abbreviations = abbreviations;
   }
 
   Future _loadXRef (BuildContext context, List bcvList) async {
     var xRefData = await bibles.crossReference(bcvList);
-    final List selected = await showSearch(context: context, delegate: BibleSearchDelegate(context, bibles.bible1, this.config.fontSize, xRefData));
+    final List selected = await showSearch(context: context, delegate: BibleSearchDelegate(context, bibles.bible1, this.config.fontSize, this.config.abbreviations, xRefData));
     _newVerseSelected(selected);
   }
 
   Future _loadCompare (BuildContext context, List bcvList) async {
     var compareData = await bibles.compareBibles("ALL", bcvList);
-    final List selected = await showSearch(context: context, delegate: BibleSearchDelegate(context, bibles.bible1, this.config.fontSize, compareData));
+    final List selected = await showSearch(context: context, delegate: BibleSearchDelegate(context, bibles.bible1, this.config.fontSize, this.config.abbreviations, compareData));
     _newVerseSelected(selected);
   }
+
   bool _toggleParallelBibles() {
     if ((_parallelBibles) && (bibles.bible1.data != null)) {
       _data = bibles.bible1.directOpenSingleChapter(_lastBcvList);
@@ -129,7 +150,11 @@ class UniqueBibleState extends State<UniqueBible> {
     bibles.bible3 = bibles.bible1;
     bibles.bible1 = bibles.bible2;
     bibles.bible2 = bibles.bible3;
-    bibles.bible3 = Bible("KJV");
+    bibles.bible3 = Bible("KJV", this.config.abbreviations);
+    this.config.bible1 = bibles.bible1.module;
+    this.config.bible2 = bibles.bible2.module;
+    this.config.save("bible1", bibles.bible1.module);
+    this.config.save("bible2", bibles.bible2.module);
     _reLoadBibles();
   }
 
@@ -196,7 +221,7 @@ class UniqueBibleState extends State<UniqueBible> {
             onPressed: () async {
               final List selected = await showSearch(
                 context: context,
-                delegate: BibleSearchDelegate(context, bibles.bible1, this.config.fontSize),
+                delegate: BibleSearchDelegate(context, bibles.bible1, this.config.fontSize, this.config.abbreviations),
               );
               _newVerseSelected(selected);
             },
@@ -256,7 +281,6 @@ class UniqueBibleState extends State<UniqueBible> {
   }
 
   Widget _buildVerseRow(BuildContext context, int i) {
-    // if (_data[i][0] == _lastBcvList) {
     if ((i < 0) && (i >= _data.length)) {
       return ListTile(
         title: Text(
