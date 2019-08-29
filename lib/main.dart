@@ -95,13 +95,18 @@ class UniqueBibleState extends State<UniqueBible> {
 
   void setActiveVerse(BuildContext context, List bcvList) {
     if ((bcvList.isNotEmpty) && (bcvList != this._currentActiveVerse)) {
-      final snackBar = SnackBar(content: Text('"Tap" or "Long-press" on the selected verse for further actions.'));
-      Scaffold.of(context).showSnackBar(snackBar);
       setState(() {
         _currentActiveVerse = bcvList;
         this.updateHistoryActiveVerse();
         //_scrollToCurrentActiveVerse();
       });
+      String verseReference = BibleParser(this.config.abbreviations).bcvToVerseReference(bcvList);
+      String message = ""
+          "'$verseReference' is selected.\n"
+          "'Tap' it again for cross-references.\n"
+          "Or 'press' it & 'hold' for more actions.";
+      final snackBar = SnackBar(content: Text(message));
+      Scaffold.of(context).showSnackBar(snackBar);
     }
   }
 

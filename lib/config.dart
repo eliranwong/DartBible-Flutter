@@ -11,9 +11,9 @@ class Config {
   };
 
   String assets = "assets";
-  List allBibleList = ["CUV", "KJV", "ISV", "LEB", "NET", "WEB"];
-  // List allBibleList = ["ASV", "BSB", "CUV", "CUVs", "KJV", "ISV", "LEB", "NET", "ULT", "UST", "WEB"];
-  //List allBibleList = ["CUV", "CSB", "NIV", "KJV", "ISV", "LEB", "NET", "WEB"];
+  //List allBibleList = ["CUV", "KJV", "ISV", "LEB", "NET", "WEB"];
+  //List allBibleList = ["ASV", "BSB", "CUV", "CUVs", "KJV", "ISV", "LEB", "NET", "ULT", "UST", "WEB"];
+  List allBibleList = ["CUV", "CSB", "NIV", "KJV", "ISV", "LEB", "NET", "WEB"];
 
   // variables linked with shared preferences
   double fontSize = 18.0;
