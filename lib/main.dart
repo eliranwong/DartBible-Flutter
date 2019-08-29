@@ -74,7 +74,7 @@ class UniqueBibleState extends State<UniqueBible> {
   }
 
   void updateHistoryActiveVerse() {
-    List<int> tempList = this._currentActiveVerse.map((i) => i as int).toList();
+    List tempList = List<int>.from(this._currentActiveVerse);
     if (this.config.historyActiveVerse[0] != tempList)
       this.config.historyActiveVerse.insert(0, tempList);
     this.config.add("historyActiveVerse", (tempList));
@@ -542,70 +542,6 @@ class UniqueBibleState extends State<UniqueBible> {
         }
       },
     );
-  }
-
-  Widget _buildVerseRowOLD(BuildContext context, int i) {
-    if ((i < 0) && (i >= _data.length)) {
-      return ListTile(
-        title: Text(
-          "",
-          style: _verseFont,
-        ),
-        onTap: () {
-          if (i < 0) {
-            scrollController.jumpToIndex(0);
-          } else if (i > _data.length) {
-            scrollController.jumpToIndex(_data.length - 1);
-          }
-        },
-      );
-    } else if (((!_parallelBibles) && (i == _currentActiveVerse[2])) ||
-        ((_parallelBibles) &&
-            ((i == _currentActiveVerse[2] * 2) ||
-                (i == _currentActiveVerse[2] * 2 - 1)))) {
-      return ListTile(
-        title: Text(
-          _data[i][1],
-          style: _activeVerseFont,
-        ),
-        onTap: () {
-          final snackBar =
-              SnackBar(content: Text('Loading cross-references ...'));
-          Scaffold.of(context).showSnackBar(snackBar);
-          _loadXRef(context, _data[i][0]);
-        },
-        onLongPress: () {
-          _longPressedActiveVerse(context, _data[i]);
-        },
-      );
-    } else if ((i >= 0) && (i < _data.length)) {
-      return ListTile(
-        title: Text(
-          _data[i][1],
-          style: _verseFont,
-        ),
-        onTap: () {
-          setActiveVerse(context, _data[i][0]);
-        },
-        onLongPress: () {
-          _longPressedVerse(_data[i]);
-        },
-      );
-    } else {
-      return ListTile(
-        title: Text(
-          "",
-          style: _verseFont,
-        ),
-        onTap: () {
-          if (i < 0) {
-            scrollController.jumpToIndex(0);
-          } else if (i > _data.length) {
-            scrollController.jumpToIndex(_data.length - 1);
-          }
-        },
-      );
-    }
   }
 
   // reference: https://api.flutter.dev/flutter/material/SimpleDialog-class.html
