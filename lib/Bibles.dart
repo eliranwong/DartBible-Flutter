@@ -5,7 +5,13 @@ import 'config.dart';
 class Bibles {
 
   var bible1, bible2, bible3;
+
   String abbreviations;
+  Map interfaceBibles = {
+    "ENG": ["Compare", "Cross-references"],
+    "TC": ["比較", "相關經文"],
+    "SC": ["比较", "相关经文"],
+  };
 
   Map getBibles() => {1: this.bible1, 2: this.bible1};
 
@@ -44,7 +50,7 @@ class Bibles {
     List<dynamic> versesFound = [];
 
     for (var bcvList in listOfBcvList) {
-      versesFound.add([[], "[Compare ${BibleParser(this.abbreviations).bcvToVerseReference(bcvList)}]"]);
+      versesFound.add([[], "[${interfaceBibles[this.abbreviations][0]} ${BibleParser(this.abbreviations).bcvToVerseReference(bcvList)}]"]);
       for (var bible in bibleList) {
         var verseText;
         if (bible == this.bible1.module) {
@@ -99,7 +105,7 @@ class Bibles {
     if (bcvList.isNotEmpty) xRefList = await this.getCrossReference(bcvList);
     if (xRefList.isNotEmpty) {
       xRefList = [bcvList, ...xRefList]; // include the original verse
-      var versesFound = this.bible1.openMultipleVerses(xRefList, "[Cross-references]");
+      var versesFound = this.bible1.openMultipleVerses(xRefList, "[${interfaceBibles[this.abbreviations][1]}]");
       return versesFound;
     }
     return [];
@@ -122,7 +128,13 @@ class Bible {
   String biblePath;
   List data;
   List bookList;
+
   String abbreviations;
+  Map interfaceBible = {
+    "ENG": ["is found in", "verse(s)."],
+    "TC": ["在", "節經文裡找到"],
+    "SC": ["在", "节经文里找到"],
+  };
 
   Bible(String bible, String abbreviations) {
     this.module = bible;
@@ -286,7 +298,7 @@ class Bible {
     var fetchResults = this.data.where((i) => (i["vText"].contains(RegExp(searchString)) as bool)).toList();
 
     List<dynamic> versesFound = [];
-    versesFound.add([[], "[$searchString is found in ${fetchResults.length} verse(s).]", this.module]);
+    versesFound.add([[], "[$searchString ${interfaceBible[this.abbreviations][0]} ${fetchResults.length} ${interfaceBible[this.abbreviations][1]}]", this.module]);
 
     for (var found in fetchResults) {
       var b = found["bNo"];

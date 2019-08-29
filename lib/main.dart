@@ -44,6 +44,13 @@ class UniqueBibleState extends State<UniqueBible> {
   var config;
   var _verseFont;
   var _activeVerseFont;
+  
+  String abbreviations = "ENG";
+  Map interfaceApp = {
+    "ENG": ["Unique Bible App", "Navigation menu", "Search", "Quick swap", "Settings", "Parallel mode", "Favourites", "History", "Books", "Chapters"],
+    "TC": ["超好用聖經工具", "菜單", "搜索", "快速轉換", "設定", "平衡模式", "收藏", "歷史", "書卷", "章"],
+    "SC": ["超好用圣经工具", "菜单", "搜索", "快速转换", "设定", "平衡模式", "收藏", "历史", "书卷", "章"],
+  };
 
   UniqueBibleState() {
     this.config = Config();
@@ -57,15 +64,16 @@ class UniqueBibleState extends State<UniqueBible> {
         _activeVerseFont =
             TextStyle(fontSize: config.fontSize, fontWeight: FontWeight.bold);
       }
-      bibles = Bibles(this.config.abbreviations);
+      this.abbreviations = this.config.abbreviations;
+      bibles = Bibles(this.abbreviations);
       // pre-load bible1 data
-      bibles.bible1 = Bible(config.bible1, this.config.abbreviations);
+      bibles.bible1 = Bible(config.bible1, this.abbreviations);
       await bibles.bible1.loadData();
       setState(() {
         _currentActiveVerse = this.config.historyActiveVerse[0];
         _data = bibles.bible1.openSingleChapter(_currentActiveVerse);
         // pre-load bible2 data
-        bibles.bible2 = Bible(config.bible2, this.config.abbreviations);
+        bibles.bible2 = Bible(config.bible2, this.abbreviations);
         bibles.bible2.loadData();
         // make sure these function runs on startup only
         this._startup = true;
@@ -100,7 +108,7 @@ class UniqueBibleState extends State<UniqueBible> {
         this.updateHistoryActiveVerse();
         //_scrollToCurrentActiveVerse();
       });
-      String verseReference = BibleParser(this.config.abbreviations).bcvToVerseReference(bcvList);
+      String verseReference = BibleParser(this.abbreviations).bcvToVerseReference(bcvList);
       String message = ""
           "'$verseReference' is selected.\n"
           "'Tap' it again for cross-references.\n"
@@ -124,7 +132,7 @@ class UniqueBibleState extends State<UniqueBible> {
           ((selectedBcvList == _currentActiveVerse) &&
               (selectedBible != bibles.bible1.module))) {
         if (selectedBible != bibles.bible1.module) {
-          bibles.bible1 = Bible(selectedBible, this.config.abbreviations);
+          bibles.bible1 = Bible(selectedBible, this.abbreviations);
           await bibles.bible1.loadData();
         }
         setState(() {
@@ -147,7 +155,7 @@ class UniqueBibleState extends State<UniqueBible> {
               bibles.bible1,
               _currentActiveVerse,
               this.config.fontSize,
-              this.config.abbreviations)),
+              this.abbreviations)),
     );
     var newVerseString =
         "${newBibleSettings[1]} ${newBibleSettings[3]}:${newBibleSettings[4]}";
@@ -163,10 +171,10 @@ class UniqueBibleState extends State<UniqueBible> {
     var newFontSizeValue = double.parse(newBibleSettings[5]);
     this.config.fontSize = newFontSizeValue;
     this.config.save("fontSize", newFontSizeValue);
-    var newAbbreviationValue = newBibleSettings[6];
-    this.config.abbreviations = newAbbreviationValue;
-    this.updateBibleAbbreviations(newAbbreviationValue);
-    this.config.save("abbreviations", newAbbreviationValue);
+    this.abbreviations = newBibleSettings[6];
+    this.config.abbreviations = this.abbreviations;
+    this.updateBibleAbbreviations(this.abbreviations);
+    this.config.save("abbreviations", this.abbreviations);
     _newVerseSelected(newVerse);
   }
 
@@ -181,7 +189,7 @@ class UniqueBibleState extends State<UniqueBible> {
     final List selected = await showSearch(
         context: context,
         delegate: BibleSearchDelegate(context, bibles.bible1,
-            this.config.fontSize, this.config.abbreviations, xRefData));
+            this.config.fontSize, this.abbreviations, xRefData));
     _newVerseSelected(selected);
   }
 
@@ -190,7 +198,7 @@ class UniqueBibleState extends State<UniqueBible> {
     final List selected = await showSearch(
         context: context,
         delegate: BibleSearchDelegate(context, bibles.bible1,
-            this.config.fontSize, this.config.abbreviations, compareData));
+            this.config.fontSize, this.abbreviations, compareData));
     _newVerseSelected(selected);
   }
 
@@ -211,7 +219,7 @@ class UniqueBibleState extends State<UniqueBible> {
     bibles.bible3 = bibles.bible1;
     bibles.bible1 = bibles.bible2;
     bibles.bible2 = bibles.bible3;
-    bibles.bible3 = Bible("KJV", this.config.abbreviations);
+    bibles.bible3 = Bible("KJV", this.abbreviations);
     this.config.bible1 = bibles.bible1.module;
     this.config.bible2 = bibles.bible2.module;
     this.config.save("bible1", bibles.bible1.module);
@@ -246,7 +254,7 @@ class UniqueBibleState extends State<UniqueBible> {
                   backgroundImage: AssetImage("assets/images/account.png"),
                 ),
                 accountName: const Text("Eliran Wong"),
-                accountEmail: const Text("support@bibletools.app")),
+                accountEmail: const Text("support@BibleTools.app")),
             _buildFavouriteList(context),
             _buildHistoryList(context),
             _buildBookList(context),
@@ -255,7 +263,7 @@ class UniqueBibleState extends State<UniqueBible> {
         ),
       ),
       appBar: AppBar(
-        title: Text('Unique Bible App'),
+        title: Text(interfaceApp[this.abbreviations][0]),
         leading: Builder(
           builder: (BuildContext context) {
             return IconButton(
@@ -263,25 +271,26 @@ class UniqueBibleState extends State<UniqueBible> {
               onPressed: () {
                 Scaffold.of(context).openDrawer();
               },
-              tooltip: MaterialLocalizations.of(context).openAppDrawerTooltip,
+              //tooltip: MaterialLocalizations.of(context).openAppDrawerTooltip,
+              tooltip: interfaceApp[this.abbreviations][1],
             );
           },
         ),
         actions: <Widget>[
           IconButton(
-            tooltip: 'Search',
+            tooltip: interfaceApp[this.abbreviations][2],
             icon: const Icon(Icons.search),
             onPressed: () async {
               final List selected = await showSearch(
                 context: context,
                 delegate: BibleSearchDelegate(context, bibles.bible1,
-                    this.config.fontSize, this.config.abbreviations),
+                    this.config.fontSize, this.abbreviations),
               );
               _newVerseSelected(selected);
             },
           ),
           IconButton(
-            tooltip: 'Swap',
+            tooltip: interfaceApp[this.abbreviations][3],
             icon: const Icon(Icons.swap_calls),
             onPressed: () {
               setState(() {
@@ -290,7 +299,7 @@ class UniqueBibleState extends State<UniqueBible> {
             },
           ),
           IconButton(
-            tooltip: 'Settings',
+            tooltip: interfaceApp[this.abbreviations][4],
             icon: const Icon(Icons.more_vert),
             onPressed: () {
               _openBibleSettings(context);
@@ -305,7 +314,7 @@ class UniqueBibleState extends State<UniqueBible> {
             _parallelBibles = _toggleParallelBibles();
           });
         },
-        tooltip: 'Parallel',
+        tooltip: interfaceApp[this.abbreviations][5],
         child: Icon(Icons.add),
       ),
     );
@@ -321,14 +330,14 @@ class UniqueBibleState extends State<UniqueBible> {
           favouriteList.map((i) => _buildFavouriteRow(context, i)).toList();
     }
     return ExpansionTile(
-      title: const Text("Favourites"),
+      title: const Text(interfaceApp[this.abbreviations][6]),
       backgroundColor: Theme.of(context).accentColor.withOpacity(0.025),
       children: favouriteRowList,
     );
   }
 
   Widget _buildFavouriteRow(BuildContext context, List hxBcvList) {
-    var parser = BibleParser(this.config.abbreviations);
+    var parser = BibleParser(this.abbreviations);
     String hxReference = parser.bcvToVerseReference(hxBcvList);
     return ListTile(
       title: Text(
@@ -357,14 +366,14 @@ class UniqueBibleState extends State<UniqueBible> {
           historyList.map((i) => _buildHistoryRow(context, i)).toList();
     }
     return ExpansionTile(
-      title: const Text("History"),
+      title: const Text(interfaceApp[this.abbreviations][7]),
       backgroundColor: Theme.of(context).accentColor.withOpacity(0.025),
       children: historyRowList,
     );
   }
 
   Widget _buildHistoryRow(BuildContext context, List hxBcvList) {
-    var parser = BibleParser(this.config.abbreviations);
+    var parser = BibleParser(this.abbreviations);
     String hxReference = parser.bcvToVerseReference(hxBcvList);
     return ListTile(
       title: Text(
@@ -391,14 +400,14 @@ class UniqueBibleState extends State<UniqueBible> {
       bookRowList = bookList.map((i) => _buildBookRow(context, i)).toList();
     }
     return ExpansionTile(
-      title: const Text("Books"),
+      title: const Text(interfaceApp[this.abbreviations][8]),
       backgroundColor: Theme.of(context).accentColor.withOpacity(0.025),
       children: bookRowList,
     );
   }
 
   Widget _buildBookRow(BuildContext context, int book) {
-    var parser = BibleParser(this.config.abbreviations);
+    var parser = BibleParser(this.abbreviations);
     return ListTile(
       title: Text(
         parser.standardAbbreviation[book.toString()],
@@ -431,7 +440,7 @@ class UniqueBibleState extends State<UniqueBible> {
           chapterList.map((i) => _buildChapterRow(context, i)).toList();
     }
     return ExpansionTile(
-      title: const Text("Chapters"),
+      title: const Text(interfaceApp[this.abbreviations][9]),
       initiallyExpanded: true,
       backgroundColor: Theme.of(context).accentColor.withOpacity(0.025),
       children: chapterRowList,

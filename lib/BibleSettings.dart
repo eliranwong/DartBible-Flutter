@@ -20,6 +20,12 @@ class BibleSettingsState extends State<BibleSettings> {
   List _interface;
 
   String abbreviations;
+  Map interfaceBibleSettings = {
+    "ENG": ["Settings", "Interface", "Bible", "Book", "Chapter", "Verse", "Font Size"],
+    "TC": ["設定", "介面語言", "聖經", "書卷", "章", "節", "字體大小"],
+    "SC": ["设定", "接口语言", "圣经", "书卷", "章", "节", "字体大小"],
+  };
+  
   Bible _bible;
 
   BibleParser _parser;
@@ -33,7 +39,7 @@ class BibleSettingsState extends State<BibleSettings> {
   BibleSettingsState(Bible bible, List bcvList, double fontSize, String abbreviations) {
     this._fontSizeValue = fontSize.toString().substring(0, (fontSize.toString().length - 2));
     this.abbreviations = abbreviations;
-    this._interface = Config().interfaceBibleSettings[this.abbreviations];
+    this._interface = interfaceBibleSettings[this.abbreviations];
     var interfaceMapReverse = {"ENG": "English", "TC": "繁體中文", "SC": "简体中文"};
     this._interfaceValue = interfaceMapReverse[this.abbreviations];
 
@@ -86,7 +92,7 @@ class BibleSettingsState extends State<BibleSettings> {
     this._interfaceValue = newValue;
     this.abbreviations = this.interfaceMap[newValue];
 
-    this._interface = Config().interfaceBibleSettings[this.abbreviations];
+    this._interface = interfaceBibleSettings[this.abbreviations];
     this._abbreviations = BibleParser(this.abbreviations).standardAbbreviation;
     this._bookList = this._bible.bookList;
     this._bookList = this._bookList.map((i) => this._abbreviations[(i).toString()]).toList();

@@ -4,12 +4,6 @@ class Config {
 
   SharedPreferences prefs;
 
-  Map interfaceBibleSettings = {
-    "ENG": ["Settings", "Interface", "Bible", "Book", "Chapter", "Verse", "Font Size"],
-    "TC": ["設定", "介面語言", "聖經", "書卷", "章", "節", "字體大小"],
-    "SC": ["设定", "接口语言", "圣经", "书卷", "章", "节", "字体大小"],
-  };
-
   String assets = "assets";
   //List allBibleList = ["CUV", "KJV", "ISV", "LEB", "NET", "WEB"];
   //List allBibleList = ["ASV", "BSB", "CUV", "CUVs", "KJV", "ISV", "LEB", "NET", "ULT", "UST", "WEB"];
