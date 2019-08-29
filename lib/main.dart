@@ -8,6 +8,7 @@ import 'Bibles.dart';
 import 'BibleSearchDelegate.dart';
 import 'BibleSettings.dart';
 import 'BibleParser.dart';
+import 'DialogAction.dart';
 
 void main() => runApp(MyApp());
 
@@ -92,8 +93,10 @@ class UniqueBibleState extends State<UniqueBible> {
     this.config.remove("favouriteVerse", bcvList);
   }
 
-  void setActiveVerse(List bcvList) {
+  void setActiveVerse(BuildContext context, List bcvList) {
     if ((bcvList.isNotEmpty) && (bcvList != this._currentActiveVerse)) {
+      final snackBar = SnackBar(content: Text('"Tap" or "Long-press" on the selected verse for further actions.'));
+      Scaffold.of(context).showSnackBar(snackBar);
       setState(() {
         _currentActiveVerse = bcvList;
         this.updateHistoryActiveVerse();
@@ -235,7 +238,7 @@ class UniqueBibleState extends State<UniqueBible> {
             UserAccountsDrawerHeader(
                 //decoration: BoxDecoration(color: Colors.blue,),
                 currentAccountPicture: const CircleAvatar(
-                  backgroundImage: AssetImage("assets/images/AppIcon.png"),
+                  backgroundImage: AssetImage("assets/images/account.png"),
                 ),
                 accountName: const Text("Eliran Wong"),
                 accountEmail: const Text("support@bibletools.app")),
@@ -331,6 +334,10 @@ class UniqueBibleState extends State<UniqueBible> {
         Navigator.pop(context);
         _scrollToCurrentActiveVerse();
         _newVerseSelected([hxBcvList, "", this.bibles.bible1.module]);
+      },
+
+      onLongPress: () {
+        _removeFromFavouriteDialog(context, hxBcvList);
       },
     );
   }
@@ -513,12 +520,7 @@ class UniqueBibleState extends State<UniqueBible> {
           _loadXRef(context, _data[i][0]);
         },
         onLongPress: () {
-          Clipboard.setData(ClipboardData(text: _data[i][1]));
-          final snackBar = SnackBar(
-              content:
-                  Text('Text copied to clipboard!\nLoading comparison ...'));
-          Scaffold.of(context).showSnackBar(snackBar);
-          _loadCompare(context, _data[i][0]);
+          _longPressedActiveVerse(context, _data[i]);
         },
       );
     } else if ((i >= 0) && (i < _data.length)) {
@@ -528,12 +530,10 @@ class UniqueBibleState extends State<UniqueBible> {
           style: _verseFont,
         ),
         onTap: () {
-          setActiveVerse(_data[i][0]);
+          setActiveVerse(context, _data[i][0]);
         },
         onLongPress: () {
-          Clipboard.setData(ClipboardData(text: _data[i][1]));
-          final snackBar = SnackBar(content: Text('Text copied to clipboard!'));
-          Scaffold.of(context).showSnackBar(snackBar);
+          _longPressedVerse(_data[i]);
         },
       );
     } else {
@@ -554,7 +554,8 @@ class UniqueBibleState extends State<UniqueBible> {
   }
 
   // reference: https://api.flutter.dev/flutter/material/SimpleDialog-class.html
-  Future<void> _longPressedVerse() async {
+  Future<void> _longPressedVerse(List verseData) async {
+    var copiedText = await Clipboard.getData('text/plain');
     switch (await showDialog<DialogAction>(
         context: context,
         builder: (BuildContext context) {
@@ -566,6 +567,10 @@ class UniqueBibleState extends State<UniqueBible> {
                 child: const Text('Copy'),
               ),
               SimpleDialogOption(
+                onPressed: () { Navigator.pop(context, DialogAction.addCopy); },
+                child: const Text('Add to Copied Text'),
+              ),
+              SimpleDialogOption(
                 onPressed: () { Navigator.pop(context, DialogAction.addFavourite); },
                 child: const Text('Add to Favourites'),
               ),
@@ -574,14 +579,90 @@ class UniqueBibleState extends State<UniqueBible> {
         }
     )) {
       case DialogAction.copy:
-      // Let's go.
-      // ...
+        Clipboard.setData(ClipboardData(text: verseData[1]));
+        break;
+      case DialogAction.addCopy:
+        var combinedText = copiedText.text;
+        combinedText += "\n${verseData[1]}";
+        Clipboard.setData(ClipboardData(text: combinedText));
         break;
       case DialogAction.addFavourite:
+        setState(() {
+          List bcvList = List<int>.from(verseData[0]);
+          addToFavourite(bcvList);
+        });
+        break;
+      default:
+    }
+  }
+
+  Future<void> _longPressedActiveVerse(BuildContext context, List verseData) async {
+    var copiedText = await Clipboard.getData('text/plain');
+    switch (await showDialog<DialogAction>(
+        context: context,
+        builder: (BuildContext context) {
+          return SimpleDialog(
+            title: const Text('Select an action:'),
+            children: <Widget>[
+              SimpleDialogOption(
+                onPressed: () { Navigator.pop(context, DialogAction.copy); },
+                child: const Text('Copy'),
+              ),
+              SimpleDialogOption(
+                onPressed: () { Navigator.pop(context, DialogAction.addCopy); },
+                child: const Text('Add to Copied Text'),
+              ),
+              SimpleDialogOption(
+                onPressed: () { Navigator.pop(context, DialogAction.addFavourite); },
+                child: const Text('Add to Favourites'),
+              ),
+              SimpleDialogOption(
+                onPressed: () { Navigator.pop(context, DialogAction.crossReference); },
+                child: const Text('Cross-References'),
+              ),
+              SimpleDialogOption(
+                onPressed: () { Navigator.pop(context, DialogAction.compareAll); },
+                child: const Text('Compare ALL'),
+              ),
+              SimpleDialogOption(
+                onPressed: () { Navigator.pop(context, DialogAction.interlinear); },
+                child: const Text('Interlinear'),
+              ),
+              SimpleDialogOption(
+                onPressed: () { Navigator.pop(context, DialogAction.morphology); },
+                child: const Text('Morphology'),
+              ),
+            ],
+          );
+        }
+    )) {
+      case DialogAction.copy:
+        Clipboard.setData(ClipboardData(text: verseData[1]));
+        break;
+      case DialogAction.addCopy:
+        var combinedText = copiedText.text;
+        combinedText += "\n${verseData[1]}";
+        Clipboard.setData(ClipboardData(text: combinedText));
+        break;
+      case DialogAction.addFavourite:
+        setState(() {
+          List bcvList = List<int>.from(verseData[0]);
+          addToFavourite(bcvList);
+        });
+        break;
+      case DialogAction.crossReference:
+        _loadXRef(context, verseData[0]);
+        break;
+      case DialogAction.compareAll:
+        _loadCompare(context, verseData[0]);
+        break;
+      case DialogAction.interlinear:
+        // ...
+        break;
+      case DialogAction.morphology:
       // ...
         break;
       default:
-        print("ignore");
     }
   }
 
@@ -665,9 +746,3 @@ class UniqueBibleState extends State<UniqueBible> {
 
 }
 
-enum DialogAction {
-  addFavourite,
-  removeFavourite,
-  cancel,
-  copy,
-}

@@ -1,6 +1,7 @@
 import 'package:flutter/services.dart' show Clipboard, ClipboardData;
 import 'package:flutter/material.dart';
 import 'BibleParser.dart';
+import 'DialogAction.dart';
 
 class BibleSearchDelegate extends SearchDelegate<List> {
 
@@ -87,12 +88,42 @@ class BibleSearchDelegate extends SearchDelegate<List> {
       },
 
       onLongPress: () {
-        Clipboard.setData(ClipboardData(text: _data[i][1]));
-        final snackBar = SnackBar(content: Text('Text copied to clipboard!'));
-        Scaffold.of(context).showSnackBar(snackBar);
+        _longPressedVerse(context, _data[i]);
       },
 
     );
+  }
+
+  Future<void> _longPressedVerse(BuildContext context, List verseData) async {
+    var copiedText = await Clipboard.getData('text/plain');
+    switch (await showDialog<DialogAction>(
+        context: context,
+        builder: (BuildContext context) {
+          return SimpleDialog(
+            title: const Text('Select an action:'),
+            children: <Widget>[
+              SimpleDialogOption(
+                onPressed: () { Navigator.pop(context, DialogAction.copy); },
+                child: const Text('Copy'),
+              ),
+              SimpleDialogOption(
+                onPressed: () { Navigator.pop(context, DialogAction.addCopy); },
+                child: const Text('Add to Copied Text'),
+              ),
+            ],
+          );
+        }
+    )) {
+      case DialogAction.copy:
+        Clipboard.setData(ClipboardData(text: verseData[1]));
+        break;
+      case DialogAction.addCopy:
+        var combinedText = copiedText.text;
+        combinedText += "\n${verseData[1]}";
+        Clipboard.setData(ClipboardData(text: combinedText));
+        break;
+      default:
+    }
   }
 
 }
