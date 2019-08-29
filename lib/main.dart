@@ -481,15 +481,70 @@ class UniqueBibleState extends State<UniqueBible> {
         padding: const EdgeInsets.all(16.0),
         controller: scrollController,
         // workaround of finite list with IndexedListView:
-        // build empty rows with embedded actions
         // do not use itemCount in this case
-        //itemCount: _data.length,
+        // build empty rows with embedded actions
+        // itemCount: _data.length,
         itemBuilder: (context, i) {
           return _buildVerseRow(context, i);
+        },
+        emptyItemBuilder: (context, i) {
+          return _buildEmptyVerseRow(i);
         });
   }
 
   Widget _buildVerseRow(BuildContext context, int i) {
+    if (((!_parallelBibles) && (i == _currentActiveVerse[2])) ||
+        ((_parallelBibles) &&
+            ((i == _currentActiveVerse[2] * 2) ||
+                (i == _currentActiveVerse[2] * 2 - 1)))) {
+      return ListTile(
+        title: Text(
+          _data[i][1],
+          style: _activeVerseFont,
+        ),
+        onTap: () {
+          final snackBar =
+              SnackBar(content: Text('Loading cross-references ...'));
+          Scaffold.of(context).showSnackBar(snackBar);
+          _loadXRef(context, _data[i][0]);
+        },
+        onLongPress: () {
+          _longPressedActiveVerse(context, _data[i]);
+        },
+      );
+    } else if ((i >= 0) && (i < _data.length)) {
+      return ListTile(
+        title: Text(
+          _data[i][1],
+          style: _verseFont,
+        ),
+        onTap: () {
+          setActiveVerse(context, _data[i][0]);
+        },
+        onLongPress: () {
+          _longPressedVerse(_data[i]);
+        },
+      );
+    }
+  }
+
+  Widget _buildEmptyVerseRow(int i) {
+    return ListTile(
+      title: Text(
+        "",
+        style: _verseFont,
+      ),
+      onTap: () {
+        if (i < 0) {
+          scrollController.jumpToIndex(0);
+        } else if (i > _data.length) {
+          scrollController.jumpToIndex(_data.length - 1);
+        }
+      },
+    );
+  }
+
+  Widget _buildVerseRowOLD(BuildContext context, int i) {
     if ((i < 0) && (i >= _data.length)) {
       return ListTile(
         title: Text(
