@@ -25,6 +25,12 @@ dependencies:
   cupertino_icons: ^0.1.2
   indexed_list_view: ^1.0.0
   shared_preferences: ^0.5.3+4
+  flutter_launcher_icons: ^0.7.2+1
+
+flutter_icons:
+  android: "launcher_icon"
+  ios: true
+  image_path: "assets/images/AppIcon.png"
 
 dev_dependencies:
   flutter_test:
@@ -75,3 +81,4 @@ flutter:
   assets:
     - assets/bible/
     - assets/xRef/
+    - assets/images/
