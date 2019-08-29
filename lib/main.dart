@@ -52,6 +52,24 @@ class UniqueBibleState extends State<UniqueBible> {
     "SC": ["超好用圣经工具", "菜单", "搜索", "快速转换", "设定", "平衡模式", "收藏", "历史", "书卷", "章"],
   };
 
+  Map interfaceMessage = {
+    "ENG": ["is selected.\n'Tap' it again for cross-references.\nOr 'press' it & 'hold' for more actions.", "Loading cross-references ..."],
+    "TC": ["被點選。\n在此節上再'按'一下可開啟相關經文。\n或'長按'可選擇更多功能。", "啟動相關經文 ..."],
+    "SC": ["被点选。\n在此节上再'按'一下可开启相关经文。\n或'长按'可选择更多功能。", "启动相关经文 ..."],
+  };
+
+  Map interfaceDialog = {
+    "ENG": ["Select an action:", "Copy", "Add to Copied Text", "Add to Favourites", "Cross-references", "Compare Versions", "Interlinear", "Morphology"],
+    "TC": ["功能選項：", "複製", "加到已被複製的內容後面", "收藏", "相關經文", "比較版本", "聖經原文逐字翻譯", "聖經原文形態學"],
+    "SC": ["功能选项：", "拷贝", "加到已被拷贝的内容后面", "收藏", "相关经文", "比较版本", "圣经原文逐字翻译", "圣经原文形态学"],
+  };
+
+  Map interfaceAlert = {
+    "ENG": ["CANCEL", "ADD", "REMOVE", "Add to Favourites?", "Remove from Favourites?"],
+    "TC": ["取消", "收藏", "删除", "收藏？", "删除？"],
+    "SC": ["取消", "收藏", "删除", "收藏？", "删除？"],
+  };
+
   UniqueBibleState() {
     this.config = Config();
   }
@@ -109,10 +127,7 @@ class UniqueBibleState extends State<UniqueBible> {
         //_scrollToCurrentActiveVerse();
       });
       String verseReference = BibleParser(this.abbreviations).bcvToVerseReference(bcvList);
-      String message = ""
-          "'$verseReference' is selected.\n"
-          "'Tap' it again for cross-references.\n"
-          "Or 'press' it & 'hold' for more actions.";
+      String message = "'$verseReference' ${interfaceMessage[this.abbreviations][0]}";
       final snackBar = SnackBar(content: Text(message));
       Scaffold.of(context).showSnackBar(snackBar);
     }
@@ -330,7 +345,7 @@ class UniqueBibleState extends State<UniqueBible> {
           favouriteList.map((i) => _buildFavouriteRow(context, i)).toList();
     }
     return ExpansionTile(
-      title: const Text(interfaceApp[this.abbreviations][6]),
+      title: Text(interfaceApp[this.abbreviations][6]),
       backgroundColor: Theme.of(context).accentColor.withOpacity(0.025),
       children: favouriteRowList,
     );
@@ -366,7 +381,7 @@ class UniqueBibleState extends State<UniqueBible> {
           historyList.map((i) => _buildHistoryRow(context, i)).toList();
     }
     return ExpansionTile(
-      title: const Text(interfaceApp[this.abbreviations][7]),
+      title: Text(interfaceApp[this.abbreviations][7]),
       backgroundColor: Theme.of(context).accentColor.withOpacity(0.025),
       children: historyRowList,
     );
@@ -400,7 +415,7 @@ class UniqueBibleState extends State<UniqueBible> {
       bookRowList = bookList.map((i) => _buildBookRow(context, i)).toList();
     }
     return ExpansionTile(
-      title: const Text(interfaceApp[this.abbreviations][8]),
+      title: Text(interfaceApp[this.abbreviations][8]),
       backgroundColor: Theme.of(context).accentColor.withOpacity(0.025),
       children: bookRowList,
     );
@@ -440,7 +455,7 @@ class UniqueBibleState extends State<UniqueBible> {
           chapterList.map((i) => _buildChapterRow(context, i)).toList();
     }
     return ExpansionTile(
-      title: const Text(interfaceApp[this.abbreviations][9]),
+      title: Text(interfaceApp[this.abbreviations][9]),
       initiallyExpanded: true,
       backgroundColor: Theme.of(context).accentColor.withOpacity(0.025),
       children: chapterRowList,
@@ -518,7 +533,7 @@ class UniqueBibleState extends State<UniqueBible> {
         ),
         onTap: () {
           final snackBar =
-              SnackBar(content: Text('Loading cross-references ...'));
+              SnackBar(content: Text(interfaceMessage[this.abbreviations][1]));
           Scaffold.of(context).showSnackBar(snackBar);
           _loadXRef(context, _data[i][0]);
         },
@@ -565,19 +580,19 @@ class UniqueBibleState extends State<UniqueBible> {
         context: context,
         builder: (BuildContext context) {
           return SimpleDialog(
-            title: const Text('Select an action:'),
+            title: Text(interfaceDialog[this.abbreviations][0]),
             children: <Widget>[
               SimpleDialogOption(
                 onPressed: () { Navigator.pop(context, DialogAction.copy); },
-                child: const Text('Copy'),
+                child: Text(interfaceDialog[this.abbreviations][1]),
               ),
               SimpleDialogOption(
                 onPressed: () { Navigator.pop(context, DialogAction.addCopy); },
-                child: const Text('Add to Copied Text'),
+                child: Text(interfaceDialog[this.abbreviations][2]),
               ),
               SimpleDialogOption(
                 onPressed: () { Navigator.pop(context, DialogAction.addFavourite); },
-                child: const Text('Add to Favourites'),
+                child: Text(interfaceDialog[this.abbreviations][3]),
               ),
             ],
           );
@@ -607,35 +622,35 @@ class UniqueBibleState extends State<UniqueBible> {
         context: context,
         builder: (BuildContext context) {
           return SimpleDialog(
-            title: const Text('Select an action:'),
+            title: Text(interfaceDialog[this.abbreviations][0]),
             children: <Widget>[
               SimpleDialogOption(
                 onPressed: () { Navigator.pop(context, DialogAction.copy); },
-                child: const Text('Copy'),
+                child: Text(interfaceDialog[this.abbreviations][1]),
               ),
               SimpleDialogOption(
                 onPressed: () { Navigator.pop(context, DialogAction.addCopy); },
-                child: const Text('Add to Copied Text'),
+                child: Text(interfaceDialog[this.abbreviations][2]),
               ),
               SimpleDialogOption(
                 onPressed: () { Navigator.pop(context, DialogAction.addFavourite); },
-                child: const Text('Add to Favourites'),
+                child: Text(interfaceDialog[this.abbreviations][3]),
               ),
               SimpleDialogOption(
                 onPressed: () { Navigator.pop(context, DialogAction.crossReference); },
-                child: const Text('Cross-References'),
+                child: Text(interfaceDialog[this.abbreviations][4]),
               ),
               SimpleDialogOption(
                 onPressed: () { Navigator.pop(context, DialogAction.compareAll); },
-                child: const Text('Compare ALL'),
+                child: Text(interfaceDialog[this.abbreviations][5]),
               ),
               SimpleDialogOption(
                 onPressed: () { Navigator.pop(context, DialogAction.interlinear); },
-                child: const Text('Interlinear'),
+                child: Text(interfaceDialog[this.abbreviations][6]),
               ),
               SimpleDialogOption(
                 onPressed: () { Navigator.pop(context, DialogAction.morphology); },
-                child: const Text('Morphology'),
+                child: Text(interfaceDialog[this.abbreviations][7]),
               ),
             ],
           );
@@ -680,18 +695,18 @@ class UniqueBibleState extends State<UniqueBible> {
       context: context,
       child: AlertDialog(
         content: Text(
-          "Add to Favourites?",
+          interfaceAlert[this.abbreviations][3],
           style: dialogTextStyle,
         ),
         actions: <Widget>[
           FlatButton(
-            child: const Text('CANCEL'),
+            child: Text(interfaceAlert[this.abbreviations][0]),
             onPressed: () {
               Navigator.pop(context, DialogAction.cancel);
             },
           ),
           FlatButton(
-            child: const Text('ADD'),
+            child: Text(interfaceAlert[this.abbreviations][1]),
             onPressed: () {
               Navigator.pop(context, DialogAction.addFavourite);
             },
@@ -709,18 +724,18 @@ class UniqueBibleState extends State<UniqueBible> {
       context: context,
       child: AlertDialog(
         content: Text(
-          "Remove from Favourites?",
+          interfaceAlert[this.abbreviations][4],
           style: dialogTextStyle,
         ),
         actions: <Widget>[
           FlatButton(
-            child: const Text('CANCEL'),
+            child: Text(interfaceAlert[this.abbreviations][0]),
             onPressed: () {
               Navigator.pop(context, DialogAction.cancel);
             },
           ),
           FlatButton(
-            child: const Text('REMOVE'),
+            child: Text(interfaceAlert[this.abbreviations][2]),
             onPressed: () {
               Navigator.pop(context, DialogAction.removeFavourite);
             },

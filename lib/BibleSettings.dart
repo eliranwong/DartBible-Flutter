@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'BibleParser.dart';
 import 'Bibles.dart';
-import 'config.dart';
 
 class BibleSettings extends StatefulWidget {
   final _bible;
