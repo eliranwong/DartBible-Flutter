@@ -1,6 +1,7 @@
 // Copyright 2019 Eliran Wong. All rights reserved.
 
-import 'package:flutter/services.dart' show Clipboard, ClipboardData;
+//import 'dart:async';
+import 'package:flutter/services.dart' show Clipboard, ClipboardData, rootBundle, ByteData;
 import 'package:flutter/material.dart';
 import 'package:indexed_list_view/indexed_list_view.dart';
 import 'config.dart';
@@ -9,6 +10,11 @@ import 'BibleSearchDelegate.dart';
 import 'BibleSettings.dart';
 import 'BibleParser.dart';
 import 'DialogAction.dart';
+
+// work with sqlite files
+import 'dart:io';
+import 'package:path/path.dart';
+import 'package:sqflite/sqflite.dart';
 
 void main() => runApp(MyApp());
 
@@ -73,6 +79,40 @@ class UniqueBibleState extends State<UniqueBible> {
 
   UniqueBibleState() {
     this.config = Config();
+    //records();
+  }
+
+  initMorphologyDb() async {
+    // Construct the path to the app's writable database file:
+    var dbDir = await getDatabasesPath();
+    var dbPath = join(dbDir, "morphology.sqlite");
+
+    // check if database had been setup in first launch
+    if (!this.config.morphologySetup) {
+      // Delete any existing database:
+      await deleteDatabase(dbPath);
+
+      // Create the writable database file from the bundled demo database file:
+      ByteData data = await rootBundle.load("assets/morphology.sqlite");
+      List<int> bytes = data.buffer.asUint8List(data.offsetInBytes, data.lengthInBytes);
+      await File(dbPath).writeAsBytes(bytes);
+
+      // save config to avoid copying the database file again
+      this.config.morphologySetup = true;
+      this.config.save("morphologySetup", true);
+    }
+
+    var db = await openDatabase(dbPath);
+    return db;
+  }
+
+  Future testMorphologyDatabase() async {
+    // Get a reference to the database.
+    final Database db = await initMorphologyDb();
+
+    List<Map> testList = await db.rawQuery('SELECT * FROM morphology WHERE Book = ? AND Chapter = ? AND Verse = ?', [1, 1, 1]);
+
+    print(testList);
   }
 
   Future _setup() async {
@@ -552,7 +592,7 @@ class UniqueBibleState extends State<UniqueBible> {
           (i == 0) ? scrollController.jumpToIndex(0) : setActiveVerse(context, _data[i][0]);
         },
         onLongPress: () {
-          _longPressedVerse(_data[i]);
+          _longPressedVerse(context, _data[i]);
         },
       );
     }
@@ -575,7 +615,7 @@ class UniqueBibleState extends State<UniqueBible> {
   }
 
   // reference: https://api.flutter.dev/flutter/material/SimpleDialog-class.html
-  Future<void> _longPressedVerse(List verseData) async {
+  Future<void> _longPressedVerse(BuildContext context, List verseData) async {
     var copiedText = await Clipboard.getData('text/plain');
     switch (await showDialog<DialogAction>(
         context: context,
@@ -680,10 +720,14 @@ class UniqueBibleState extends State<UniqueBible> {
         _loadCompare(context, verseData[0]);
         break;
       case DialogAction.interlinear:
-        // ...
+        // testing
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (context) => InterlinearGrid()),
+        );
         break;
       case DialogAction.morphology:
-      // ...
+        testMorphologyDatabase();
         break;
       default:
     }
@@ -769,3 +813,32 @@ class UniqueBibleState extends State<UniqueBible> {
 
 }
 
+
+class InterlinearGrid extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    final title = 'Interlinear';
+    var data = ["one", "1", "two", "2", "three", "3"];
+
+    return Scaffold(
+        appBar: AppBar(
+          title: Text(title),
+        ),
+        body: GridView.count(
+          // Create a grid with 2 columns. If you change the scrollDirection to
+          // horizontal, this produces 2 rows.
+          crossAxisCount: 2,
+          childAspectRatio: 3,
+          // Generate 100 widgets that display their index in the List.
+          children: List.generate(data.length, (index) {
+            return Center(
+              child: Text(
+                data[index],
+                style: Theme.of(context).textTheme.headline,
+              ),
+            );
+          }),
+        ),
+      );
+  }
+}

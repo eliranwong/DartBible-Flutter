@@ -5,9 +5,9 @@ class Config {
   SharedPreferences prefs;
 
   String assets = "assets";
-  List allBibleList = ["CUV", "KJV", "ISV", "LEB", "NET", "WEB"];
-  //List allBibleList = ["ASV", "BSB", "CUV", "CUVs", "KJV", "ISV", "LEB", "NET", "ULT", "UST", "WEB"];
-  //List allBibleList = ["CUV", "CSB", "NIV", "KJV", "ISV", "LEB", "NET", "WEB"];
+  List allBibleList = ["ASV", "BSB", "CUV", "CUVs", "ERV", "KJV", "ISV", "LEB", "NET", "T4T", "ULT", "UST", "WEB"];
+  // personal [not for public]
+  //List allBibleList = ["CEVD", "CUV", "CSB", "ESV", "EXP", "ISV", "KJV", "LEB", "NASB", "NET", "NIV", "WEB"];
 
   // variables linked with shared preferences
   double fontSize = 18.0;
@@ -16,6 +16,7 @@ class Config {
   var bible2 = "NET";
   var historyActiveVerse = [[43, 3, 16]];
   var favouriteVerse = [[43, 3, 16]];
+  var morphologySetup = false;
 
   Future setDefault() async {
     this.prefs = await SharedPreferences.getInstance();
@@ -58,6 +59,11 @@ class Config {
         this.favouriteVerse.add(i.map((i) => int.parse(i)).toList());
       }
     }
+    if (prefs.getBool("morphologySetup") == null) {
+      prefs.setBool("morphologySetup", this.morphologySetup);
+    } else {
+      this.morphologySetup = prefs.getBool("morphologySetup");
+    }
 
     return true;
   }
@@ -83,6 +89,7 @@ class Config {
         this.favouriteVerse.add(i.map((i) => int.parse(i)).toList());
       }
     }
+    if (prefs.getBool("morphologySetup") != null) this.morphologySetup = prefs.getBool("morphologySetup");
 
     return true;
   }
@@ -100,6 +107,9 @@ class Config {
         break;
       case "bible2":
         await prefs.setString(feature, newSetting as String);
+        break;
+      case "morphologySetup":
+        await prefs.setBool(feature, newSetting as bool);
         break;
     }
 
