@@ -7,6 +7,11 @@ class BibleSearchDelegate extends SearchDelegate<List> {
 
   final _bible;
   String abbreviations;
+  Map interfaceDialog = {
+    "ENG": ["Select an action:", "Copy", "Add to Copied Text"],
+    "TC": ["功能選項：", "複製", "加到已被複製的內容後面"],
+    "SC": ["功能选项：", "拷贝", "加到已被拷贝的内容后面"],
+  };
 
   var _bibleFont;
   List<dynamic> _data = [];
@@ -100,15 +105,15 @@ class BibleSearchDelegate extends SearchDelegate<List> {
         context: context,
         builder: (BuildContext context) {
           return SimpleDialog(
-            title: const Text('Select an action:'),
+            title: Text(interfaceDialog[this.abbreviations][0]),
             children: <Widget>[
               SimpleDialogOption(
                 onPressed: () { Navigator.pop(context, DialogAction.copy); },
-                child: const Text('Copy'),
+                child: Text(interfaceDialog[this.abbreviations][1]),
               ),
               SimpleDialogOption(
                 onPressed: () { Navigator.pop(context, DialogAction.addCopy); },
-                child: const Text('Add to Copied Text'),
+                child: Text(interfaceDialog[this.abbreviations][2]),
               ),
             ],
           );

@@ -44,6 +44,7 @@ class UniqueBibleState extends State<UniqueBible> {
   var config;
   var _verseFont;
   var _activeVerseFont;
+  final _highlightStyle = TextStyle(fontWeight: FontWeight.bold, fontStyle: FontStyle.italic, decoration: TextDecoration.underline);
   
   String abbreviations = "ENG";
   Map interfaceApp = {
@@ -423,11 +424,12 @@ class UniqueBibleState extends State<UniqueBible> {
 
   Widget _buildBookRow(BuildContext context, int book) {
     var parser = BibleParser(this.abbreviations);
+    var abb = parser.standardAbbreviation[book.toString()];
+    Widget bookText;
+    (book == this._currentActiveVerse[0]) ? bookText = Text(abb, style: _highlightStyle) : bookText = Text(abb);
+
     return ListTile(
-      title: Text(
-        parser.standardAbbreviation[book.toString()],
-        //style: _verseFont,
-      ),
+      title: bookText,
       onTap: () {
         Navigator.pop(context);
         _scrollToCurrentActiveVerse();
@@ -463,11 +465,10 @@ class UniqueBibleState extends State<UniqueBible> {
   }
 
   Widget _buildChapterRow(BuildContext context, int chapter) {
+    Widget chapterText;
+    (chapter == this._currentActiveVerse[1]) ? chapterText = Text(chapter.toString(), style: _highlightStyle) : chapterText = Text(chapter.toString());
     return ListTile(
-      title: Text(
-        chapter.toString(),
-        //style: _verseFont,
-      ),
+      title: chapterText,
       onTap: () {
         Navigator.pop(context);
         _scrollToCurrentActiveVerse();
@@ -548,7 +549,7 @@ class UniqueBibleState extends State<UniqueBible> {
           style: _verseFont,
         ),
         onTap: () {
-          setActiveVerse(context, _data[i][0]);
+          (i == 0) ? scrollController.jumpToIndex(0) : setActiveVerse(context, _data[i][0]);
         },
         onLongPress: () {
           _longPressedVerse(_data[i]);
@@ -607,10 +608,12 @@ class UniqueBibleState extends State<UniqueBible> {
         Clipboard.setData(ClipboardData(text: combinedText));
         break;
       case DialogAction.addFavourite:
-        setState(() {
-          List bcvList = List<int>.from(verseData[0]);
-          addToFavourite(bcvList);
-        });
+        if (verseData[0].isNotEmpty) {
+          setState(() {
+            List bcvList = List<int>.from(verseData[0]);
+            addToFavourite(bcvList);
+          });
+        }
         break;
       default:
     }
