@@ -26,6 +26,7 @@ dependencies:
   indexed_list_view: ^1.0.6
   shared_preferences: ^0.5.3+4
   flutter_launcher_icons: ^0.7.2+1
+  sqflite: ^1.1.6+4
 
 flutter_icons:
   android: true
@@ -84,3 +85,4 @@ flutter:
     - assets/bible/
     - assets/xRef/
     - assets/images/
+    - assets/morphology.sqlite
