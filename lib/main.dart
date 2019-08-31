@@ -690,14 +690,14 @@ class UniqueBibleState extends State<UniqueBible> {
         final List<Map> morphology = await getMorphology(verseData[0]);
         Navigator.push(
           context,
-          MaterialPageRoute(builder: (context) => InterlinearView(morphology)),
+          MaterialPageRoute(builder: (context) => InterlinearView(morphology, true, this.abbreviations, config.fontSize)),
         );
         break;
       case DialogAction.morphology:
         final List<Map> morphology = await getMorphology(verseData[0]);
         Navigator.push(
           context,
-          MaterialPageRoute(builder: (context) => MorphologyView(morphology)),
+          MaterialPageRoute(builder: (context) => MorphologyView(morphology, true, this.abbreviations, config.fontSize)),
         );
         break;
       default:
