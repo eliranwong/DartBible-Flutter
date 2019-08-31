@@ -11,9 +11,8 @@ For command-line version, please visit https://github.com/eliranwong/DartBible.
 
 # screenshots
 
-<img src="screenshot/10.png">
-<img src="screenshot/11.png">
 <img src="screenshot/12.png">
+<img src="screenshot/11.png">
 <img src="screenshot/13.png">
 <img src="screenshot/14.png">
 <img src="screenshot/15.png">
@@ -22,6 +21,7 @@ For command-line version, please visit https://github.com/eliranwong/DartBible.
 <img src="screenshot/18.png">
 <img src="screenshot/19.png">
 <img src="screenshot/20.png">
+<img src="screenshot/10.png">
 <img src="screenshot/screenshot1.png">
 <img src="screenshot/screenshot2.png">
 <img src="screenshot/screenshot3.png">
