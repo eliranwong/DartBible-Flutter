@@ -5,9 +5,11 @@ class Config {
   SharedPreferences prefs;
 
   String assets = "assets";
-  List allBibleList = ["ASV", "BSB", "CUV", "CUVs", "ERV", "KJV", "ISV", "LEB", "NET", "T4T", "ULT", "UST", "WEB"];
-  // personal [not for public]
-  //List allBibleList = ["CEVD", "CUV", "CSB", "ESV", "EXP", "ISV", "KJV", "LEB", "NASB", "NET", "NIV", "WEB"];
+  List allBibleList = ["ASV", "BSB", "CUV", "CUVs", "ERV", "ISV", "KJV", "LEB", "LXX", "LXXE", "NET", "OHGB", "T4T", "ULT", "UST", "WEB"];
+  // the following line is written for personal use only [not for public]
+  //List allBibleList = ["CEVD", "CUV", "CSB", "ESV", "EXP", "ISV", "KJV", "LEB", "LXX", "LXXE", "NASB", "NET", "NIV", "OHGB", "WEB"];
+  List hebrewBibles = ["OHGB"];
+  List greekBibles = ["LXX", "OHGB"];
 
   // variables linked with shared preferences
   double fontSize = 18.0;

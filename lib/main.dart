@@ -49,8 +49,8 @@ class UniqueBibleState extends State<UniqueBible> {
   Bibles bibles;
   var scrollController;
   var config;
-  var _verseFont;
-  var _activeVerseFont;
+  var _verseFont, _verseFontHebrew, _verseFontGreek;
+  var _activeVerseFont, _activeVerseFontHebrew, _activeVerseFontGreek;
   final _highlightStyle = TextStyle(fontWeight: FontWeight.bold, fontStyle: FontStyle.italic, decoration: TextDecoration.underline);
   
   String abbreviations = "ENG";
@@ -85,11 +85,17 @@ class UniqueBibleState extends State<UniqueBible> {
   Future _setup() async {
     if (!this._startup) {
       var check = await config.setDefault();
+      /*
       if (check) {
         _verseFont = TextStyle(fontSize: config.fontSize);
-        _activeVerseFont =
-            TextStyle(fontSize: config.fontSize, fontWeight: FontWeight.bold);
+        _verseFontHebrew = TextStyle(fontFamily: "Ezra SIL", fontSize: (config.fontSize + 4));
+        _verseFontGreek = TextStyle(fontSize: (config.fontSize + 2));
+        _activeVerseFont = TextStyle(fontSize: config.fontSize, fontWeight: FontWeight.bold);
+        _activeVerseFontHebrew = TextStyle(fontFamily: "Ezra SIL", fontSize: (config.fontSize + 4), fontWeight: FontWeight.bold);
+        _activeVerseFontGreek = TextStyle(fontSize: (config.fontSize + 2), fontWeight: FontWeight.bold);
       }
+
+       */
       this.abbreviations = this.config.abbreviations;
       bibles = Bibles(this.abbreviations);
       // pre-load bible1 data
@@ -259,9 +265,12 @@ class UniqueBibleState extends State<UniqueBible> {
   @override
   build(BuildContext context) {
     _setup();
-    _verseFont = TextStyle(fontSize: this.config.fontSize);
-    _activeVerseFont =
-        TextStyle(fontSize: this.config.fontSize, fontWeight: FontWeight.bold);
+    _verseFont = TextStyle(fontSize: config.fontSize);
+    _verseFontHebrew = TextStyle(fontFamily: "Ezra SIL", fontSize: (config.fontSize + 4));
+    _verseFontGreek = TextStyle(fontSize: (config.fontSize + 2));
+    _activeVerseFont = TextStyle(fontSize: config.fontSize, fontWeight: FontWeight.bold);
+    _activeVerseFontHebrew = TextStyle(fontFamily: "Ezra SIL", fontSize: (config.fontSize + 4), fontWeight: FontWeight.bold);
+    _activeVerseFontGreek = TextStyle(fontSize: (config.fontSize + 2), fontWeight: FontWeight.bold);
     return Scaffold(
       drawer: Drawer(
         // Add a ListView to the drawer. This ensures the user can scroll
@@ -530,6 +539,20 @@ class UniqueBibleState extends State<UniqueBible> {
   }
 
   Widget _buildVerseRow(BuildContext context, int i) {
+    var verseFont = _verseFont;
+    var verseActiveFont = _activeVerseFont;
+    var verseDirection = TextDirection.ltr;
+    if ((i >= 1) && (i < _data.length)) {
+      var verseData = _data[i];
+      if ((config.hebrewBibles.contains(verseData[2])) && (verseData[0][0] < 40)) {
+        verseFont = _verseFontHebrew;
+        verseActiveFont = _activeVerseFontHebrew;
+        verseDirection = TextDirection.rtl;
+      } else if (config.greekBibles.contains(verseData[2])) {
+        verseFont = _verseFontGreek;
+        verseActiveFont = _activeVerseFontGreek;
+      }
+    }
     if (((!_parallelBibles) && (i == _currentActiveVerse[2])) ||
         ((_parallelBibles) &&
             ((i == _currentActiveVerse[2] * 2) ||
@@ -537,7 +560,8 @@ class UniqueBibleState extends State<UniqueBible> {
       return ListTile(
         title: Text(
           _data[i][1],
-          style: _activeVerseFont,
+          style: verseActiveFont,
+          textDirection: verseDirection,
         ),
         onTap: () {
           final snackBar =
@@ -553,7 +577,8 @@ class UniqueBibleState extends State<UniqueBible> {
       return ListTile(
         title: Text(
           _data[i][1],
-          style: _verseFont,
+          style: verseFont,
+          textDirection: verseDirection,
         ),
         onTap: () {
           (i == 0) ? scrollController.jumpToIndex(0) : setActiveVerse(context, _data[i][0]);
