@@ -11,6 +11,17 @@ For command-line version, please visit https://github.com/eliranwong/DartBible.
 
 # screenshots
 
+<img src="screenshot/screenshot10.png">
+<img src="screenshot/screenshot11.png">
+<img src="screenshot/screenshot12.png">
+<img src="screenshot/screenshot13.png">
+<img src="screenshot/screenshot14.png">
+<img src="screenshot/screenshot15.png">
+<img src="screenshot/screenshot16.png">
+<img src="screenshot/screenshot17.png">
+<img src="screenshot/screenshot18.png">
+<img src="screenshot/screenshot19.png">
+<img src="screenshot/screenshot20.png">
 <img src="screenshot/screenshot1.png">
 <img src="screenshot/screenshot2.png">
 <img src="screenshot/screenshot3.png">
