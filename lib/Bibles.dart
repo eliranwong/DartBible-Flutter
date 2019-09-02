@@ -88,8 +88,8 @@ class Bibles {
         var ibcv = [b, c, i];
         var verseText1 = this.bible1.openSingleVerse(ibcv);
         var verseText2 = this.bible2.openSingleVerse(ibcv);
-        versesFound.add([ibcv, "[$i] [${this.bible1.module}] $verseText1", this.bible1.module]);
-        versesFound.add([ibcv, "[$i] [${this.bible2.module}] $verseText2", this.bible2.module]);
+        versesFound.add([ibcv, verseText1, this.bible1.module]);
+        versesFound.add([ibcv, verseText2, this.bible2.module]);
       }
     }
 
@@ -266,7 +266,7 @@ class Bible {
       var c = found["cNo"];
       var v = found["vNo"];
       var verseText = found["vText"].trim();
-      versesFound.add([[b, c, v], "[$v] $verseText", this.module]);
+      versesFound.add([[b, c, v], verseText, this.module]);
     }
     return versesFound;
   }

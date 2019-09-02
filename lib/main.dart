@@ -582,9 +582,12 @@ class UniqueBibleState extends State<UniqueBible> {
   }
 
   Widget _buildVerseRow(BuildContext context, int i) {
+    var verseNoFont = _verseFont;
     var verseFont = _verseFont;
     var verseActiveFont = _activeVerseFont;
     var verseDirection = TextDirection.ltr;
+    var verseNo;
+    var verseContent;
     if ((i >= 1) && (i < _data.length)) {
       var verseData = _data[i];
       if ((config.hebrewBibles.contains(verseData[2])) && (verseData[0][0] < 40)) {
@@ -595,17 +598,29 @@ class UniqueBibleState extends State<UniqueBible> {
         verseFont = _verseFontGreek;
         verseActiveFont = _activeVerseFontGreek;
       }
+      (_parallelBibles) ? verseNo = "[${verseData[0][2]}] [${verseData[2]}] " : verseNo = "[${verseData[0][2]}] ";
+      verseContent = verseData[1];
     }
     if (((!_parallelBibles) && (i == _currentActiveVerse[2])) ||
         ((_parallelBibles) &&
             ((i == _currentActiveVerse[2] * 2) ||
                 (i == _currentActiveVerse[2] * 2 - 1)))) {
       return ListTile(
-        title: Text(
+        title: RichText(
+          text: TextSpan(
+            style: DefaultTextStyle.of(context).style,
+            children: <TextSpan>[
+              TextSpan(text: verseNo, style: verseNoFont),
+              TextSpan(text: verseContent, style: verseActiveFont),
+            ],
+          ),
+          textDirection: verseDirection,
+        ),
+        /*title: Text(
           _data[i][1],
           style: verseActiveFont,
           textDirection: verseDirection,
-        ),
+        ),*/
         onTap: () {
           _tapActiveVerse(context, _data[i][0]);
         },
@@ -615,11 +630,21 @@ class UniqueBibleState extends State<UniqueBible> {
       );
     } else if ((i >= 0) && (i < _data.length)) {
       return ListTile(
-        title: Text(
+        title: RichText(
+          text: TextSpan(
+            style: DefaultTextStyle.of(context).style,
+            children: <TextSpan>[
+              TextSpan(text: verseNo, style: verseNoFont),
+              TextSpan(text: verseContent, style: verseFont),
+            ],
+          ),
+          textDirection: verseDirection,
+        ),
+        /*title: Text(
           _data[i][1],
           style: verseFont,
           textDirection: verseDirection,
-        ),
+        ),*/
         onTap: () {
           (i == 0) ? scrollController.jumpToIndex(0) : setActiveVerse(context, _data[i][0]);
         },
