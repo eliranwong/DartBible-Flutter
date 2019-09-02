@@ -1,27 +1,21 @@
 import 'package:flutter/services.dart' show Clipboard, ClipboardData;
 import 'package:flutter/material.dart';
+import 'package:share/share.dart';
 import 'BibleParser.dart';
 import 'DialogAction.dart';
 
 class BibleSearchDelegate extends SearchDelegate<List> {
 
   final _bible;
+  final _interfaceDialog;
   String abbreviations;
-  Map interfaceDialog = {
-    "ENG": ["Select an action:", "Copy", "Add to Copied Text"],
-    "TC": ["功能選項：", "複製", "加到已被複製的內容後面"],
-    "SC": ["功能选项：", "拷贝", "加到已被拷贝的内容后面"],
-  };
 
   var _bibleFont;
-  List<dynamic> _data = [];
+  List _data = [];
 
-  BibleSearchDelegate(BuildContext context, this._bible, double fontSize, abbreviations, [List startupData]) {
+  BibleSearchDelegate(BuildContext context, this._bible, this._interfaceDialog, double fontSize, String abbreviations, this._data) {
     this._bibleFont = TextStyle(fontSize: fontSize);
     this.abbreviations = abbreviations;
-    if (startupData != null) {
-      _data = startupData; // startup data to be displayed via suggestions
-    }
   }
 
   List _fetch(query) {
@@ -89,7 +83,8 @@ class BibleSearchDelegate extends SearchDelegate<List> {
       ),
 
       onTap: () {
-        close(context, _data[i]);
+        //print([_data[i], _data]);
+        close(context, [_data, i]);
       },
 
       onLongPress: () {
@@ -105,20 +100,27 @@ class BibleSearchDelegate extends SearchDelegate<List> {
         context: context,
         builder: (BuildContext context) {
           return SimpleDialog(
-            title: Text(interfaceDialog[this.abbreviations][0]),
+            title: Text(_interfaceDialog[this.abbreviations][0]),
             children: <Widget>[
               SimpleDialogOption(
+                onPressed: () { Navigator.pop(context, DialogAction.share); },
+                child: Text(_interfaceDialog[this.abbreviations][1]),
+              ),
+              SimpleDialogOption(
                 onPressed: () { Navigator.pop(context, DialogAction.copy); },
-                child: Text(interfaceDialog[this.abbreviations][1]),
+                child: Text(_interfaceDialog[this.abbreviations][2]),
               ),
               SimpleDialogOption(
                 onPressed: () { Navigator.pop(context, DialogAction.addCopy); },
-                child: Text(interfaceDialog[this.abbreviations][2]),
+                child: Text(_interfaceDialog[this.abbreviations][3]),
               ),
             ],
           );
         }
     )) {
+      case DialogAction.share:
+        Share.share(verseData[1]);
+        break;
       case DialogAction.copy:
         Clipboard.setData(ClipboardData(text: verseData[1]));
         break;

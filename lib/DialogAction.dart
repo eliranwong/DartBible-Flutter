@@ -1,5 +1,6 @@
 enum DialogAction {
   cancel,
+  share,
   addFavourite,
   removeFavourite,
   copy,

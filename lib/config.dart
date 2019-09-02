@@ -1,17 +1,20 @@
 import 'package:shared_preferences/shared_preferences.dart';
 
 class Config {
-
   SharedPreferences prefs;
 
   String assets = "assets";
-  List allBibleList = ["ASV", "BSB", "CUV", "CUVs", "ERV", "ISV", "KJV", "LEB", "LXX", "LXXE", "NET", "OHGB", "T4T", "ULT", "UST", "WEB"];
+  List allBibleList = ["ASV", "BBE", "BSB", "CUV", "CUVs", "ERV", "ISV", "KJV", "LEB", "LXX", "LXXE", "NET", "OHGB", "T4T", "ULT", "UST", "WEB"];
   // the following line is written for personal use only [not for public]
-  //List allBibleList = ["CEVD", "CUV", "CSB", "ESV", "EXP", "ISV", "KJV", "LEB", "LXX", "LXXE", "NASB", "NET", "NIV", "OHGB", "WEB"];
+  //List allBibleList = ["BBE", "CEV", "CUV", "CSB", "ESV", "EXP", "ISV", "KJV", "LEB", "LXX", "LXXE", "NASB", "NET", "NIV", "OHGB", "WEB"];
   List hebrewBibles = ["OHGB"];
   List greekBibles = ["LXX", "OHGB"];
 
   // variables linked with shared preferences
+  List compareBibleList = ["ASV", "BBE", "BSB", "CUV", "CUVs", "ERV", "ISV", "KJV", "LEB", "LXX", "LXXE", "NET", "OHGB", "T4T", "ULT", "UST", "WEB"];
+  // the following line is written for personal use only [not for public]
+  //List<String> compareBibleList = ["CEV", "CUV", "CSB", "ESV", "EXP", "ISV", "KJV", "LEB", "LXX", "LXXE", "NASB", "NET", "NIV", "OHGB", "WEB"];
+
   double fontSize = 18.0;
   var abbreviations = "ENG";
   var bible1 = "KJV";
@@ -19,6 +22,7 @@ class Config {
   var historyActiveVerse = [[43, 3, 16]];
   var favouriteVerse = [[43, 3, 16]];
   var morphologySetup = false;
+  var quickAction = 1;
 
   Future setDefault() async {
     this.prefs = await SharedPreferences.getInstance();
@@ -66,6 +70,16 @@ class Config {
     } else {
       this.morphologySetup = prefs.getBool("morphologySetup");
     }
+    if (prefs.getStringList("compareBibleList") == null) {
+      prefs.setStringList("compareBibleList", this.compareBibleList);
+    } else {
+      this.compareBibleList = prefs.getStringList("compareBibleList");
+    }
+    if (prefs.getInt("quickAction") == null) {
+      prefs.setInt("quickAction", this.quickAction);
+    } else {
+      this.quickAction = prefs.getInt("quickAction");
+    }
 
     return true;
   }
@@ -92,6 +106,8 @@ class Config {
       }
     }
     if (prefs.getBool("morphologySetup") != null) this.morphologySetup = prefs.getBool("morphologySetup");
+    if (prefs.getStringList("compareBibleList") != null) this.compareBibleList = prefs.getStringList("compareBibleList");
+    if (prefs.getInt("quickAction") != null) this.quickAction = prefs.getInt("quickAction");
 
     return true;
   }
@@ -113,6 +129,12 @@ class Config {
       case "morphologySetup":
         await prefs.setBool(feature, newSetting as bool);
         break;
+      case "compareBibleList":
+        await prefs.setStringList(feature, newSetting as List<String>);
+        break;
+      case "quickAction":
+        await prefs.setInt(feature, newSetting as int);
+        break;
     }
 
     return true;
@@ -133,7 +155,7 @@ class Config {
       case "favouriteVerse":
         var tempFavouriteVerse = prefs.getStringList("favouriteVerse");
         var newAddition = newItem.join(".");
-        if (tempFavouriteVerse[0] != newAddition) {
+        if ((tempFavouriteVerse.isEmpty) || (tempFavouriteVerse[0] != newAddition)) {
           // avoid duplication in favourite records:
           var check = tempFavouriteVerse.indexOf(newAddition);
           if (check != -1) tempFavouriteVerse.removeAt(check);

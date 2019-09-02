@@ -7,11 +7,14 @@ class BibleSettings extends StatefulWidget {
   final _bcvList;
   final _fontSize;
   final _abbreviations;
+  final _compareBibleList;
+  final _actionMap;
+  final _action;
 
-  BibleSettings(this._bible, this._bcvList, this._fontSize, this._abbreviations);
+  BibleSettings(this._bible, this._bcvList, this._fontSize, this._abbreviations, this._compareBibleList, this._actionMap, this._action);
 
   @override
-  BibleSettingsState createState() => BibleSettingsState(_bible, _bcvList, _fontSize, _abbreviations);
+  BibleSettingsState createState() => BibleSettingsState(_bible, _bcvList, _fontSize, _abbreviations, _compareBibleList, _actionMap, _action);
 }
 
 class BibleSettingsState extends State<BibleSettings> {
@@ -20,9 +23,9 @@ class BibleSettingsState extends State<BibleSettings> {
 
   String abbreviations;
   Map interfaceBibleSettings = {
-    "ENG": ["Settings", "Interface", "Bible", "Book", "Chapter", "Verse", "Font Size"],
-    "TC": ["設定", "介面語言", "聖經", "書卷", "章", "節", "字體大小"],
-    "SC": ["设定", "接口语言", "圣经", "书卷", "章", "节", "字体大小"],
+    "ENG": ["Settings", "Interface", "Bible", "Book", "Chapter", "Verse", "Font Size", "Versions for Comparison", "Double-Tap Action"],
+    "TC": ["設定", "介面語言", "聖經", "書卷", "章", "節", "字體大小", "版本比較選項", "雙擊功能"],
+    "SC": ["设定", "接口语言", "圣经", "书卷", "章", "节", "字体大小", "版本比较选项", "双击功能"],
   };
   
   Bible _bible;
@@ -30,12 +33,22 @@ class BibleSettingsState extends State<BibleSettings> {
   BibleParser _parser;
   Map _abbreviations;
   List _bookList, _chapterList, _verseList;
+  List<String> _compareBibleList;
   String _moduleValue, _bookValue, _chapterValue, _verseValue, _fontSizeValue, _interfaceValue;
 
   List fontSizeList = ["7", "8", "9", "10", "11", "12", "13", "14", "15", "16", "17", "18", "19", "20", "21", "22", "23", "24", "25", "26", "27", "28", "29", "30"];
   Map interfaceMap = {"English": "ENG", "繁體中文": "TC", "简体中文": "SC"};
 
-  BibleSettingsState(Bible bible, List bcvList, double fontSize, String abbreviations) {
+  Map _actionMap;
+  List _quickActionList;
+  int _quickAction;
+
+  BibleSettingsState(Bible bible, List bcvList, double fontSize, String abbreviations, List<String> compareBibleList, Map actionMap, int quickAction) {
+    // The following line is used instead of "this._compareBibleList = compareBibleList";
+    // Reason: To avoid direct update of original config settings
+    // This allows users to cancel the changes made by pressing the "back" button
+    this._compareBibleList = List<String>.from(compareBibleList);
+
     this._fontSizeValue = fontSize.toString().substring(0, (fontSize.toString().length - 2));
     this.abbreviations = abbreviations;
     this._interface = interfaceBibleSettings[this.abbreviations];
@@ -51,6 +64,11 @@ class BibleSettingsState extends State<BibleSettings> {
     this._bookValue = this._abbreviations[bcvList[0].toString()];
     this._chapterValue = bcvList[1].toString();
     this._verseValue = bcvList[2].toString();
+
+    this._actionMap = actionMap;
+    this._quickActionList = this._actionMap[this.abbreviations].sublist(4);
+    this._quickActionList.insert(0, "---");
+    this._quickAction = quickAction + 1;
 
     updateSettingsValues();
   }
@@ -96,6 +114,9 @@ class BibleSettingsState extends State<BibleSettings> {
     this._bookList = this._bible.bookList;
     this._bookList = this._bookList.map((i) => this._abbreviations[(i).toString()]).toList();
     this._bookValue = this._bookList[bookIndex];
+
+    this._quickActionList = this._actionMap[this.abbreviations].sublist(3);
+    this._quickActionList.insert(0, "---");
   }
 
   String getBookNo() {
@@ -118,7 +139,7 @@ class BibleSettingsState extends State<BibleSettings> {
             tooltip: 'Go',
             icon: const Icon(Icons.check),
             onPressed: () {
-              Navigator.pop(context, [this._moduleValue, this._bookValue, getBookNo(), this._chapterValue, this._verseValue, this._fontSizeValue, this.interfaceMap[this._interfaceValue]]);
+              Navigator.pop(context, [this._moduleValue, this._bookValue, getBookNo(), this._chapterValue, this._verseValue, this._fontSizeValue, this.interfaceMap[this._interfaceValue], this._compareBibleList, this._quickAction]);
             },
           ),
         ],
@@ -130,6 +151,7 @@ class BibleSettingsState extends State<BibleSettings> {
   Widget _bibleSettings(BuildContext context) {
 
     List moduleList = Bibles(this.abbreviations).getALLBibleList();
+    List<Widget> versionRowList = moduleList.map((i) => _buildVersionRow(context, i)).toList();
 
     return Padding(
       padding: const EdgeInsets.all(24.0),
@@ -147,6 +169,25 @@ class BibleSettingsState extends State<BibleSettings> {
                 }
               },
               items: <String>[...interfaceMap.keys.toList()].map<DropdownMenuItem<String>>((String value) {
+                return DropdownMenuItem<String>(
+                  value: value,
+                  child: Text(value),
+                );
+              }).toList(),
+            ),
+          ),
+          ListTile(
+            title: Text(this._interface[6]),
+            trailing: DropdownButton<String>(
+              value: this._fontSizeValue,
+              onChanged: (String newValue) {
+                if (this._verseValue != newValue) {
+                  setState(() {
+                    this._fontSizeValue = newValue;
+                  });
+                }
+              },
+              items: <String>[...fontSizeList].map<DropdownMenuItem<String>>((String value) {
                 return DropdownMenuItem<String>(
                   value: value,
                   child: Text(value),
@@ -238,17 +279,17 @@ class BibleSettingsState extends State<BibleSettings> {
             ),
           ),
           ListTile(
-            title: Text(this._interface[6]),
+            title: Text(this._interface[8]),
             trailing: DropdownButton<String>(
-              value: this._fontSizeValue,
+              value: this._quickActionList[this._quickAction],
               onChanged: (String newValue) {
-                if (this._verseValue != newValue) {
+                if (this._quickActionList[this._quickAction] != newValue) {
                   setState(() {
-                    this._fontSizeValue = newValue;
+                    this._quickAction = this._quickActionList.indexOf(newValue);
                   });
                 }
               },
-              items: <String>[...fontSizeList].map<DropdownMenuItem<String>>((String value) {
+              items: <String>[...this._quickActionList].map<DropdownMenuItem<String>>((String value) {
                 return DropdownMenuItem<String>(
                   value: value,
                   child: Text(value),
@@ -256,8 +297,31 @@ class BibleSettingsState extends State<BibleSettings> {
               }).toList(),
             ),
           ),
+          ExpansionTile(
+            title: Text(this._interface[7]),
+            backgroundColor: Theme.of(context).accentColor.withOpacity(0.025),
+            children: versionRowList,
+          ),
         ],
       ),
+    );
+  }
+
+  Widget _buildVersionRow(BuildContext context, String version) {
+    return CheckboxListTile(
+      title: Text(version),
+      value: (this._compareBibleList.contains(version)),
+      onChanged: (bool value) {
+        setState(() {
+          if (value) {
+            this._compareBibleList.add(version);
+          } else {
+            var versionIndex = this._compareBibleList.indexOf(version);
+            this._compareBibleList.removeAt(versionIndex);
+          }
+        });
+      },
+      //secondary: const Icon(Icons.more_vert),
     );
   }
 

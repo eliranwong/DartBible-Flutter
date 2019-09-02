@@ -34,14 +34,10 @@ class Bibles {
     return validBibleList;
   }
 
-  Future compareBibles(String bibleString, List bcvList) async {
-    var bibleList;
-    (bibleString == "ALL") ? bibleList = this.getALLBibleList() : bibleList = this.getValidBibleList(bibleString.split("_"));
-    if (bibleList.isNotEmpty) {
-      if (bcvList.isNotEmpty) {
-        var versesFound = await this.compareVerses([bcvList], bibleList);
-        return versesFound;
-      }
+  Future compareBibles(List bibleList, List bcvList) async {
+    if ((bibleList.isNotEmpty) && (bcvList.isNotEmpty)) {
+      var versesFound = await this.compareVerses([bcvList], bibleList);
+      return versesFound;
     }
     return [];
   }

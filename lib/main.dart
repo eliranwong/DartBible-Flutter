@@ -1,8 +1,9 @@
 // Copyright 2019 Eliran Wong. All rights reserved.
 
-//import 'dart:async';
+//import 'dart:as
 import 'package:flutter/services.dart' show Clipboard, ClipboardData, rootBundle, ByteData;
 import 'package:flutter/material.dart';
+import 'package:share/share.dart';
 import 'package:indexed_list_view/indexed_list_view.dart';
 import 'config.dart';
 import 'Bibles.dart';
@@ -52,7 +53,9 @@ class UniqueBibleState extends State<UniqueBible> {
   var _verseFont, _verseFontHebrew, _verseFontGreek;
   var _activeVerseFont, _activeVerseFontHebrew, _activeVerseFontGreek;
   final _highlightStyle = TextStyle(fontWeight: FontWeight.bold, fontStyle: FontStyle.italic, decoration: TextDecoration.underline);
-  
+
+  List searchData = [];
+
   String abbreviations = "ENG";
   Map interfaceApp = {
     "ENG": ["Unique Bible App", "Navigation menu", "Search", "Quick swap", "Settings", "Parallel mode", "Favourites", "History", "Books", "Chapters"],
@@ -61,15 +64,15 @@ class UniqueBibleState extends State<UniqueBible> {
   };
 
   Map interfaceMessage = {
-    "ENG": ["is selected.\n'Tap' it again for cross-references.\nOr 'press' it & 'hold' for more actions.", "Loading cross-references ..."],
-    "TC": ["被點選。\n在此節上再'按'一下可開啟相關經文。\n或'長按'可選擇更多功能。", "啟動相關經文 ..."],
-    "SC": ["被点选。\n在此节上再'按'一下可开启相关经文。\n或'长按'可选择更多功能。", "启动相关经文 ..."],
+    "ENG": ["is selected.\n'Tap' it again to open a pre-defined action.\nOr 'press' it & 'hold' for more actions.", "Loading cross-references ...", "Loading bibles for comparison ...", "Added to Favourites!"],
+    "TC": ["被點選。\n再'按'此節可啟動已預先設定的功能。\n或'長按'可選擇更多功能。", "啟動相關經文 ...", "啟動版本比較 ...", "已收藏"],
+    "SC": ["被点选。\n再'按'此节可启动已预先设定的功能。\n或'长按'可选择更多功能。", "启动相关经文 ...", "啟動版本比较 ...", "已收藏"],
   };
 
   Map interfaceDialog = {
-    "ENG": ["Select an action:", "Copy", "Add to Copied Text", "Add to Favourites", "Cross-references", "Compare Versions", "Interlinear", "Morphology"],
-    "TC": ["功能選項：", "複製", "加到已被複製的內容後面", "收藏", "相關經文", "比較版本", "聖經原文逐字翻譯", "聖經原文形態學"],
-    "SC": ["功能选项：", "拷贝", "加到已被拷贝的内容后面", "收藏", "相关经文", "比较版本", "圣经原文逐字翻译", "圣经原文形态学"],
+    "ENG": ["Select an action:", "Share", "Copy", "Add to Copied Text", "Add to Favourites", "Cross-references", "Version Comparison", "Interlinear", "Morphology"],
+    "TC": ["功能選項：", "分享", "複製", "增補複製內容", "收藏", "相關經文", "比較版本", "原文逐字翻譯", "原文形態學"],
+    "SC": ["功能选项：", "分享", "拷贝", "增补拷贝内容", "收藏", "相关经文", "比较版本", "原文逐字翻译", "原文形态学"],
   };
 
   Map interfaceAlert = {
@@ -84,7 +87,7 @@ class UniqueBibleState extends State<UniqueBible> {
 
   Future _setup() async {
     if (!this._startup) {
-      var check = await config.setDefault();
+      //var check = await config.setDefault();
       /*
       if (check) {
         _verseFont = TextStyle(fontSize: config.fontSize);
@@ -120,11 +123,19 @@ class UniqueBibleState extends State<UniqueBible> {
     this.config.add("historyActiveVerse", (tempList));
   }
 
-  void addToFavourite(List bcvList) {
-    var check = this.config.favouriteVerse.indexOf(bcvList);
-    if (check != -1) this.config.favouriteVerse.removeAt(check);
-    this.config.favouriteVerse.insert(0, bcvList);
-    this.config.add("favouriteVerse", bcvList);
+  void addToFavourite(BuildContext context, List inBcvList) {
+    //final snackBar = SnackBar(content: Text(interfaceMessage[this.abbreviations][3]));
+    //Scaffold.of(context).showSnackBar(snackBar);
+
+    setState(() {
+      // make sure runtimeType is List<int>
+      List bcvList = List<int>.from(inBcvList);
+
+      var check = this.config.favouriteVerse.indexOf(bcvList);
+      if (check != -1) this.config.favouriteVerse.removeAt(check);
+      this.config.favouriteVerse.insert(0, bcvList);
+      this.config.add("favouriteVerse", bcvList);
+    });
   }
 
   void removeFromFavourite(List bcvList) {
@@ -154,7 +165,7 @@ class UniqueBibleState extends State<UniqueBible> {
   }
 
   Future _newVerseSelected(List selected) async {
-    var selectedBcvList = selected[0];
+    var selectedBcvList = List<int>.from(selected[0]);
     var selectedBible = selected[2];
     if (selectedBcvList != null && selectedBcvList.isNotEmpty) {
       if ((selectedBcvList != _currentActiveVerse) ||
@@ -181,10 +192,14 @@ class UniqueBibleState extends State<UniqueBible> {
       context,
       MaterialPageRoute(
           builder: (context) => BibleSettings(
-              bibles.bible1,
-              _currentActiveVerse,
-              this.config.fontSize,
-              this.abbreviations)),
+            bibles.bible1,
+            _currentActiveVerse,
+            this.config.fontSize,
+            this.abbreviations,
+            this.config.compareBibleList,
+            this.interfaceDialog,
+            this.config.quickAction,
+          )),
     );
     var newVerseString =
         "${newBibleSettings[1]} ${newBibleSettings[3]}:${newBibleSettings[4]}";
@@ -204,6 +219,12 @@ class UniqueBibleState extends State<UniqueBible> {
     this.config.abbreviations = this.abbreviations;
     this.updateBibleAbbreviations(this.abbreviations);
     this.config.save("abbreviations", this.abbreviations);
+    var newCompareBibleList = newBibleSettings[7]..sort();
+    this.config.compareBibleList = newCompareBibleList;
+    this.config.save("compareBibleList", newCompareBibleList);
+    var newQuickActionSetting = newBibleSettings[8] - 1;
+    this.config.quickAction = newQuickActionSetting;
+    this.config.save("quickAction", newQuickActionSetting);
     _newVerseSelected(newVerse);
   }
 
@@ -214,21 +235,43 @@ class UniqueBibleState extends State<UniqueBible> {
   }
 
   Future _loadXRef(BuildContext context, List bcvList) async {
+    final snackBar = SnackBar(content: Text(interfaceMessage[this.abbreviations][1]));
+    Scaffold.of(context).showSnackBar(snackBar);
+
     var xRefData = await bibles.crossReference(bcvList);
     final List selected = await showSearch(
         context: context,
-        delegate: BibleSearchDelegate(context, bibles.bible1,
-            this.config.fontSize, this.abbreviations, xRefData));
-    _newVerseSelected(selected);
+        delegate: BibleSearchDelegate(context, bibles.bible1, interfaceDialog, this.config.fontSize, this.abbreviations, xRefData));
+    this.searchData = selected[0];
+    _newVerseSelected(this.searchData[selected[1]]);
   }
 
   Future _loadCompare(BuildContext context, List bcvList) async {
-    var compareData = await bibles.compareBibles("ALL", bcvList);
+    final snackBar = SnackBar(content: Text(interfaceMessage[this.abbreviations][2]));
+    Scaffold.of(context).showSnackBar(snackBar);
+
+    var compareData = await bibles.compareBibles(this.config.compareBibleList, bcvList);
     final List selected = await showSearch(
         context: context,
-        delegate: BibleSearchDelegate(context, bibles.bible1,
-            this.config.fontSize, this.abbreviations, compareData));
-    _newVerseSelected(selected);
+        delegate: BibleSearchDelegate(context, bibles.bible1, interfaceDialog, this.config.fontSize, this.abbreviations, compareData));
+    this.searchData = selected[0];
+    _newVerseSelected(this.searchData[selected[1]]);
+  }
+
+  Future _loadInterlinearView(BuildContext context, List bcvList) async {
+    final List<Map> morphology = await getMorphology(bcvList);
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => InterlinearView(morphology, true, this.abbreviations, config.fontSize)),
+    );
+  }
+
+  Future _loadMorphologyView(BuildContext context, List bcvList) async {
+    final List<Map> morphology = await getMorphology(bcvList);
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => MorphologyView(morphology, true, this.abbreviations, config.fontSize)),
+    );
   }
 
   bool _toggleParallelBibles() {
@@ -315,10 +358,10 @@ class UniqueBibleState extends State<UniqueBible> {
             onPressed: () async {
               final List selected = await showSearch(
                 context: context,
-                delegate: BibleSearchDelegate(context, bibles.bible1,
-                    this.config.fontSize, this.abbreviations),
+                delegate: BibleSearchDelegate(context, bibles.bible1, interfaceDialog, this.config.fontSize, this.abbreviations, this.searchData),
               );
-              _newVerseSelected(selected);
+              this.searchData = selected[0];
+              _newVerseSelected(this.searchData[selected[1]]);
             },
           ),
           IconButton(
@@ -425,7 +468,7 @@ class UniqueBibleState extends State<UniqueBible> {
 
   Widget _buildBookList(BuildContext context) {
     List<Widget> bookRowList;
-    if ((this._currentActiveVerse[0] == [0, 0, 0]) || (this.bibles == null)) {
+    if ((this._currentActiveVerse[0] == [0, 0, 0]) || (this.bibles.bible1.bookList == null)) {
       bookRowList = [_emptyRow(context)];
     } else {
       List bookList = this.bibles.bible1.bookList;
@@ -464,7 +507,7 @@ class UniqueBibleState extends State<UniqueBible> {
 
   Widget _buildChapterList(BuildContext context) {
     List<Widget> chapterRowList;
-    if ((this._currentActiveVerse[0] == [0, 0, 0]) || (this.bibles == null)) {
+    if ((this._currentActiveVerse[0] == [0, 0, 0]) || (this.bibles.bible1.bookList == null)) {
       chapterRowList = [_emptyRow(context)];
     } else {
       List chapterList =
@@ -564,10 +607,7 @@ class UniqueBibleState extends State<UniqueBible> {
           textDirection: verseDirection,
         ),
         onTap: () {
-          final snackBar =
-              SnackBar(content: Text(interfaceMessage[this.abbreviations][1]));
-          Scaffold.of(context).showSnackBar(snackBar);
-          _loadXRef(context, _data[i][0]);
+          _tapActiveVerse(context, _data[i][0]);
         },
         onLongPress: () {
           _longPressedActiveVerse(context, _data[i]);
@@ -588,6 +628,7 @@ class UniqueBibleState extends State<UniqueBible> {
         },
       );
     }
+    return null;
   }
 
   Widget _buildEmptyVerseRow(int i) {
@@ -606,6 +647,13 @@ class UniqueBibleState extends State<UniqueBible> {
     );
   }
 
+  void _tapActiveVerse(context, bcvList) {
+    if (this.config.quickAction != -1) {
+      List activeVerseActions = [addToFavourite, _loadXRef, _loadCompare, _loadInterlinearView, _loadMorphologyView];
+      activeVerseActions[this.config.quickAction](context, bcvList);
+    }
+  }
+
   // reference: https://api.flutter.dev/flutter/material/SimpleDialog-class.html
   Future<void> _longPressedVerse(BuildContext context, List verseData) async {
     var copiedText = await Clipboard.getData('text/plain');
@@ -616,21 +664,24 @@ class UniqueBibleState extends State<UniqueBible> {
             title: Text(interfaceDialog[this.abbreviations][0]),
             children: <Widget>[
               SimpleDialogOption(
-                onPressed: () { Navigator.pop(context, DialogAction.copy); },
+                onPressed: () { Navigator.pop(context, DialogAction.share); },
                 child: Text(interfaceDialog[this.abbreviations][1]),
               ),
               SimpleDialogOption(
-                onPressed: () { Navigator.pop(context, DialogAction.addCopy); },
+                onPressed: () { Navigator.pop(context, DialogAction.copy); },
                 child: Text(interfaceDialog[this.abbreviations][2]),
               ),
               SimpleDialogOption(
-                onPressed: () { Navigator.pop(context, DialogAction.addFavourite); },
+                onPressed: () { Navigator.pop(context, DialogAction.addCopy); },
                 child: Text(interfaceDialog[this.abbreviations][3]),
               ),
             ],
           );
         }
     )) {
+      case DialogAction.share:
+        Share.share(verseData[1]);
+        break;
       case DialogAction.copy:
         Clipboard.setData(ClipboardData(text: verseData[1]));
         break;
@@ -638,14 +689,6 @@ class UniqueBibleState extends State<UniqueBible> {
         var combinedText = copiedText.text;
         combinedText += "\n${verseData[1]}";
         Clipboard.setData(ClipboardData(text: combinedText));
-        break;
-      case DialogAction.addFavourite:
-        if (verseData[0].isNotEmpty) {
-          setState(() {
-            List bcvList = List<int>.from(verseData[0]);
-            addToFavourite(bcvList);
-          });
-        }
         break;
       default:
     }
@@ -660,37 +703,44 @@ class UniqueBibleState extends State<UniqueBible> {
             title: Text(interfaceDialog[this.abbreviations][0]),
             children: <Widget>[
               SimpleDialogOption(
-                onPressed: () { Navigator.pop(context, DialogAction.copy); },
+                onPressed: () { Navigator.pop(context, DialogAction.share); },
                 child: Text(interfaceDialog[this.abbreviations][1]),
               ),
               SimpleDialogOption(
-                onPressed: () { Navigator.pop(context, DialogAction.addCopy); },
+                onPressed: () { Navigator.pop(context, DialogAction.copy); },
                 child: Text(interfaceDialog[this.abbreviations][2]),
               ),
               SimpleDialogOption(
-                onPressed: () { Navigator.pop(context, DialogAction.addFavourite); },
+                onPressed: () { Navigator.pop(context, DialogAction.addCopy); },
                 child: Text(interfaceDialog[this.abbreviations][3]),
               ),
               SimpleDialogOption(
-                onPressed: () { Navigator.pop(context, DialogAction.crossReference); },
+                onPressed: () { Navigator.pop(context, DialogAction.addFavourite); },
                 child: Text(interfaceDialog[this.abbreviations][4]),
               ),
               SimpleDialogOption(
-                onPressed: () { Navigator.pop(context, DialogAction.compareAll); },
+                onPressed: () { Navigator.pop(context, DialogAction.crossReference); },
                 child: Text(interfaceDialog[this.abbreviations][5]),
               ),
               SimpleDialogOption(
-                onPressed: () { Navigator.pop(context, DialogAction.interlinear); },
+                onPressed: () { Navigator.pop(context, DialogAction.compareAll); },
                 child: Text(interfaceDialog[this.abbreviations][6]),
               ),
               SimpleDialogOption(
-                onPressed: () { Navigator.pop(context, DialogAction.morphology); },
+                onPressed: () { Navigator.pop(context, DialogAction.interlinear); },
                 child: Text(interfaceDialog[this.abbreviations][7]),
+              ),
+              SimpleDialogOption(
+                onPressed: () { Navigator.pop(context, DialogAction.morphology); },
+                child: Text(interfaceDialog[this.abbreviations][8]),
               ),
             ],
           );
         }
     )) {
+      case DialogAction.share:
+        Share.share(verseData[1]);
+        break;
       case DialogAction.copy:
         Clipboard.setData(ClipboardData(text: verseData[1]));
         break;
@@ -700,10 +750,7 @@ class UniqueBibleState extends State<UniqueBible> {
         Clipboard.setData(ClipboardData(text: combinedText));
         break;
       case DialogAction.addFavourite:
-        setState(() {
-          List bcvList = List<int>.from(verseData[0]);
-          addToFavourite(bcvList);
-        });
+        addToFavourite(context, verseData[0]);
         break;
       case DialogAction.crossReference:
         _loadXRef(context, verseData[0]);
@@ -712,18 +759,10 @@ class UniqueBibleState extends State<UniqueBible> {
         _loadCompare(context, verseData[0]);
         break;
       case DialogAction.interlinear:
-        final List<Map> morphology = await getMorphology(verseData[0]);
-        Navigator.push(
-          context,
-          MaterialPageRoute(builder: (context) => InterlinearView(morphology, true, this.abbreviations, config.fontSize)),
-        );
+        _loadInterlinearView(context, verseData[0]);
         break;
       case DialogAction.morphology:
-        final List<Map> morphology = await getMorphology(verseData[0]);
-        Navigator.push(
-          context,
-          MaterialPageRoute(builder: (context) => MorphologyView(morphology, true, this.abbreviations, config.fontSize)),
-        );
+        _loadMorphologyView(context, verseData[0]);
         break;
       default:
     }
@@ -796,9 +835,7 @@ class UniqueBibleState extends State<UniqueBible> {
       // The value passed to Navigator.pop() or null.
 
       if (value == DialogAction.addFavourite) {
-        setState(() {
-          addToFavourite(bcvList);
-        });
+        addToFavourite(context, bcvList);
       } else if (value == DialogAction.removeFavourite) {
         setState(() {
           removeFromFavourite(bcvList);
