@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:share/share.dart';
 import 'BibleParser.dart';
 import 'DialogAction.dart';
+import 'config.dart';
 
 class BibleSearchDelegate extends SearchDelegate<List> {
 
@@ -10,12 +11,19 @@ class BibleSearchDelegate extends SearchDelegate<List> {
   final _interfaceDialog;
   String abbreviations;
 
-  var _bibleFont;
+  var _verseNoFont, _verseFont, _verseFontHebrew, _verseFontGreek;
+  var hebrewBibles, greekBibles;
   List _data = [];
 
-  BibleSearchDelegate(BuildContext context, this._bible, this._interfaceDialog, double fontSize, String abbreviations, this._data) {
-    this._bibleFont = TextStyle(fontSize: fontSize);
-    this.abbreviations = abbreviations;
+  BibleSearchDelegate(BuildContext context, this._bible, this._interfaceDialog, Config config, this._data) {
+    _verseNoFont = config.verseTextStyle["verseNoFont"];
+    _verseFont = config.verseTextStyle["verseFont"];
+    _verseFontHebrew = config.verseTextStyle["verseFontHebrew"];
+    _verseFontGreek = config.verseTextStyle["verseFontGreek"];
+
+    this.abbreviations = config.abbreviations;
+    this.hebrewBibles = config.hebrewBibles;
+    this.greekBibles = config.greekBibles;
   }
 
   List _fetch(query) {
@@ -76,14 +84,27 @@ class BibleSearchDelegate extends SearchDelegate<List> {
   }
 
   Widget _buildVerseRow(int i, BuildContext context) {
+    var verseDirection = TextDirection.ltr;
+    var verseFont = _verseFont;
+    var verseNo;
+    var verseContent;
+    var verseData = _data[i];
+    if ((hebrewBibles.contains(verseData[2])) && (verseData[0][0] < 40)) {
+      verseFont = _verseFontHebrew;
+      verseDirection = TextDirection.rtl;
+    } else if (greekBibles.contains(verseData[2])) {
+      verseFont = _verseFontGreek;
+    }
+    //verseNo = "[${verseData[0][2]}] ";
+    //verseContent = verseData[1];
+
     return ListTile(
       title: Text(
-        _data[i][1],
-        style: _bibleFont,
+        verseData[1],
+        style: _verseNoFont,
       ),
 
       onTap: () {
-        //print([_data[i], _data]);
         close(context, [_data, i]);
       },
 

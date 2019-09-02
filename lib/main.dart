@@ -45,13 +45,14 @@ class UniqueBibleState extends State<UniqueBible> {
       ""
     ]
   ];
-  List _currentActiveVerse = [0, 0, 0];
+  List<int> _currentActiveVerse = [0, 0, 0];
 
   Bibles bibles;
   var scrollController;
+  var _scrollIndex = 0;
   var config;
-  var _verseFont, _verseFontHebrew, _verseFontGreek;
-  var _activeVerseFont, _activeVerseFontHebrew, _activeVerseFontGreek;
+  var _verseNoFont, _verseFont, _verseFontHebrew, _verseFontGreek;
+  var _activeVerseNoFont, _activeVerseFont, _activeVerseFontHebrew, _activeVerseFontGreek;
   final _highlightStyle = TextStyle(fontWeight: FontWeight.bold, fontStyle: FontStyle.italic, decoration: TextDecoration.underline);
 
   List searchData = [];
@@ -87,40 +88,88 @@ class UniqueBibleState extends State<UniqueBible> {
 
   Future _setup() async {
     if (!this._startup) {
-      //var check = await config.setDefault();
-      /*
-      if (check) {
-        _verseFont = TextStyle(fontSize: config.fontSize);
-        _verseFontHebrew = TextStyle(fontFamily: "Ezra SIL", fontSize: (config.fontSize + 4));
-        _verseFontGreek = TextStyle(fontSize: (config.fontSize + 2));
-        _activeVerseFont = TextStyle(fontSize: config.fontSize, fontWeight: FontWeight.bold);
-        _activeVerseFontHebrew = TextStyle(fontFamily: "Ezra SIL", fontSize: (config.fontSize + 4), fontWeight: FontWeight.bold);
-        _activeVerseFontGreek = TextStyle(fontSize: (config.fontSize + 2), fontWeight: FontWeight.bold);
-      }
+      await config.setDefault();
 
-       */
       this.abbreviations = this.config.abbreviations;
       bibles = Bibles(this.abbreviations);
+
       // pre-load bible1 data
       bibles.bible1 = Bible(config.bible1, this.abbreviations);
       await bibles.bible1.loadData();
+
+      // pre-load bible2 data
+      bibles.bible2 = Bible(config.bible2, this.abbreviations);
+      bibles.bible2.loadData();
+
+      // make sure these function runs on startup only
+      this._startup = true;
+
       setState(() {
-        _currentActiveVerse = this.config.historyActiveVerse[0];
+        _currentActiveVerse = List<int>.from(this.config.historyActiveVerse[0]);
         _data = bibles.bible1.openSingleChapter(_currentActiveVerse);
-        // pre-load bible2 data
-        bibles.bible2 = Bible(config.bible2, this.abbreviations);
-        bibles.bible2.loadData();
-        // make sure these function runs on startup only
-        this._startup = true;
+        _scrollIndex = getScrollIndex();
       });
+    }
+  }
+
+  int getScrollIndex() {
+    for (var i = 0; i < _data.length; i++) {
+      if (_data[i][0][2] == _currentActiveVerse[2]) {
+        return i;
+      }
+    }
+    return 0;
+  }
+
+  void _scrollToCurrentActiveVerse() {
+    scrollController.jumpToIndex(_scrollIndex);
+  }
+
+  void setActiveVerse(BuildContext context, List bcvList) {
+    List newBcvList = List<int>.from(bcvList);
+    if ((bcvList.isNotEmpty) && (newBcvList != this._currentActiveVerse)) {
+      setState(() {
+        _currentActiveVerse = newBcvList;
+        this.updateHistoryActiveVerse();
+      });
+      String verseReference = BibleParser(this.abbreviations).bcvToVerseReference(bcvList);
+      String message = "'$verseReference' ${interfaceMessage[this.abbreviations][0]}";
+      final snackBar = SnackBar(content: Text(message));
+      Scaffold.of(context).showSnackBar(snackBar);
+    }
+  }
+
+  Future _newVerseSelected(List selected) async {
+    _scrollToCurrentActiveVerse();
+    var selectedBcvList = List<int>.from(selected[0]);
+    var selectedBible = selected[2];
+    if (selectedBcvList != null && selectedBcvList.isNotEmpty) {
+      if ((selectedBcvList != _currentActiveVerse) ||
+          ((selectedBcvList == _currentActiveVerse) &&
+              (selectedBible != bibles.bible1.module))) {
+        if (selectedBible != bibles.bible1.module) {
+          bibles.bible1 = Bible(selectedBible, this.abbreviations);
+          await bibles.bible1.loadData();
+          this.config.bible1 = selectedBible;
+          this.config.save("bible1", selectedBible);
+        }
+        setState(() {
+          _currentActiveVerse = selectedBcvList;
+          this.updateHistoryActiveVerse();
+          (_parallelBibles) ? _parallelBibles = false : _parallelBibles = true;
+          _parallelBibles = _toggleParallelBibles();
+          _scrollIndex = getScrollIndex();
+        });
+      }
     }
   }
 
   void updateHistoryActiveVerse() {
     List tempList = List<int>.from(this._currentActiveVerse);
-    if (this.config.historyActiveVerse[0] != tempList)
+    if (this.config.historyActiveVerse[0].join(".") != tempList.join(".")) {
       this.config.historyActiveVerse.insert(0, tempList);
-    this.config.add("historyActiveVerse", (tempList));
+      this.config.add("historyActiveVerse", (tempList));
+    }
   }
 
   void addToFavourite(BuildContext context, List inBcvList) {
@@ -142,49 +191,6 @@ class UniqueBibleState extends State<UniqueBible> {
     var check = this.config.favouriteVerse.indexOf(bcvList);
     if (check != -1) this.config.favouriteVerse.removeAt(check);
     this.config.remove("favouriteVerse", bcvList);
-  }
-
-  void setActiveVerse(BuildContext context, List bcvList) {
-    if ((bcvList.isNotEmpty) && (bcvList != this._currentActiveVerse)) {
-      setState(() {
-        _currentActiveVerse = bcvList;
-        this.updateHistoryActiveVerse();
-        //_scrollToCurrentActiveVerse();
-      });
-      String verseReference = BibleParser(this.abbreviations).bcvToVerseReference(bcvList);
-      String message = "'$verseReference' ${interfaceMessage[this.abbreviations][0]}";
-      final snackBar = SnackBar(content: Text(message));
-      Scaffold.of(context).showSnackBar(snackBar);
-    }
-  }
-
-  void _scrollToCurrentActiveVerse() {
-    (_parallelBibles)
-        ? scrollController.jumpToIndex(this._currentActiveVerse[2] * 2 - 1)
-        : scrollController.jumpToIndex(this._currentActiveVerse[2]);
-  }
-
-  Future _newVerseSelected(List selected) async {
-    var selectedBcvList = List<int>.from(selected[0]);
-    var selectedBible = selected[2];
-    if (selectedBcvList != null && selectedBcvList.isNotEmpty) {
-      if ((selectedBcvList != _currentActiveVerse) ||
-          ((selectedBcvList == _currentActiveVerse) &&
-              (selectedBible != bibles.bible1.module))) {
-        if (selectedBible != bibles.bible1.module) {
-          bibles.bible1 = Bible(selectedBible, this.abbreviations);
-          await bibles.bible1.loadData();
-        }
-        setState(() {
-          this.config.bible1 = bibles.bible1.module;
-          this.config.save("bible1", bibles.bible1.module);
-          _data = bibles.bible1.openSingleChapter(selectedBcvList);
-          _currentActiveVerse = selectedBcvList;
-          this.updateHistoryActiveVerse();
-          _parallelBibles = false;
-        });
-      }
-    }
   }
 
   Future _openBibleSettings(BuildContext context) async {
@@ -241,7 +247,7 @@ class UniqueBibleState extends State<UniqueBible> {
     var xRefData = await bibles.crossReference(bcvList);
     final List selected = await showSearch(
         context: context,
-        delegate: BibleSearchDelegate(context, bibles.bible1, interfaceDialog, this.config.fontSize, this.abbreviations, xRefData));
+        delegate: BibleSearchDelegate(context, bibles.bible1, interfaceDialog, config, xRefData));
     this.searchData = selected[0];
     _newVerseSelected(this.searchData[selected[1]]);
   }
@@ -253,7 +259,7 @@ class UniqueBibleState extends State<UniqueBible> {
     var compareData = await bibles.compareBibles(this.config.compareBibleList, bcvList);
     final List selected = await showSearch(
         context: context,
-        delegate: BibleSearchDelegate(context, bibles.bible1, interfaceDialog, this.config.fontSize, this.abbreviations, compareData));
+        delegate: BibleSearchDelegate(context, bibles.bible1, interfaceDialog, config, compareData));
     this.searchData = selected[0];
     _newVerseSelected(this.searchData[selected[1]]);
   }
@@ -308,12 +314,30 @@ class UniqueBibleState extends State<UniqueBible> {
   @override
   build(BuildContext context) {
     _setup();
+    // update various font text style here
+    _verseNoFont = TextStyle(fontSize: config.fontSize);
     _verseFont = TextStyle(fontSize: config.fontSize);
     _verseFontHebrew = TextStyle(fontFamily: "Ezra SIL", fontSize: (config.fontSize + 4));
     _verseFontGreek = TextStyle(fontSize: (config.fontSize + 2));
+    _activeVerseNoFont = TextStyle(fontSize: config.fontSize);
     _activeVerseFont = TextStyle(fontSize: config.fontSize, fontWeight: FontWeight.bold);
     _activeVerseFontHebrew = TextStyle(fontFamily: "Ezra SIL", fontSize: (config.fontSize + 4), fontWeight: FontWeight.bold);
     _activeVerseFontGreek = TextStyle(fontSize: (config.fontSize + 2), fontWeight: FontWeight.bold);
+    // set the same font settings, which is passed to search delegate
+    config.verseTextStyle = {
+      "verseNoFont": _verseNoFont,
+      "verseFont": _verseFont,
+      "verseFontHebrew": _verseFontHebrew,
+      "verseFontGreek": _verseFontGreek,
+    };
+    // update App bar title
+    if (this.bibles?.bible1?.bookList != null) {
+      if (_parallelBibles) {
+        interfaceApp[this.abbreviations][0] = BibleParser(this.abbreviations).bcvToChapterReference(_currentActiveVerse);
+      } else {
+        interfaceApp[this.abbreviations][0] = "${BibleParser(this.abbreviations).bcvToChapterReference(_currentActiveVerse)} [${bibles.bible1.module}]";
+      }
+    }
     return Scaffold(
       drawer: Drawer(
         // Add a ListView to the drawer. This ensures the user can scroll
@@ -358,7 +382,7 @@ class UniqueBibleState extends State<UniqueBible> {
             onPressed: () async {
               final List selected = await showSearch(
                 context: context,
-                delegate: BibleSearchDelegate(context, bibles.bible1, interfaceDialog, this.config.fontSize, this.abbreviations, this.searchData),
+                delegate: BibleSearchDelegate(context, bibles.bible1, interfaceDialog, config, this.searchData),
               );
               this.searchData = selected[0];
               _newVerseSelected(this.searchData[selected[1]]);
@@ -387,6 +411,7 @@ class UniqueBibleState extends State<UniqueBible> {
         onPressed: () {
           setState(() {
             _parallelBibles = _toggleParallelBibles();
+            _scrollIndex = getScrollIndex();
           });
         },
         tooltip: interfaceApp[this.abbreviations][5],
@@ -397,7 +422,7 @@ class UniqueBibleState extends State<UniqueBible> {
 
   Widget _buildFavouriteList(BuildContext context) {
     List<Widget> favouriteRowList;
-    if ((this._currentActiveVerse[0] == [0, 0, 0]) || (this.bibles == null)) {
+    if ((this._currentActiveVerse.join(".") == "0.0.0") || (this.bibles == null)) {
       favouriteRowList = [_emptyRow(context)];
     } else {
       List favouriteList = this.config.favouriteVerse;
@@ -433,7 +458,7 @@ class UniqueBibleState extends State<UniqueBible> {
 
   Widget _buildHistoryList(BuildContext context) {
     List<Widget> historyRowList;
-    if ((this._currentActiveVerse[0] == [0, 0, 0]) || (this.bibles == null)) {
+    if ((this._currentActiveVerse.join(".") == "0.0.0") || (this.bibles == null)) {
       historyRowList = [_emptyRow(context)];
     } else {
       List historyList = this.config.historyActiveVerse;
@@ -468,7 +493,7 @@ class UniqueBibleState extends State<UniqueBible> {
 
   Widget _buildBookList(BuildContext context) {
     List<Widget> bookRowList;
-    if ((this._currentActiveVerse[0] == [0, 0, 0]) || (this.bibles.bible1.bookList == null)) {
+    if ((this._currentActiveVerse.join(".") == "0.0.0") || (this.bibles?.bible1?.bookList == null)) {
       bookRowList = [_emptyRow(context)];
     } else {
       List bookList = this.bibles.bible1.bookList;
@@ -507,7 +532,7 @@ class UniqueBibleState extends State<UniqueBible> {
 
   Widget _buildChapterList(BuildContext context) {
     List<Widget> chapterRowList;
-    if ((this._currentActiveVerse[0] == [0, 0, 0]) || (this.bibles.bible1.bookList == null)) {
+    if ((this._currentActiveVerse.join(".") == "0.0.0") || (this.bibles?.bible1?.bookList == null)) {
       chapterRowList = [_emptyRow(context)];
     } else {
       List chapterList =
@@ -538,7 +563,7 @@ class UniqueBibleState extends State<UniqueBible> {
         ]);
       },
       onLongPress: () {
-        List<int> selectedBcvList = [this._currentActiveVerse[0] as int, chapter, 1];
+        List<int> selectedBcvList = [this._currentActiveVerse[0], chapter, 1];
         _addToFavouriteDialog(context, selectedBcvList);
       },
     );
@@ -554,15 +579,11 @@ class UniqueBibleState extends State<UniqueBible> {
   }
 
   Widget _buildVerses(BuildContext context) {
-    var initialIndex;
-    (_parallelBibles)
-        ? initialIndex = _currentActiveVerse[2] * 2 - 1
-        : initialIndex = _currentActiveVerse[2];
     if (_currentActiveVerse == null) {
       scrollController = IndexedScrollController();
     } else {
       scrollController = IndexedScrollController(
-        initialIndex: initialIndex,
+        initialIndex: _scrollIndex,
         initialScrollOffset: 0.0,
       );
     }
@@ -582,13 +603,13 @@ class UniqueBibleState extends State<UniqueBible> {
   }
 
   Widget _buildVerseRow(BuildContext context, int i) {
-    var verseNoFont = _verseFont;
+    var verseDirection = TextDirection.ltr;
     var verseFont = _verseFont;
     var verseActiveFont = _activeVerseFont;
-    var verseDirection = TextDirection.ltr;
     var verseNo;
     var verseContent;
-    if ((i >= 1) && (i < _data.length)) {
+    if ((i >= 0) && (i < _data.length)) {
+      // assign text style here
       var verseData = _data[i];
       if ((config.hebrewBibles.contains(verseData[2])) && (verseData[0][0] < 40)) {
         verseFont = _verseFontHebrew;
@@ -600,58 +621,57 @@ class UniqueBibleState extends State<UniqueBible> {
       }
       (_parallelBibles) ? verseNo = "[${verseData[0][2]}] [${verseData[2]}] " : verseNo = "[${verseData[0][2]}] ";
       verseContent = verseData[1];
-    }
-    if (((!_parallelBibles) && (i == _currentActiveVerse[2])) ||
-        ((_parallelBibles) &&
-            ((i == _currentActiveVerse[2] * 2) ||
-                (i == _currentActiveVerse[2] * 2 - 1)))) {
-      return ListTile(
-        title: RichText(
-          text: TextSpan(
-            style: DefaultTextStyle.of(context).style,
-            children: <TextSpan>[
-              TextSpan(text: verseNo, style: verseNoFont),
-              TextSpan(text: verseContent, style: verseActiveFont),
-            ],
+      // check if it is an active verse or not
+      if (verseData[0][2] == _currentActiveVerse[2]) {
+        return ListTile(
+          title: RichText(
+            text: TextSpan(
+              style: DefaultTextStyle.of(context).style,
+              children: <TextSpan>[
+                TextSpan(text: verseNo, style: _activeVerseNoFont),
+                TextSpan(text: verseContent, style: verseActiveFont),
+              ],
+            ),
+            textDirection: verseDirection,
           ),
-          textDirection: verseDirection,
-        ),
-        /*title: Text(
+          /*title: Text(
           _data[i][1],
           style: verseActiveFont,
           textDirection: verseDirection,
         ),*/
-        onTap: () {
-          _tapActiveVerse(context, _data[i][0]);
-        },
-        onLongPress: () {
-          _longPressedActiveVerse(context, _data[i]);
-        },
-      );
-    } else if ((i >= 0) && (i < _data.length)) {
-      return ListTile(
-        title: RichText(
-          text: TextSpan(
-            style: DefaultTextStyle.of(context).style,
-            children: <TextSpan>[
-              TextSpan(text: verseNo, style: verseNoFont),
-              TextSpan(text: verseContent, style: verseFont),
-            ],
+          onTap: () {
+            _tapActiveVerse(context, _data[i][0]);
+          },
+          onLongPress: () {
+            _longPressedActiveVerse(context, _data[i]);
+          },
+        );
+      } else {
+        return ListTile(
+          title: RichText(
+            text: TextSpan(
+              style: DefaultTextStyle.of(context).style,
+              children: <TextSpan>[
+                TextSpan(text: verseNo, style: _verseNoFont),
+                TextSpan(text: verseContent, style: verseFont),
+              ],
+            ),
+            textDirection: verseDirection,
           ),
-          textDirection: verseDirection,
-        ),
-        /*title: Text(
+          /*title: Text(
           _data[i][1],
           style: verseFont,
           textDirection: verseDirection,
         ),*/
-        onTap: () {
-          (i == 0) ? scrollController.jumpToIndex(0) : setActiveVerse(context, _data[i][0]);
-        },
-        onLongPress: () {
-          _longPressedVerse(context, _data[i]);
-        },
-      );
+          onTap: () {
+            (verseData[2] == bibles.bible1.module) ? _scrollIndex = i : _scrollIndex = (i - 1);
+            setActiveVerse(context, _data[i][0]);
+          },
+          onLongPress: () {
+            _longPressedVerse(context, _data[i]);
+          },
+        );
+      }
     }
     return null;
   }

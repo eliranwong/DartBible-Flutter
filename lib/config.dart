@@ -4,25 +4,29 @@ class Config {
   SharedPreferences prefs;
 
   String assets = "assets";
+
   List allBibleList = ["ASV", "BBE", "BSB", "CUV", "CUVs", "ERV", "ISV", "KJV", "LEB", "LXX", "LXXE", "NET", "OHGB", "T4T", "ULT", "UST", "WEB"];
   // the following line is written for personal use only [not for public]
   //List allBibleList = ["BBE", "CEV", "CUV", "CSB", "ESV", "EXP", "ISV", "KJV", "LEB", "LXX", "LXXE", "NASB", "NET", "NIV", "OHGB", "WEB"];
-  List hebrewBibles = ["OHGB"];
-  List greekBibles = ["LXX", "OHGB"];
 
   // variables linked with shared preferences
   List compareBibleList = ["ASV", "BBE", "BSB", "CUV", "CUVs", "ERV", "ISV", "KJV", "LEB", "LXX", "LXXE", "NET", "OHGB", "T4T", "ULT", "UST", "WEB"];
   // the following line is written for personal use only [not for public]
   //List<String> compareBibleList = ["CEV", "CUV", "CSB", "ESV", "EXP", "ISV", "KJV", "LEB", "LXX", "LXXE", "NASB", "NET", "NIV", "OHGB", "WEB"];
 
+  List hebrewBibles = ["OHGB"];
+  List greekBibles = ["LXX", "OHGB"];
+
+  Map verseTextStyle;
+
   double fontSize = 18.0;
-  var abbreviations = "ENG";
-  var bible1 = "KJV";
-  var bible2 = "NET";
-  var historyActiveVerse = [[43, 3, 16]];
-  var favouriteVerse = [[43, 3, 16]];
-  var morphologySetup = false;
-  var quickAction = 1;
+  String abbreviations = "ENG";
+  String bible1 = "KJV";
+  String bible2 = "NET";
+  List<List<int>> historyActiveVerse = [[43, 3, 16]];
+  List<List<int>> favouriteVerse = [[43, 3, 16]];
+  bool morphologySetup = false;
+  int quickAction = 1;
 
   Future setDefault() async {
     this.prefs = await SharedPreferences.getInstance();

@@ -66,7 +66,7 @@ class Bibles {
     List<dynamic> versesFound = [];
 
     if (bcvList.isNotEmpty) {
-      versesFound.add([[], "[${BibleParser(this.abbreviations).bcvToChapterReference(bcvList)}]"]);
+      //versesFound.add([[], "[${BibleParser(this.abbreviations).bcvToChapterReference(bcvList)}]"]);
 
       var b = bcvList[0];
       var c = bcvList[1];
@@ -259,7 +259,7 @@ class Bible {
   List openSingleChapter(List bcvList) {
 
     List<dynamic> versesFound = [];
-    versesFound.add([[], "[${BibleParser(this.abbreviations).bcvToChapterReference(bcvList)}, ${this.module}]", this.module]);
+    //versesFound.add([[], "[${BibleParser(this.abbreviations).bcvToChapterReference(bcvList)}, ${this.module}]", this.module]);
     var fetchResults = this.data.where((i) => ((i["bNo"] == bcvList[0]) && (i["cNo"] == bcvList[1]))).toList();
     for (var found in fetchResults) {
       var b = found["bNo"];
