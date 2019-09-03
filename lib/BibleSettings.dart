@@ -24,8 +24,8 @@ class BibleSettingsState extends State<BibleSettings> {
   String abbreviations;
   Map interfaceBibleSettings = {
     "ENG": ["Settings", "Interface", "Bible", "Book", "Chapter", "Verse", "Font Size", "Versions for Comparison", "Double-Tap Action"],
-    "TC": ["設定", "介面語言", "聖經", "書卷", "章", "節", "字體大小", "版本比較選項", "雙擊功能"],
-    "SC": ["设定", "接口语言", "圣经", "书卷", "章", "节", "字体大小", "版本比较选项", "双击功能"],
+    "TC": ["設定", "介面語言", "聖經", "書卷", "章", "節", "字體大小", "版本比較選項", "雙按功能"],
+    "SC": ["设定", "接口语言", "圣经", "书卷", "章", "节", "字体大小", "版本比较选项", "双按功能"],
   };
   
   Bible _bible;
@@ -36,7 +36,7 @@ class BibleSettingsState extends State<BibleSettings> {
   List<String> _compareBibleList;
   String _moduleValue, _bookValue, _chapterValue, _verseValue, _fontSizeValue, _interfaceValue;
 
-  List fontSizeList = ["7", "8", "9", "10", "11", "12", "13", "14", "15", "16", "17", "18", "19", "20", "21", "22", "23", "24", "25", "26", "27", "28", "29", "30"];
+  List fontSizeList = ["7", "8", "9", "10", "11", "12", "13", "14", "15", "16", "17", "18", "19", "20", "21", "22", "23", "24", "25", "26", "27", "28", "29", "30", "31", "32", "33", "34", "35", "36", "37", "38", "39", "40"];
   Map interfaceMap = {"English": "ENG", "繁體中文": "TC", "简体中文": "SC"};
 
   Map _actionMap;

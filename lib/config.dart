@@ -25,7 +25,7 @@ class Config {
   String bible2 = "NET";
   List<List<int>> historyActiveVerse = [[43, 3, 16]];
   List<List<int>> favouriteVerse = [[43, 3, 16]];
-  double morphologyVersion = 0.1;
+  double morphologyVersion = 0.0;
   int quickAction = 1;
 
   Future setDefault() async {
