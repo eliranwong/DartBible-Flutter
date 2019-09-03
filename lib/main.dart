@@ -5,6 +5,7 @@ import 'package:flutter/services.dart' show Clipboard, ClipboardData, rootBundle
 import 'package:flutter/material.dart';
 import 'package:share/share.dart';
 import 'package:indexed_list_view/indexed_list_view.dart';
+import 'package:swipedetector/swipedetector.dart';
 import 'config.dart';
 import 'Bibles.dart';
 import 'BibleSearchDelegate.dart';
@@ -53,7 +54,12 @@ class UniqueBibleState extends State<UniqueBible> {
   var config;
   var _verseNoFont, _verseFont, _verseFontHebrew, _verseFontGreek;
   var _activeVerseNoFont, _activeVerseFont, _activeVerseFontHebrew, _activeVerseFontGreek;
-  final _highlightStyle = TextStyle(fontWeight: FontWeight.bold, fontStyle: FontStyle.italic, decoration: TextDecoration.underline);
+  final _highlightStyle = TextStyle(
+      fontWeight: FontWeight.bold,
+      //fontStyle: FontStyle.italic,
+      decoration: TextDecoration.underline,
+      color: Colors.purple,
+  );
 
   List searchData = [];
 
@@ -169,6 +175,50 @@ class UniqueBibleState extends State<UniqueBible> {
     if (this.config.historyActiveVerse[0].join(".") != tempList.join(".")) {
       this.config.historyActiveVerse.insert(0, tempList);
       this.config.add("historyActiveVerse", (tempList));
+    }
+  }
+
+  goPreviousChapter() {
+    int currentBook = _currentActiveVerse[0];
+    int previousChapter = _currentActiveVerse[1] - 1;
+    List chapterList = this.bibles.bible1.getChapterList(currentBook);
+
+    if (chapterList.contains(previousChapter)) {
+      List verseList = this.bibles.bible1.getVerseList(currentBook, previousChapter);
+      if (verseList.isNotEmpty) _newVerseSelected([[currentBook, previousChapter, verseList[0]], "", this.bibles.bible1.module]);
+    } else {
+      List bookList = this.bibles.bible1.bookList;
+      int previousBook = currentBook - 1;
+      if (bookList.contains(previousBook)) {
+        chapterList = this.bibles.bible1.getChapterList(previousBook);
+        if (chapterList.isNotEmpty) {
+          previousChapter = chapterList[chapterList.length - 1];
+          List verseList = this.bibles.bible1.getVerseList(previousBook, previousChapter);
+          if (verseList.isNotEmpty) _newVerseSelected([[previousBook, previousChapter, verseList[0]], "", this.bibles.bible1.module]);
+        }
+      }
+    }
+  }
+
+  goNextChapter() {
+    int currentBook = _currentActiveVerse[0];
+    int nextChapter = _currentActiveVerse[1] + 1;
+    List chapterList = this.bibles.bible1.getChapterList(currentBook);
+
+    if (chapterList.contains(nextChapter)) {
+      List verseList = this.bibles.bible1.getVerseList(currentBook, nextChapter);
+      if (verseList.isNotEmpty) _newVerseSelected([[currentBook, nextChapter, verseList[0]], "", this.bibles.bible1.module]);
+    } else {
+      List bookList = this.bibles.bible1.bookList;
+      int nextBook = currentBook + 1;
+      if (bookList.contains(nextBook)) {
+        chapterList = this.bibles.bible1.getChapterList(nextBook);
+        if (chapterList.isNotEmpty) {
+          nextChapter = chapterList[0];
+          List verseList = this.bibles.bible1.getVerseList(nextBook, nextChapter);
+          if (verseList.isNotEmpty) _newVerseSelected([[nextBook, nextChapter, verseList[0]], "", this.bibles.bible1.module]);
+        }
+      }
     }
   }
 
@@ -315,14 +365,14 @@ class UniqueBibleState extends State<UniqueBible> {
   build(BuildContext context) {
     _setup();
     // update various font text style here
-    _verseNoFont = TextStyle(fontSize: config.fontSize);
+    _verseNoFont = TextStyle(fontSize: (config.fontSize - 3), color: Colors.blueAccent);
     _verseFont = TextStyle(fontSize: config.fontSize);
     _verseFontHebrew = TextStyle(fontFamily: "Ezra SIL", fontSize: (config.fontSize + 4));
     _verseFontGreek = TextStyle(fontSize: (config.fontSize + 2));
-    _activeVerseNoFont = TextStyle(fontSize: config.fontSize);
-    _activeVerseFont = TextStyle(fontSize: config.fontSize, fontWeight: FontWeight.bold);
-    _activeVerseFontHebrew = TextStyle(fontFamily: "Ezra SIL", fontSize: (config.fontSize + 4), fontWeight: FontWeight.bold);
-    _activeVerseFontGreek = TextStyle(fontSize: (config.fontSize + 2), fontWeight: FontWeight.bold);
+    _activeVerseNoFont = TextStyle(fontSize: (config.fontSize - 3), color: Colors.blueAccent, fontWeight: FontWeight.bold);
+    _activeVerseFont = TextStyle(fontSize: config.fontSize, color: Colors.purple, fontWeight: FontWeight.bold);
+    _activeVerseFontHebrew = TextStyle(fontFamily: "Ezra SIL", fontSize: (config.fontSize + 4), color: Colors.purple);
+    _activeVerseFontGreek = TextStyle(fontSize: (config.fontSize + 2), color: Colors.purple);
     // set the same font settings, which is passed to search delegate
     config.verseTextStyle = {
       "verseNoFont": _verseNoFont,
@@ -406,7 +456,15 @@ class UniqueBibleState extends State<UniqueBible> {
           ),
         ],
       ),
-      body: _buildVerses(context),
+      body: SwipeDetector(
+        child: _buildVerses(context),
+        onSwipeLeft: () {
+          goNextChapter();
+        },
+        onSwipeRight: () {
+          goPreviousChapter();
+        },
+      ),
       floatingActionButton: FloatingActionButton(
         onPressed: () {
           setState(() {
@@ -634,11 +692,6 @@ class UniqueBibleState extends State<UniqueBible> {
             ),
             textDirection: verseDirection,
           ),
-          /*title: Text(
-          _data[i][1],
-          style: verseActiveFont,
-          textDirection: verseDirection,
-        ),*/
           onTap: () {
             _tapActiveVerse(context, _data[i][0]);
           },
@@ -658,11 +711,6 @@ class UniqueBibleState extends State<UniqueBible> {
             ),
             textDirection: verseDirection,
           ),
-          /*title: Text(
-          _data[i][1],
-          style: verseFont,
-          textDirection: verseDirection,
-        ),*/
           onTap: () {
             (verseData[2] == bibles.bible1.module) ? _scrollIndex = i : _scrollIndex = (i - 1);
             setActiveVerse(context, _data[i][0]);
@@ -894,8 +942,10 @@ class UniqueBibleState extends State<UniqueBible> {
     var dbDir = await getDatabasesPath();
     var dbPath = join(dbDir, "morphology.sqlite");
 
+    double latestMorphologyVersion = 0.2;
+
     // check if database had been setup in first launch
-    if (!this.config.morphologySetup) {
+    if (this.config.morphologyVersion < latestMorphologyVersion) {
       // Delete any existing database:
       await deleteDatabase(dbPath);
 
@@ -905,8 +955,8 @@ class UniqueBibleState extends State<UniqueBible> {
       await File(dbPath).writeAsBytes(bytes);
 
       // save config to avoid copying the database file again
-      this.config.morphologySetup = true;
-      this.config.save("morphologySetup", true);
+      this.config.morphologyVersion = latestMorphologyVersion;
+      this.config.save("morphologyVersion", latestMorphologyVersion);
     }
 
     var db = await openDatabase(dbPath);

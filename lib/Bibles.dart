@@ -46,7 +46,7 @@ class Bibles {
     List<dynamic> versesFound = [];
 
     for (var bcvList in listOfBcvList) {
-      versesFound.add([[], "[${interfaceBibles[this.abbreviations][0]} ${BibleParser(this.abbreviations).bcvToVerseReference(bcvList)}]"]);
+      versesFound.add([[], "[${interfaceBibles[this.abbreviations][0]} ${BibleParser(this.abbreviations).bcvToVerseReference(bcvList)}]", ""]);
       for (var bible in bibleList) {
         var verseText;
         if (bible == this.bible1.module) {
@@ -167,6 +167,7 @@ class Bible {
       if (i["bNo"] != 0) books.add(i["bNo"]);
     }
     var bookList = books.toList();
+    bookList.sort();
     return bookList;
   }
 
@@ -274,7 +275,7 @@ class Bible {
   List openMultipleVerses(List listOfBcvList, [String featureString]) {
 
     List<dynamic> versesFound = [];
-    if (featureString != null) versesFound.add([[], featureString, this.module]);
+    if (featureString != null) versesFound.add([[], featureString, ""]);
 
     for (var bcvList in listOfBcvList) {
       var referenceString = "[${BibleParser(this.abbreviations).bcvToVerseReference(bcvList)}]";
@@ -294,7 +295,7 @@ class Bible {
     var fetchResults = this.data.where((i) => (i["vText"].contains(RegExp(searchString)) as bool)).toList();
 
     List<dynamic> versesFound = [];
-    versesFound.add([[], "[$searchString ${interfaceBible[this.abbreviations][0]} ${fetchResults.length} ${interfaceBible[this.abbreviations][1]}]", this.module]);
+    versesFound.add([[], "[$searchString ${interfaceBible[this.abbreviations][0]} ${fetchResults.length} ${interfaceBible[this.abbreviations][1]}]", ""]);
 
     for (var found in fetchResults) {
       var b = found["bNo"];
@@ -304,6 +305,34 @@ class Bible {
       var verseText = found["vText"];
       versesFound.add([[b, c, v], "[$bcvRef] $verseText", this.module]);
     }
+    return versesFound;
+  }
+
+  List searchBooks(String searchString, List referenceList) {
+
+    List<dynamic> versesFound = [];
+
+    Set books = {};
+    for (var ref in referenceList) {
+      books.add(ref[0]);
+    }
+    var bookList = books.toList();
+    bookList.sort();
+
+    for (var book in bookList) {
+      var fetchResults = this.data.where((i) => ((i["bNo"] == book) && (i["vText"].contains(RegExp(searchString)) as bool))).toList();
+      for (var found in fetchResults) {
+        var b = found["bNo"];
+        var c = found["cNo"];
+        var v = found["vNo"];
+        var bcvRef = BibleParser(this.abbreviations).bcvToVerseReference([b, c, v]);
+        var verseText = found["vText"];
+        versesFound.add([[b, c, v], "[$bcvRef] $verseText", this.module]);
+      }
+    }
+
+    versesFound.insert(0, [[], "[$searchString ${interfaceBible[this.abbreviations][0]} ${versesFound.length} ${interfaceBible[this.abbreviations][1]}]", ""]);
+
     return versesFound;
   }
 

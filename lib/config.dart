@@ -7,12 +7,12 @@ class Config {
 
   List allBibleList = ["ASV", "BBE", "BSB", "CUV", "CUVs", "ERV", "ISV", "KJV", "LEB", "LXX", "LXXE", "NET", "OHGB", "T4T", "ULT", "UST", "WEB"];
   // the following line is written for personal use only [not for public]
-  //List allBibleList = ["BBE", "CEV", "CUV", "CSB", "ESV", "EXP", "ISV", "KJV", "LEB", "LXX", "LXXE", "NASB", "NET", "NIV", "OHGB", "WEB"];
+  //List allBibleList = ["BBE", "CEV", "CUV", "CUVs", "CSB", "ESV", "EXP", "ISV", "KJV", "LEB", "LXX", "LXXE", "NASB", "NET", "NIV", "OHGB", "WEB"];
 
   // variables linked with shared preferences
   List compareBibleList = ["ASV", "BBE", "BSB", "CUV", "CUVs", "ERV", "ISV", "KJV", "LEB", "LXX", "LXXE", "NET", "OHGB", "T4T", "ULT", "UST", "WEB"];
   // the following line is written for personal use only [not for public]
-  //List<String> compareBibleList = ["CEV", "CUV", "CSB", "ESV", "EXP", "ISV", "KJV", "LEB", "LXX", "LXXE", "NASB", "NET", "NIV", "OHGB", "WEB"];
+  //List<String> compareBibleList = ["CEV", "CUV", "CSB", "ESV", "EXP", "ISV", "KJV", "LEB", "LXX", "LXXE", "NASB", "NET", "NIV", "OHGB"];
 
   List hebrewBibles = ["OHGB"];
   List greekBibles = ["LXX", "OHGB"];
@@ -25,7 +25,7 @@ class Config {
   String bible2 = "NET";
   List<List<int>> historyActiveVerse = [[43, 3, 16]];
   List<List<int>> favouriteVerse = [[43, 3, 16]];
-  bool morphologySetup = false;
+  double morphologyVersion = 0.1;
   int quickAction = 1;
 
   Future setDefault() async {
@@ -69,10 +69,10 @@ class Config {
         this.favouriteVerse.add(i.map((i) => int.parse(i)).toList());
       }
     }
-    if (prefs.getBool("morphologySetup") == null) {
-      prefs.setBool("morphologySetup", this.morphologySetup);
+    if (prefs.getDouble("morphologyVersion") == null) {
+      prefs.setDouble("morphologyVersion", this.morphologyVersion);
     } else {
-      this.morphologySetup = prefs.getBool("morphologySetup");
+      this.morphologyVersion = prefs.getDouble("morphologyVersion");
     }
     if (prefs.getStringList("compareBibleList") == null) {
       prefs.setStringList("compareBibleList", this.compareBibleList);
@@ -109,7 +109,7 @@ class Config {
         this.favouriteVerse.add(i.map((i) => int.parse(i)).toList());
       }
     }
-    if (prefs.getBool("morphologySetup") != null) this.morphologySetup = prefs.getBool("morphologySetup");
+    if (prefs.getDouble("morphologyVersion") != null) this.morphologyVersion = prefs.getDouble("morphologyVersion");
     if (prefs.getStringList("compareBibleList") != null) this.compareBibleList = prefs.getStringList("compareBibleList");
     if (prefs.getInt("quickAction") != null) this.quickAction = prefs.getInt("quickAction");
 
@@ -130,8 +130,8 @@ class Config {
       case "bible2":
         await prefs.setString(feature, newSetting as String);
         break;
-      case "morphologySetup":
-        await prefs.setBool(feature, newSetting as bool);
+      case "morphologyVersion":
+        await prefs.setDouble(feature, newSetting as double);
         break;
       case "compareBibleList":
         await prefs.setStringList(feature, newSetting as List<String>);

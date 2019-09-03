@@ -28,6 +28,29 @@ class BibleSearchDelegate extends SearchDelegate<List> {
 
   List _fetch(query) {
     List<dynamic> fetchResults =[];
+
+    // search in a book or books, e.g. John:::Jesus Christ or Matthew, John:::Jesus Christ
+    if (query.contains(":::")) {
+      List queryList = query.split(":::");
+      if (queryList.length >= 2) {
+        if (queryList[0].isNotEmpty) {
+          var bookList = queryList[0].split(",");
+          var bookString = "";
+          for (var book in bookList) {
+            bookString += "${book.trim()} 0; ";
+          }
+          var bookReferenceList = BibleParser(this.abbreviations).extractAllReferences(bookString);
+          if (bookReferenceList.isNotEmpty) {
+            String queryText = queryList.sublist(1).join(":::");
+            if (queryText.isNotEmpty) {
+              return _bible.searchBooks(queryText, bookReferenceList);
+            }
+          }
+        }
+      }
+    }
+
+    // check if the query contains verse references or not.
     var verseReferenceList = BibleParser(this.abbreviations).extractAllReferences(query);
     (verseReferenceList.isEmpty) ? fetchResults = _bible.search(query) : fetchResults = _bible.openMultipleVerses(verseReferenceList);
     return fetchResults;
@@ -86,22 +109,32 @@ class BibleSearchDelegate extends SearchDelegate<List> {
   Widget _buildVerseRow(int i, BuildContext context) {
     var verseDirection = TextDirection.ltr;
     var verseFont = _verseFont;
-    var verseNo;
-    var verseContent;
+    var versePrefix = "";
+    var verseContent = "";
     var verseData = _data[i];
+
     if ((hebrewBibles.contains(verseData[2])) && (verseData[0][0] < 40)) {
       verseFont = _verseFontHebrew;
       verseDirection = TextDirection.rtl;
     } else if (greekBibles.contains(verseData[2])) {
       verseFont = _verseFontGreek;
     }
-    //verseNo = "[${verseData[0][2]}] ";
-    //verseContent = verseData[1];
+    var verseText = verseData[1];
+    var tempList = verseText.split("]");
+
+    if (tempList.isNotEmpty) versePrefix = "${tempList[0]}]";
+    if (tempList.length > 1) verseContent = tempList.sublist(1).join("]");
 
     return ListTile(
-      title: Text(
-        verseData[1],
-        style: _verseNoFont,
+      title: RichText(
+        text: TextSpan(
+          style: DefaultTextStyle.of(context).style,
+          children: <TextSpan>[
+            TextSpan(text: versePrefix, style: _verseNoFont),
+            TextSpan(text: verseContent, style: verseFont),
+          ],
+        ),
+        textDirection: verseDirection,
       ),
 
       onTap: () {
