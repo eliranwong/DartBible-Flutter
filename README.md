@@ -16,7 +16,7 @@ user manual written
 <a href='https://www.uniquebible.app/mobile/search'>Search</a><br>
 <a href='https://www.uniquebible.app/mobile/settings'>Settings</a><br>
 <a href='https://www.uniquebible.app/mobile/tap'>Tap</a><br>
-<a href='https://www.uniquebible.app/mobile/long-tap'>Long tap</a><br>
+<a href='https://www.uniquebible.app/mobile/long-tap'>Long-tap</a><br>
 <a href='https://www.uniquebible.app/mobile/swipe'>Swipe</a><br>
 <a href='https://www.uniquebible.app/mobile/swap'>Swap</a><br>
 <a href='https://www.uniquebible.app/mobile/parallel'>Parallel</a><br>
@@ -25,12 +25,12 @@ user manual written
 <a href='https://www.uniquebible.app/mobile/history'>History</a><br>
 <a href='https://www.uniquebible.app/mobile/favourites'>Favourites</a><br>
 <a href='https://www.uniquebible.app/mobile/favourite-action'>Favourite Action</a><br>
-<a href='https://www.uniquebible.app/mobile/cross-references'>Cross references</a><br>
+<a href='https://www.uniquebible.app/mobile/cross-references'>Cross-references</a><br>
 <a href='https://www.uniquebible.app/mobile/compare-versions'>Compare Versions</a><br>
 <a href='https://www.uniquebible.app/mobile/interlinear'>Interlinear</a><br>
 <a href='https://www.uniquebible.app/mobile/morphology'>Morphology</a><br>
 <a href='https://www.uniquebible.app/mobile/original-languages'>Original Languages</a><br>
-<a href='https://www.uniquebible.app/mobile/non-english-enterface'>Non English Interface</a><br>
+<a href='https://www.uniquebible.app/mobile/non-english-interface'>Non-English Interface</a><br>
 <a href='https://www.uniquebible.app/mobile/customisation'>Customisation</a>
 
 # screenshots
