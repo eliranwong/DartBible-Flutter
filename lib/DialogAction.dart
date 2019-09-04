@@ -7,6 +7,11 @@ enum DialogAction {
   addCopy,
   compareAll,
   crossReference,
-  interlinear,
-  morphology,
+  interlinearOHGB,
+  morphologyOHGB,
+  interlinearLXX1,
+  morphologyLXX1,
+  interlinearLXX2,
+  morphologyLXX2,
+  interlinearABP,
 }

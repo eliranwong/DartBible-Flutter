@@ -71,9 +71,9 @@ class UniqueBibleState extends State<UniqueBible> {
   };
 
   Map interfaceMessage = {
-    "ENG": ["is selected.\n'Tap' it again to open a predefined action.\nOr 'press' it & 'hold' for more actions.", "Loading cross-references ...", "Loading bibles for comparison ...", "Added to Favourites!"],
-    "TC": ["被點選。\n再'按'此節可啟動已預先設定的功能。\n或'長按'可選擇更多功能。", "啟動相關經文 ...", "啟動版本比較 ...", "已收藏"],
-    "SC": ["被点选。\n再'按'此节可启动已预先设定的功能。\n或'长按'可选择更多功能。", "启动相关经文 ...", "啟動版本比较 ...", "已收藏"],
+    "ENG": ["is selected.\n'Tap' it again to open your 'Favourite Action'.\nOr 'press' & 'hold' it for more actions.", "Loading cross-references ...", "Loading bibles for comparison ...", "Added to Favourites!"],
+    "TC": ["被點選。\n再'按'此節可啟動'設定'中的'常用功能'。\n或'長按'可選擇更多功能。", "啟動相關經文 ...", "啟動版本比較 ...", "已收藏"],
+    "SC": ["被点选。\n再'按'此节可启动'设定'中的'常用功能'。\n或'长按'可选择更多功能。", "启动相关经文 ...", "啟動版本比较 ...", "已收藏"],
   };
 
   Map interfaceDialog = {
@@ -245,7 +245,7 @@ class UniqueBibleState extends State<UniqueBible> {
   }
 
   Future _openBibleSettings(BuildContext context) async {
-    final newBibleSettings = await Navigator.push(
+    final BibleSettingsParser newBibleSettings = await Navigator.push(
       context,
       MaterialPageRoute(
           builder: (context) => BibleSettings(
@@ -258,30 +258,22 @@ class UniqueBibleState extends State<UniqueBible> {
             this.config.quickAction,
           )),
     );
-    var newVerseString =
-        "${newBibleSettings[1]} ${newBibleSettings[3]}:${newBibleSettings[4]}";
-    var newVerse = [
-      [
-        int.parse(newBibleSettings[2]),
-        int.parse(newBibleSettings[3]),
-        int.parse(newBibleSettings[4])
-      ],
-      newVerseString,
-      newBibleSettings[0]
-    ];
-    double newFontSizeValue = double.parse(newBibleSettings[5]);
-    this.config.fontSize = newFontSizeValue;
-    this.config.save("fontSize", newFontSizeValue);
-    this.abbreviations = newBibleSettings[6];
-    this.config.abbreviations = this.abbreviations;
-    updateBibleAbbreviations(this.abbreviations);
-    this.config.save("abbreviations", this.abbreviations);
-    List<String> newCompareBibleList = newBibleSettings[7]..sort();
-    this.config.compareBibleList = newCompareBibleList;
-    this.config.save("compareBibleList", newCompareBibleList);
-    int newQuickActionSetting = newBibleSettings[8] - 1;
-    this.config.quickAction = newQuickActionSetting;
-    this.config.save("quickAction", newQuickActionSetting);
+    // Font size
+    this.config.fontSize = newBibleSettings.fontSize;
+    this.config.save("fontSize", newBibleSettings.fontSize);
+    // Abbreviations
+    this.abbreviations = newBibleSettings.abbreviations;
+    this.config.abbreviations = newBibleSettings.abbreviations;
+    updateBibleAbbreviations(newBibleSettings.abbreviations);
+    this.config.save("abbreviations", newBibleSettings.abbreviations);
+    // Bible comparison list
+    this.config.compareBibleList = newBibleSettings.compareBibleList;
+    this.config.save("compareBibleList", newBibleSettings.compareBibleList);
+    // Quick action
+    this.config.quickAction = newBibleSettings.quickAction;
+    this.config.save("quickAction", newBibleSettings.quickAction);
+    // Newly selected verse
+    var newVerse = [[newBibleSettings.book, newBibleSettings.chapter, newBibleSettings.verse,], "", newBibleSettings.module];
     _newVerseSelected(newVerse);
   }
 
@@ -315,19 +307,23 @@ class UniqueBibleState extends State<UniqueBible> {
     _newVerseSelected(this.searchData[selected[1]]);
   }
 
-  Future _loadInterlinearView(BuildContext context, List bcvList) async {
-    final List<Map> morphology = await getMorphology(bcvList);
+  Future _loadInterlinearView(BuildContext context, List bcvList, [String module]) async {
+    String table;
+    if (module == null) table = "OHGB";
+    final List<Map> morphology = await getMorphology(bcvList, table);
     Navigator.push(
       context,
-      MaterialPageRoute(builder: (context) => InterlinearView(morphology, true, this.abbreviations, this.config.fontSize)),
+      MaterialPageRoute(builder: (context) => InterlinearView(morphology, true, this.abbreviations, this.config.fontSize, table)),
     );
   }
 
-  Future _loadMorphologyView(BuildContext context, List bcvList) async {
-    final List<Map> morphology = await getMorphology(bcvList);
+  Future _loadMorphologyView(BuildContext context, List bcvList, [String module]) async {
+    String table;
+    if (module == null) table = "OHGB";
+    final List<Map> morphology = await getMorphology(bcvList, table);
     Navigator.push(
       context,
-      MaterialPageRoute(builder: (context) => MorphologyView(morphology, true, this.abbreviations, this.config.fontSize)),
+      MaterialPageRoute(builder: (context) => MorphologyView(morphology, true, this.abbreviations, this.config.fontSize, table)),
     );
   }
 
@@ -821,12 +817,32 @@ class UniqueBibleState extends State<UniqueBible> {
                 child: Text(this.interfaceDialog[this.abbreviations][6]),
               ),
               SimpleDialogOption(
-                onPressed: () { Navigator.pop(context, DialogAction.interlinear); },
-                child: Text(this.interfaceDialog[this.abbreviations][7]),
+                onPressed: () { Navigator.pop(context, DialogAction.interlinearABP); },
+                child: Text("ABP ${this.interfaceDialog[this.abbreviations][7]}"),
               ),
               SimpleDialogOption(
-                onPressed: () { Navigator.pop(context, DialogAction.morphology); },
-                child: Text(this.interfaceDialog[this.abbreviations][8]),
+                onPressed: () { Navigator.pop(context, DialogAction.interlinearLXX1); },
+                child: Text("LXX1 ${this.interfaceDialog[this.abbreviations][7]}"),
+              ),
+              SimpleDialogOption(
+                onPressed: () { Navigator.pop(context, DialogAction.morphologyLXX1); },
+                child: Text("LXX1 ${this.interfaceDialog[this.abbreviations][8]}"),
+              ),
+              SimpleDialogOption(
+                onPressed: () { Navigator.pop(context, DialogAction.interlinearLXX2); },
+                child: Text("LXX2 ${this.interfaceDialog[this.abbreviations][7]}"),
+              ),
+              SimpleDialogOption(
+                onPressed: () { Navigator.pop(context, DialogAction.morphologyLXX2); },
+                child: Text("LXX2 ${this.interfaceDialog[this.abbreviations][8]}"),
+              ),
+              SimpleDialogOption(
+                onPressed: () { Navigator.pop(context, DialogAction.interlinearOHGB); },
+                child: Text("OHGB ${this.interfaceDialog[this.abbreviations][7]}"),
+              ),
+              SimpleDialogOption(
+                onPressed: () { Navigator.pop(context, DialogAction.morphologyOHGB); },
+                child: Text("OHGB ${this.interfaceDialog[this.abbreviations][8]}"),
               ),
             ],
           );
@@ -852,11 +868,26 @@ class UniqueBibleState extends State<UniqueBible> {
       case DialogAction.compareAll:
         _loadCompare(context, verseData[0]);
         break;
-      case DialogAction.interlinear:
-        _loadInterlinearView(context, verseData[0]);
+      case DialogAction.interlinearOHGB:
+        _loadInterlinearView(context, verseData[0], "OHGB");
         break;
-      case DialogAction.morphology:
-        _loadMorphologyView(context, verseData[0]);
+      case DialogAction.morphologyOHGB:
+        _loadMorphologyView(context, verseData[0], "OHGB");
+        break;
+      case DialogAction.interlinearLXX1:
+        _loadInterlinearView(context, verseData[0], "LXX1");
+        break;
+      case DialogAction.morphologyLXX1:
+        _loadMorphologyView(context, verseData[0], "LXX1");
+        break;
+      case DialogAction.interlinearLXX2:
+        _loadInterlinearView(context, verseData[0], "LXX2");
+        break;
+      case DialogAction.morphologyLXX2:
+        _loadMorphologyView(context, verseData[0], "LXX2");
+        break;
+      case DialogAction.interlinearABP:
+        _loadInterlinearView(context, verseData[0], "ABP");
         break;
       default:
     }
@@ -964,9 +995,15 @@ class UniqueBibleState extends State<UniqueBible> {
     return db;
   }
 
-  Future getMorphology(List bcvList) async {
+  Future getMorphology(List bcvList, String module) async {
     final Database db = await initMorphologyDb();
-    List<Map> morphology = await db.rawQuery('SELECT * FROM morphology WHERE Book = ? AND Chapter = ? AND Verse = ?', bcvList);
+    Map tables = {
+      "OHGB": "morphology",
+    };
+    var statement = "SELECT * FROM ${tables[module]} WHERE Book = ? AND Chapter = ? AND Verse = ?";
+    // TODO - add ABP, LXX1 & LXX2 data to morphology.sqlite
+    //var statement = "SELECT * FROM $module WHERE Book = ? AND Chapter = ? AND Verse = ?";
+    List<Map> morphology = await db.rawQuery(statement, bcvList);
     return morphology;
   }
 

@@ -23,9 +23,9 @@ class BibleSettingsState extends State<BibleSettings> {
 
   String abbreviations;
   Map interfaceBibleSettings = {
-    "ENG": ["Settings", "Interface", "Bible", "Book", "Chapter", "Verse", "Font Size", "Versions for Comparison", "Double-Tap Action"],
-    "TC": ["設定", "介面語言", "聖經", "書卷", "章", "節", "字體大小", "版本比較選項", "雙按功能"],
-    "SC": ["设定", "接口语言", "圣经", "书卷", "章", "节", "字体大小", "版本比较选项", "双按功能"],
+    "ENG": ["Settings", "Interface", "Bible", "Book", "Chapter", "Verse", "Font Size", "Versions for Comparison", "Favourite Action"],
+    "TC": ["設定", "介面語言", "聖經", "書卷", "章", "節", "字體大小", "版本比較選項", "常用功能"],
+    "SC": ["设定", "接口语言", "圣经", "书卷", "章", "节", "字体大小", "版本比较选项", "常用功能"],
   };
   
   Bible _bible;
@@ -139,7 +139,7 @@ class BibleSettingsState extends State<BibleSettings> {
             tooltip: 'Go',
             icon: const Icon(Icons.check),
             onPressed: () {
-              Navigator.pop(context, [this._moduleValue, this._bookValue, getBookNo(), this._chapterValue, this._verseValue, this._fontSizeValue, this.interfaceMap[this._interfaceValue], this._compareBibleList, this._quickAction]);
+              Navigator.pop(context, BibleSettingsParser(this._moduleValue, getBookNo(), this._chapterValue, this._verseValue, this.interfaceMap[this._interfaceValue], this._fontSizeValue, this._compareBibleList, this._quickAction));
             },
           ),
         ],
@@ -323,6 +323,26 @@ class BibleSettingsState extends State<BibleSettings> {
       },
       //secondary: const Icon(Icons.more_vert),
     );
+  }
+
+}
+
+class BibleSettingsParser {
+
+  final String module, _book, _chapter, _verse, abbreviations, _fontSize;
+  final List<String> _compareBibleList;
+  final int _quickAction;
+  int book, chapter, verse, quickAction;
+  double fontSize;
+  List<String> compareBibleList;
+
+  BibleSettingsParser(this.module, this._book, this._chapter, this._verse, this.abbreviations, this._fontSize, this._compareBibleList, this._quickAction) {
+    this.book = int.parse(this._book);
+    this.chapter = int.parse(this._chapter);
+    this.verse = int.parse(this._verse);
+    this.fontSize = double.parse(this._fontSize);
+    this.compareBibleList = this._compareBibleList..sort();
+    this.quickAction = this._quickAction - 1;
   }
 
 }

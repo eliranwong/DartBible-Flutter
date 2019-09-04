@@ -8,13 +8,14 @@ class InterlinearView extends StatelessWidget {
   final bool _firstOpened;
   final double _fontSize;
   final String abbreviations;
+  final String _module;
   final Map interfaceBibleSettings = {
     "ENG": ["Interlinear", "More"],
     "TC": ["原文逐字翻譯", "更多"],
     "SC": ["原文逐字翻译", "更多"],
   };
 
-  InterlinearView(this._data, this._firstOpened, this.abbreviations, this._fontSize);
+  InterlinearView(this._data, this._firstOpened, this.abbreviations, this._fontSize, this._module);
 
   @override
   Widget build(BuildContext context) {
@@ -29,10 +30,10 @@ class InterlinearView extends StatelessWidget {
             tooltip: interfaceBibleSettings[this.abbreviations][1],
             icon: const Icon(Icons.unfold_more),
             onPressed: () {
-              if (_firstOpened) {
+              if ((_firstOpened) && (_module != "ABP")) {
                 Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (context) => MorphologyView(_data, false, this.abbreviations, this._fontSize)),
+                  MaterialPageRoute(builder: (context) => MorphologyView(_data, false, this.abbreviations, _fontSize, _module)),
                 );
               } else {
                 Navigator.pop(context);
@@ -96,12 +97,13 @@ class MorphologyView extends StatelessWidget {
   final bool _firstOpened;
   final double _fontSize;
   final String abbreviations;
+  final String _module;
   final Map interfaceBibleSettings = {
     "ENG": ["Morphology", "Less", "Search"],
     "TC": ["原文形態學", "翻譯", "搜索"],
     "SC": ["原文形态学", "翻译", "搜索"],
   };
-  MorphologyView(this._data, this._firstOpened, this.abbreviations, this._fontSize);
+  MorphologyView(this._data, this._firstOpened, this.abbreviations, this._fontSize, this._module);
 
   @override
   Widget build(BuildContext context) {
@@ -119,7 +121,7 @@ class MorphologyView extends StatelessWidget {
               if (_firstOpened) {
                 Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (context) => InterlinearView(_data, false, this.abbreviations, this._fontSize)),
+                  MaterialPageRoute(builder: (context) => InterlinearView(_data, false, this.abbreviations, _fontSize, _module)),
                 );
               } else {
                 Navigator.pop(context);
