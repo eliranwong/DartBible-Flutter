@@ -35,7 +35,7 @@ user manual written
 
 # screenshots
 
-
+<a href='https://www.uniquebible.app/mobile#h.p_qIGHPlHiAnqx'>https://www.uniquebible.app/mobile#h.p_qIGHPlHiAnqx</a>
 
 # other platforms
 
