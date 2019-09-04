@@ -12,26 +12,26 @@ user manual written
 
 # User Manual
 
-<a href='https://www.uniquebible.app/mobile/Basic-Navigation'>Basic Navigation</a><br>
-<a href='https://www.uniquebible.app/mobile/Search'>Search</a><br>
-<a href='https://www.uniquebible.app/mobile/Settings'>Settings</a><br>
-<a href='https://www.uniquebible.app/mobile/Tap'>Tap</a><br>
-<a href='https://www.uniquebible.app/mobile/Long-tap'>Long tap</a><br>
-<a href='https://www.uniquebible.app/mobile/Swipe'>Swipe</a><br>
-<a href='https://www.uniquebible.app/mobile/Swap'>Swap</a><br>
-<a href='https://www.uniquebible.app/mobile/Parallel'>Parallel</a><br>
-<a href='https://www.uniquebible.app/mobile/Share'>Share</a><br>
-<a href='https://www.uniquebible.app/mobile/Copy'>Copy</a><br>
-<a href='https://www.uniquebible.app/mobile/History'>History</a><br>
-<a href='https://www.uniquebible.app/mobile/Favourites'>Favourites</a><br>
-<a href='https://www.uniquebible.app/mobile/Favourite-Action'>Favourite Action</a><br>
-<a href='https://www.uniquebible.app/mobile/Cross-references'>Cross references</a><br>
-<a href='https://www.uniquebible.app/mobile/Compare-Versions'>Compare Versions</a><br>
-<a href='https://www.uniquebible.app/mobile/Interlinear'>Interlinear</a><br>
-<a href='https://www.uniquebible.app/mobile/Morphology'>Morphology</a><br>
-<a href='https://www.uniquebible.app/mobile/Original-Languages'>Original Languages</a><br>
-<a href='https://www.uniquebible.app/mobile/Non-English-Interface'>Non English Interface</a><br>
-<a href='https://www.uniquebible.app/mobile/Customisation'>Customisation</a>
+<a href='https://www.uniquebible.app/mobile/basic-navigation'>Basic Navigation</a><br>
+<a href='https://www.uniquebible.app/mobile/search'>Search</a><br>
+<a href='https://www.uniquebible.app/mobile/settings'>Settings</a><br>
+<a href='https://www.uniquebible.app/mobile/tap'>Tap</a><br>
+<a href='https://www.uniquebible.app/mobile/long-tap'>Long tap</a><br>
+<a href='https://www.uniquebible.app/mobile/swipe'>Swipe</a><br>
+<a href='https://www.uniquebible.app/mobile/swap'>Swap</a><br>
+<a href='https://www.uniquebible.app/mobile/parallel'>Parallel</a><br>
+<a href='https://www.uniquebible.app/mobile/share'>Share</a><br>
+<a href='https://www.uniquebible.app/mobile/copy'>Copy</a><br>
+<a href='https://www.uniquebible.app/mobile/history'>History</a><br>
+<a href='https://www.uniquebible.app/mobile/favourites'>Favourites</a><br>
+<a href='https://www.uniquebible.app/mobile/favourite-action'>Favourite Action</a><br>
+<a href='https://www.uniquebible.app/mobile/cross-references'>Cross references</a><br>
+<a href='https://www.uniquebible.app/mobile/compare-versions'>Compare Versions</a><br>
+<a href='https://www.uniquebible.app/mobile/interlinear'>Interlinear</a><br>
+<a href='https://www.uniquebible.app/mobile/morphology'>Morphology</a><br>
+<a href='https://www.uniquebible.app/mobile/original-languages'>Original Languages</a><br>
+<a href='https://www.uniquebible.app/mobile/non-english-enterface'>Non English Interface</a><br>
+<a href='https://www.uniquebible.app/mobile/customisation'>Customisation</a>
 
 # screenshots
 
