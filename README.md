@@ -4,10 +4,6 @@ Flutter version of the <a href="https://github.com/eliranwong/DartBible">DartBib
 Materials in this repository is for building cross-platform apps.
 For command-line version, please visit https://github.com/eliranwong/DartBible.
 
-# progress
-
-version 1 uploaded to Google Play Store, pending for review
-
 # User Manual
 
 <a href='https://www.uniquebible.app/mobile/basic-navigation'>Basic Navigation</a><br>
