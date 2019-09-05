@@ -309,7 +309,7 @@ class UniqueBibleState extends State<UniqueBible> {
 
   Future _loadInterlinearView(BuildContext context, List bcvList, [String module]) async {
     String table;
-    if (module == null) table = "OHGB";
+    (module == null) ? table = "OHGB" : table = module;
     final List<Map> morphology = await getMorphology(bcvList, table);
     Navigator.push(
       context,
@@ -319,7 +319,7 @@ class UniqueBibleState extends State<UniqueBible> {
 
   Future _loadMorphologyView(BuildContext context, List bcvList, [String module]) async {
     String table;
-    if (module == null) table = "OHGB";
+    (module == null) ? table = "OHGB" : table = module;
     final List<Map> morphology = await getMorphology(bcvList, table);
     Navigator.push(
       context,
@@ -974,7 +974,7 @@ class UniqueBibleState extends State<UniqueBible> {
     var dbDir = await getDatabasesPath();
     var dbPath = join(dbDir, "morphology.sqlite");
 
-    double latestMorphologyVersion = 0.1;
+    double latestMorphologyVersion = 0.2;
 
     // check if database had been setup in first launch
     if (this.config.morphologyVersion < latestMorphologyVersion) {
@@ -997,12 +997,7 @@ class UniqueBibleState extends State<UniqueBible> {
 
   Future getMorphology(List bcvList, String module) async {
     final Database db = await initMorphologyDb();
-    Map tables = {
-      "OHGB": "morphology",
-    };
-    var statement = "SELECT * FROM ${tables[module]} WHERE Book = ? AND Chapter = ? AND Verse = ?";
-    // TODO - add ABP, LXX1 & LXX2 data to morphology.sqlite
-    //var statement = "SELECT * FROM $module WHERE Book = ? AND Chapter = ? AND Verse = ?";
+    var statement = "SELECT * FROM $module WHERE Book = ? AND Chapter = ? AND Verse = ?";
     List<Map> morphology = await db.rawQuery(statement, bcvList);
     return morphology;
   }

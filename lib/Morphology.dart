@@ -61,7 +61,7 @@ class InterlinearView extends StatelessWidget {
     final textStyleHebrew = TextStyle(fontFamily: "Ezra SIL", fontSize: (_fontSize + 4));
     final textStyleGreek = TextStyle(fontSize: (_fontSize + 2));
     Widget word;
-    if (wordData["Book"] < 40) {
+    if ((wordData["Book"] < 40) && (_module == "OHGB")) {
       word = Text(wordData["Word"], style: textStyleHebrew);
     } else {
       word = Text(wordData["Word"], style: textStyleGreek);
@@ -151,7 +151,7 @@ class MorphologyView extends StatelessWidget {
     final textStyleHebrew = TextStyle(fontFamily: "Ezra SIL", fontSize: (_fontSize + 4));
     final textStyleGreek = TextStyle(fontSize: (_fontSize + 2));
     Widget word, lexeme;
-    if (wordData["Book"] < 40) {
+    if ((wordData["Book"] < 40) && (_module == "OHGB")) {
       word = Text(wordData["Word"], style: textStyleHebrew);
       lexeme = Text(wordData["Lexeme"], style: textStyleHebrew);
     } else {
