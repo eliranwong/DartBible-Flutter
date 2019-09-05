@@ -6,9 +6,7 @@ For command-line version, please visit https://github.com/eliranwong/DartBible.
 
 # progress
 
-fixed all know issues<br>
-version 1 ready for release, after adding LXX database<br>
-user manual written
+version 1 uploaded to Google Play Store, pending for review
 
 # User Manual
 
