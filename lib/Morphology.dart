@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:unique_bible_app/BibleParser.dart';
+import 'package:unique_bible_app/HTMLParser.dart';
 
 class InterlinearView extends StatelessWidget {
 
@@ -205,6 +206,9 @@ class MorphologyView extends StatelessWidget {
 
 class LexiconView extends StatelessWidget {
 
+  final _parser = HTMLParser("ENG", 20.0);
+  final String testing = '<h1>testing</h1><ref onclick="bcv(43,3,16)">TEST</ref>testing';
+
   @override
   Widget build(BuildContext context) {
     final title = 'Lexicon';
@@ -213,6 +217,8 @@ class LexiconView extends StatelessWidget {
         title: Text(title),
       ),
       body: Center(
+        //The following line is created for testing only.
+        //child: _parser.buildRichText(context, _parser.convertHtmlText(testing), print),
         child: Text("This page is reserved for lexical studies.\n\nLexicons will be available next version."),
     )
     );
