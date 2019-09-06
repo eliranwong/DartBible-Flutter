@@ -1,9 +1,10 @@
 import 'package:flutter/services.dart' show Clipboard, ClipboardData;
 import 'package:flutter/material.dart';
 import 'package:share/share.dart';
-import 'BibleParser.dart';
-import 'DialogAction.dart';
-import 'config.dart';
+import 'package:unique_bible_app/BibleParser.dart';
+import 'package:unique_bible_app/DialogAction.dart';
+import 'package:unique_bible_app/config.dart';
+import 'package:unique_bible_app/Helpers.dart';
 
 class BibleSearchDelegate extends SearchDelegate<List> {
 
@@ -12,6 +13,7 @@ class BibleSearchDelegate extends SearchDelegate<List> {
   String abbreviations;
 
   var _verseNoFont, _verseFont, _verseFontHebrew, _verseFontGreek;
+  var _activeVerseFont, _activeVerseFontHebrew, _activeVerseFontGreek;
   var hebrewBibles, greekBibles;
   List _data = [];
 
@@ -20,6 +22,9 @@ class BibleSearchDelegate extends SearchDelegate<List> {
     _verseFont = config.verseTextStyle["verseFont"];
     _verseFontHebrew = config.verseTextStyle["verseFontHebrew"];
     _verseFontGreek = config.verseTextStyle["verseFontGreek"];
+    _activeVerseFont = config.verseTextStyle["activeVerseFont"];
+    _activeVerseFontHebrew = config.verseTextStyle["activeVerseFontHebrew"];
+    _activeVerseFontGreek = config.verseTextStyle["activeVerseFontGreek"];
 
     this.abbreviations = config.abbreviations;
     this.hebrewBibles = config.hebrewBibles;
@@ -107,35 +112,10 @@ class BibleSearchDelegate extends SearchDelegate<List> {
   }
 
   Widget _buildVerseRow(int i, BuildContext context) {
-    var verseDirection = TextDirection.ltr;
-    var verseFont = _verseFont;
-    var versePrefix = "";
-    var verseContent = "";
     var verseData = _data[i];
 
-    if ((hebrewBibles.contains(verseData[2])) && (verseData[0][0] < 40)) {
-      verseFont = _verseFontHebrew;
-      verseDirection = TextDirection.rtl;
-    } else if (greekBibles.contains(verseData[2])) {
-      verseFont = _verseFontGreek;
-    }
-    var verseText = verseData[1];
-    var tempList = verseText.split("]");
-
-    if (tempList.isNotEmpty) versePrefix = "${tempList[0]}]";
-    if (tempList.length > 1) verseContent = tempList.sublist(1).join("]");
-
     return ListTile(
-      title: RichText(
-        text: TextSpan(
-          style: DefaultTextStyle.of(context).style,
-          children: <TextSpan>[
-            TextSpan(text: versePrefix, style: _verseNoFont),
-            TextSpan(text: verseContent, style: verseFont),
-          ],
-        ),
-        textDirection: verseDirection,
-      ),
+      title: _buildVerseText(context, verseData),
 
       onTap: () {
         close(context, [_data, i]);
@@ -145,6 +125,57 @@ class BibleSearchDelegate extends SearchDelegate<List> {
         _longPressedVerse(context, _data[i]);
       },
 
+    );
+  }
+
+  Widget _buildVerseText(BuildContext context, List verseData) {
+    var verseDirection = TextDirection.ltr;
+    var verseFont = _verseFont;
+    var activeVerseFont = _activeVerseFont;
+    var versePrefix = "";
+    var verseContent = "";
+
+    if ((hebrewBibles.contains(verseData[2])) && (verseData[0][0] < 40)) {
+      verseFont = _verseFontHebrew;
+      activeVerseFont = _activeVerseFontHebrew;
+      verseDirection = TextDirection.rtl;
+    } else if (greekBibles.contains(verseData[2])) {
+      verseFont = _verseFontGreek;
+      activeVerseFont = _activeVerseFontGreek;
+    }
+    var verseText = verseData[1];
+    var tempList = verseText.split("]");
+
+    if (tempList.isNotEmpty) versePrefix = "${tempList[0]}]";
+    if (tempList.length > 1) verseContent = tempList.sublist(1).join("]");
+
+    List<TextSpan> textContent = [TextSpan(text: versePrefix, style: _verseNoFont)];
+    if (query.isEmpty) {
+      textContent.add(TextSpan(text: verseContent, style: verseFont));
+    } else {
+      String searchEntry = query;
+      if (query.contains(":::")) searchEntry = query.split(":::").sublist(1).join(":::");
+      var regex = RegexHelper();
+      regex.searchReplace = [
+        ["($searchEntry)", r'^\1^'],
+      ];
+      verseContent = regex.doSearchReplace(verseContent);
+      List<String> textList = verseContent.split("^");
+      for (var text in textList) {
+        if (RegExp(searchEntry).hasMatch(text)) {
+          textContent.add(TextSpan(text: text, style: activeVerseFont));
+        } else {
+          textContent.add(TextSpan(text: text, style: verseFont));
+        }
+      }
+    }
+
+    return RichText(
+      text: TextSpan(
+        style: DefaultTextStyle.of(context).style,
+        children: textContent,
+      ),
+      textDirection: verseDirection,
     );
   }
 

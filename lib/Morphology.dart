@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'BibleParser.dart';
+import 'package:unique_bible_app/BibleParser.dart';
 
 class InterlinearView extends StatelessWidget {
 

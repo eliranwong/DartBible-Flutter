@@ -6,13 +6,13 @@ import 'package:flutter/material.dart';
 import 'package:share/share.dart';
 import 'package:indexed_list_view/indexed_list_view.dart';
 import 'package:swipedetector/swipedetector.dart';
-import 'config.dart';
-import 'Bibles.dart';
-import 'BibleSearchDelegate.dart';
-import 'BibleSettings.dart';
-import 'BibleParser.dart';
-import 'DialogAction.dart';
-import 'Morphology.dart';
+import 'package:unique_bible_app/config.dart';
+import 'package:unique_bible_app/Bibles.dart';
+import 'package:unique_bible_app/BibleSearchDelegate.dart';
+import 'package:unique_bible_app/BibleSettings.dart';
+import 'package:unique_bible_app/BibleParser.dart';
+import 'package:unique_bible_app/DialogAction.dart';
+import 'package:unique_bible_app/Morphology.dart';
 
 // work with sqLite files
 import 'dart:io';
@@ -372,10 +372,15 @@ class UniqueBibleState extends State<UniqueBible> {
     _activeVerseFontGreek = TextStyle(fontSize: (this.config.fontSize + 2), color: Colors.indigo, fontWeight: FontWeight.bold);
     // set the same font settings, which is passed to search delegate
     this.config.verseTextStyle = {
+      //_activeVerseNoFont, _activeVerseFont, _activeVerseFontHebrew, _activeVerseFontGreek
       "verseNoFont": _verseNoFont,
       "verseFont": _verseFont,
       "verseFontHebrew": _verseFontHebrew,
       "verseFontGreek": _verseFontGreek,
+      "activeVerseNoFont": _activeVerseNoFont,
+      "activeVerseFont": _activeVerseFont,
+      "activeVerseFontHebrew": _activeVerseFontHebrew,
+      "activeVerseFontGreek": _activeVerseFontGreek,
     };
     // update App bar title
     if (this.bibles?.bible1?.bookList != null) {

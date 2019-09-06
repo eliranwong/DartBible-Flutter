@@ -1,6 +1,6 @@
 import 'package:flutter/services.dart' show rootBundle;
 import 'dart:convert';
-import 'config.dart';
+import 'package:unique_bible_app/config.dart';
 
 class FileIOHelper {
 
