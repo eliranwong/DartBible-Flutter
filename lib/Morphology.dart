@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:unique_bible_app/BibleParser.dart';
-import 'package:unique_bible_app/HTMLParser.dart';
+import 'package:unique_bible_app/HtmlWrapper.dart';
 
 class InterlinearView extends StatelessWidget {
 
@@ -77,16 +77,21 @@ class InterlinearView extends StatelessWidget {
               title: word,
               subtitle: Text(wordData["Interlinear"], style: textStyle),
               onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => LexiconView()),
-                );
+                _loadLexiconView(context);
               },
             )
           ],
         ),
       ),
     );
+  }
+
+  Future _loadLexiconView(BuildContext context) async {
+    final selected = await Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => LexiconView()),
+    );
+    if (selected != null) Navigator.pop(context, selected);
   }
 
 }
@@ -169,10 +174,7 @@ class MorphologyView extends StatelessWidget {
               title: word,
               subtitle: Text("${wordData["Transliteration"]} [${wordData["Pronunciation"]}]", style: textStyle),
               onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => LexiconView()),
-                );
+                _loadLexiconView(context);
               },
             ),
             ListTile(
@@ -202,12 +204,22 @@ class MorphologyView extends StatelessWidget {
     );
   }
 
+  Future _loadLexiconView(BuildContext context) async {
+    final selected = await Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => LexiconView()),
+    );
+    if (selected != null) Navigator.pop(context, selected);
+  }
+
 }
 
 class LexiconView extends StatelessWidget {
 
-  final _parser = HTMLParser("ENG", 20.0);
-  final String testing = '<h1>testing</h1><ref onclick="bcv(43,3,16)">TEST</ref>testing';
+  final _parser = HtmlWrapper("ENG", 20.0);
+  final String testing = '''
+  <h1>testing</h1><ref onclick="bcv(43,3,16)">TEST</ref>testing
+  ''';
 
   @override
   Widget build(BuildContext context) {
@@ -218,7 +230,7 @@ class LexiconView extends StatelessWidget {
       ),
       body: Center(
         //The following line is created for testing only.
-        //child: _parser.buildRichText(context, _parser.convertHtmlText(testing), print),
+        //child: _parser.buildRichText(context, _parser.convertHtmlText(testing)),
         child: Text("This page is reserved for lexical studies.\n\nLexicons will be available next version."),
     )
     );

@@ -311,20 +311,22 @@ class UniqueBibleState extends State<UniqueBible> {
     String table;
     (module == null) ? table = "OHGB" : table = module;
     final List<Map> morphology = await getMorphology(bcvList, table);
-    Navigator.push(
+    final selected = await Navigator.push(
       context,
       MaterialPageRoute(builder: (context) => InterlinearView(morphology, true, this.abbreviations, this.config.fontSize, table)),
     );
+    print(selected);
   }
 
   Future _loadMorphologyView(BuildContext context, List bcvList, [String module]) async {
     String table;
     (module == null) ? table = "OHGB" : table = module;
     final List<Map> morphology = await getMorphology(bcvList, table);
-    Navigator.push(
+    final selected = await Navigator.push(
       context,
       MaterialPageRoute(builder: (context) => MorphologyView(morphology, true, this.abbreviations, this.config.fontSize, table)),
     );
+    print(selected);
   }
 
   bool _toggleParallelBibles() {
