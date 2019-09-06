@@ -372,7 +372,6 @@ class UniqueBibleState extends State<UniqueBible> {
     _activeVerseFontGreek = TextStyle(fontSize: (this.config.fontSize + 2), color: Colors.indigo, fontWeight: FontWeight.bold);
     // set the same font settings, which is passed to search delegate
     this.config.verseTextStyle = {
-      //_activeVerseNoFont, _activeVerseFont, _activeVerseFontHebrew, _activeVerseFontGreek
       "verseNoFont": _verseNoFont,
       "verseFont": _verseFont,
       "verseFontHebrew": _verseFontHebrew,
@@ -791,65 +790,72 @@ class UniqueBibleState extends State<UniqueBible> {
 
   Future<void> _longPressedActiveVerse(BuildContext context, List verseData) async {
     var copiedText = await Clipboard.getData('text/plain');
+    List<Widget> dialogOptions = [
+          SimpleDialogOption(
+            onPressed: () { Navigator.pop(context, DialogAction.share); },
+            child: Text(this.interfaceDialog[this.abbreviations][1]),
+          ),
+          SimpleDialogOption(
+            onPressed: () { Navigator.pop(context, DialogAction.copy); },
+            child: Text(this.interfaceDialog[this.abbreviations][2]),
+          ),
+          SimpleDialogOption(
+            onPressed: () { Navigator.pop(context, DialogAction.addCopy); },
+            child: Text(this.interfaceDialog[this.abbreviations][3]),
+          ),
+          SimpleDialogOption(
+            onPressed: () { Navigator.pop(context, DialogAction.addFavourite); },
+            child: Text(this.interfaceDialog[this.abbreviations][4]),
+          ),
+          SimpleDialogOption(
+            onPressed: () { Navigator.pop(context, DialogAction.crossReference); },
+            child: Text(this.interfaceDialog[this.abbreviations][5]),
+          ),
+          SimpleDialogOption(
+            onPressed: () { Navigator.pop(context, DialogAction.compareAll); },
+            child: Text(this.interfaceDialog[this.abbreviations][6]),
+          ),
+          SimpleDialogOption(
+            onPressed: () { Navigator.pop(context, DialogAction.interlinearOHGB); },
+            child: Text("OHGB ${this.interfaceDialog[this.abbreviations][7]}"),
+          ),
+          SimpleDialogOption(
+            onPressed: () { Navigator.pop(context, DialogAction.morphologyOHGB); },
+            child: Text("OHGB ${this.interfaceDialog[this.abbreviations][8]}"),
+          ),
+          SimpleDialogOption(
+            onPressed: () { Navigator.pop(context, DialogAction.interlinearABP); },
+            child: Text("ABP ${this.interfaceDialog[this.abbreviations][7]}"),
+          ),
+        ];
+    int bookNo = verseData[0][0];
+    if ((bookNo < 40) || (bookNo > 66)) {
+      List<Widget> lxxDialogOptions = [
+        SimpleDialogOption(
+          onPressed: () { Navigator.pop(context, DialogAction.interlinearLXX1); },
+          child: Text("LXX1 ${this.interfaceDialog[this.abbreviations][7]}"),
+        ),
+        SimpleDialogOption(
+          onPressed: () { Navigator.pop(context, DialogAction.morphologyLXX1); },
+          child: Text("LXX1 ${this.interfaceDialog[this.abbreviations][8]}"),
+        ),
+        SimpleDialogOption(
+          onPressed: () { Navigator.pop(context, DialogAction.interlinearLXX2); },
+          child: Text("LXX2 ${this.interfaceDialog[this.abbreviations][7]}"),
+        ),
+        SimpleDialogOption(
+          onPressed: () { Navigator.pop(context, DialogAction.morphologyLXX2); },
+          child: Text("LXX2 ${this.interfaceDialog[this.abbreviations][8]}"),
+        ),
+      ];
+      dialogOptions = [...dialogOptions, ...lxxDialogOptions];
+    }
     switch (await showDialog<DialogAction>(
         context: context,
         builder: (BuildContext context) {
           return SimpleDialog(
             title: Text(this.interfaceDialog[this.abbreviations][0]),
-            children: <Widget>[
-              SimpleDialogOption(
-                onPressed: () { Navigator.pop(context, DialogAction.share); },
-                child: Text(this.interfaceDialog[this.abbreviations][1]),
-              ),
-              SimpleDialogOption(
-                onPressed: () { Navigator.pop(context, DialogAction.copy); },
-                child: Text(this.interfaceDialog[this.abbreviations][2]),
-              ),
-              SimpleDialogOption(
-                onPressed: () { Navigator.pop(context, DialogAction.addCopy); },
-                child: Text(this.interfaceDialog[this.abbreviations][3]),
-              ),
-              SimpleDialogOption(
-                onPressed: () { Navigator.pop(context, DialogAction.addFavourite); },
-                child: Text(this.interfaceDialog[this.abbreviations][4]),
-              ),
-              SimpleDialogOption(
-                onPressed: () { Navigator.pop(context, DialogAction.crossReference); },
-                child: Text(this.interfaceDialog[this.abbreviations][5]),
-              ),
-              SimpleDialogOption(
-                onPressed: () { Navigator.pop(context, DialogAction.compareAll); },
-                child: Text(this.interfaceDialog[this.abbreviations][6]),
-              ),
-              SimpleDialogOption(
-                onPressed: () { Navigator.pop(context, DialogAction.interlinearABP); },
-                child: Text("ABP ${this.interfaceDialog[this.abbreviations][7]}"),
-              ),
-              SimpleDialogOption(
-                onPressed: () { Navigator.pop(context, DialogAction.interlinearLXX1); },
-                child: Text("LXX1 ${this.interfaceDialog[this.abbreviations][7]}"),
-              ),
-              SimpleDialogOption(
-                onPressed: () { Navigator.pop(context, DialogAction.morphologyLXX1); },
-                child: Text("LXX1 ${this.interfaceDialog[this.abbreviations][8]}"),
-              ),
-              SimpleDialogOption(
-                onPressed: () { Navigator.pop(context, DialogAction.interlinearLXX2); },
-                child: Text("LXX2 ${this.interfaceDialog[this.abbreviations][7]}"),
-              ),
-              SimpleDialogOption(
-                onPressed: () { Navigator.pop(context, DialogAction.morphologyLXX2); },
-                child: Text("LXX2 ${this.interfaceDialog[this.abbreviations][8]}"),
-              ),
-              SimpleDialogOption(
-                onPressed: () { Navigator.pop(context, DialogAction.interlinearOHGB); },
-                child: Text("OHGB ${this.interfaceDialog[this.abbreviations][7]}"),
-              ),
-              SimpleDialogOption(
-                onPressed: () { Navigator.pop(context, DialogAction.morphologyOHGB); },
-                child: Text("OHGB ${this.interfaceDialog[this.abbreviations][8]}"),
-              ),
-            ],
+            children: dialogOptions,
           );
         }
     )) {

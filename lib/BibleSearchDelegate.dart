@@ -157,10 +157,10 @@ class BibleSearchDelegate extends SearchDelegate<List> {
       if (query.contains(":::")) searchEntry = query.split(":::").sublist(1).join(":::");
       var regex = RegexHelper();
       regex.searchReplace = [
-        ["($searchEntry)", r'^\1^'],
+        ["($searchEntry)", r'％\1％'],
       ];
       verseContent = regex.doSearchReplace(verseContent);
-      List<String> textList = verseContent.split("^");
+      List<String> textList = verseContent.split("％");
       for (var text in textList) {
         if (RegExp(searchEntry).hasMatch(text)) {
           textContent.add(TextSpan(text: text, style: activeVerseFont));
