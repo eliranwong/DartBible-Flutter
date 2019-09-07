@@ -54,6 +54,7 @@ class UniqueBibleState extends State<UniqueBible> {
   var config;
   var _verseNoFont, _verseFont, _verseFontHebrew, _verseFontGreek;
   var _activeVerseNoFont, _activeVerseFont, _activeVerseFontHebrew, _activeVerseFontGreek;
+  var _interlinearStyle, _interlinearStyleDim;
   final _highlightStyle = TextStyle(
       fontWeight: FontWeight.bold,
       //fontStyle: FontStyle.italic,
@@ -107,6 +108,9 @@ class UniqueBibleState extends State<UniqueBible> {
       this.bibles.bible2 = Bible(this.config.bible2, this.abbreviations);
       this.bibles.bible2.loadData();
 
+      this.bibles.iBible = Bible("OHGBi", this.abbreviations);
+      await this.bibles.iBible.loadData();
+
       // make sure these function runs on startup only
       _startup = true;
 
@@ -138,11 +142,88 @@ class UniqueBibleState extends State<UniqueBible> {
         _currentActiveVerse = newBcvList;
         updateHistoryActiveVerse();
       });
-      String verseReference = BibleParser(this.abbreviations).bcvToVerseReference(bcvList);
-      String message = "'$verseReference' ${this.interfaceMessage[this.abbreviations][0]}";
-      final snackBar = SnackBar(content: Text(message));
-      Scaffold.of(context).showSnackBar(snackBar);
+      popUpInterlinear(context, bcvList);
     }
+  }
+
+  popUpTip(BuildContext context, List bcvList) {
+    String verseReference = BibleParser(this.abbreviations).bcvToVerseReference(bcvList);
+    String message = "'$verseReference' ${this.interfaceMessage[this.abbreviations][0]}";
+    final snackBar = SnackBar(content: Text(message));
+    Scaffold.of(context).showSnackBar(snackBar);
+  }
+
+  Future popUpInterlinear(BuildContext context, List bcvList) async {
+    String verseReference = BibleParser(this.abbreviations).bcvToVerseReference(bcvList);
+
+    var verseDirection = TextDirection.ltr;
+    var originalWordStyle = _verseFontGreek;
+    if (bcvList[0] < 40) {
+      verseDirection = TextDirection.rtl;
+      originalWordStyle = _verseFontHebrew;
+    }
+
+    List<TextSpan> textContent = getInterlinearSpan(bcvList);
+
+    final selected = await showModalBottomSheet(context: context, builder: (BuildContext context) {
+      return Container(
+        child: Padding(
+          padding: const EdgeInsets.all(10.0),
+          child: ListTile(
+            title: RichText(
+              text: TextSpan(
+                //style: DefaultTextStyle.of(context).style,
+                children: textContent,
+              ),
+              textDirection: verseDirection,
+            ),
+            subtitle: Text(verseReference, style: _highlightStyle),
+            onTap: () {
+              Navigator.pop(context, bcvList);
+            },
+          ),
+        ),
+      );
+    });
+    if (selected != null) _loadInterlinearView(context, selected);
+  }
+
+  List<TextSpan> getInterlinearSpan(List bcvList) {
+    String text = this.bibles.iBible.openSingleVerse(bcvList);
+    bool isHebrewBible = (bcvList[0] < 40);
+
+    var originalStyle = _verseFontGreek;
+    if (isHebrewBible) originalStyle = _verseFontHebrew;
+    List<TextSpan> words = <TextSpan>[];
+    List<String> wordList = text.split("｜");
+    for (var word in wordList) {
+      if (word.startsWith("＠")) {
+        if (isHebrewBible) {
+          List<String> glossList = word.substring(1).split(" ");
+          for (var gloss in glossList) {
+            if ((gloss.startsWith("[")) || (gloss.endsWith("]"))) {
+              gloss = gloss.replaceAll(RegExp(r"[\[\]\+\.]"), "");
+              words.add(TextSpan(text: "$gloss ", style: _interlinearStyleDim));
+            } else {
+              words.add(TextSpan(text: "$gloss ", style: _interlinearStyle));
+            }
+          }
+        } else {
+          words.add(TextSpan(text: word.substring(1), style: _interlinearStyle));
+        }
+      } else {
+        words.add(TextSpan(text: word, style: originalStyle));
+      }
+    }
+    /*words = text.split("｜").map((i) {
+      if (i.startsWith("＠")) {
+        return TextSpan(text: i.substring(1), style: _interlinearStyle);
+      }
+      return TextSpan(text: i, style: originalStyle);
+    }).toList();
+     */
+
+    return words;
   }
 
   Future _newVerseSelected(List selected) async {
@@ -258,23 +339,25 @@ class UniqueBibleState extends State<UniqueBible> {
             this.config.quickAction,
           )),
     );
-    // Font size
-    this.config.fontSize = newBibleSettings.fontSize;
-    this.config.save("fontSize", newBibleSettings.fontSize);
-    // Abbreviations
-    this.abbreviations = newBibleSettings.abbreviations;
-    this.config.abbreviations = newBibleSettings.abbreviations;
-    updateBibleAbbreviations(newBibleSettings.abbreviations);
-    this.config.save("abbreviations", newBibleSettings.abbreviations);
-    // Bible comparison list
-    this.config.compareBibleList = newBibleSettings.compareBibleList;
-    this.config.save("compareBibleList", newBibleSettings.compareBibleList);
-    // Quick action
-    this.config.quickAction = newBibleSettings.quickAction;
-    this.config.save("quickAction", newBibleSettings.quickAction);
-    // Newly selected verse
-    var newVerse = [[newBibleSettings.book, newBibleSettings.chapter, newBibleSettings.verse,], "", newBibleSettings.module];
-    _newVerseSelected(newVerse);
+    if (newBibleSettings != null) {
+      // Font size
+      this.config.fontSize = newBibleSettings.fontSize;
+      this.config.save("fontSize", newBibleSettings.fontSize);
+      // Abbreviations
+      this.abbreviations = newBibleSettings.abbreviations;
+      this.config.abbreviations = newBibleSettings.abbreviations;
+      updateBibleAbbreviations(newBibleSettings.abbreviations);
+      this.config.save("abbreviations", newBibleSettings.abbreviations);
+      // Bible comparison list
+      this.config.compareBibleList = newBibleSettings.compareBibleList;
+      this.config.save("compareBibleList", newBibleSettings.compareBibleList);
+      // Quick action
+      this.config.quickAction = newBibleSettings.quickAction;
+      this.config.save("quickAction", newBibleSettings.quickAction);
+      // Newly selected verse
+      var newVerse = [[newBibleSettings.book, newBibleSettings.chapter, newBibleSettings.verse,], "", newBibleSettings.module];
+      _newVerseSelected(newVerse);
+    }
   }
 
   void updateBibleAbbreviations(String abbreviations) {
@@ -291,8 +374,10 @@ class UniqueBibleState extends State<UniqueBible> {
     final List selected = await showSearch(
         context: context,
         delegate: BibleSearchDelegate(context, this.bibles.bible1, this.interfaceDialog, this.config, xRefData));
-    this.searchData = selected[0];
-    _newVerseSelected(this.searchData[selected[1]]);
+    if (selected != null) {
+      this.searchData = selected[0];
+      _newVerseSelected(this.searchData[selected[1]]);
+    }
   }
 
   Future _loadCompare(BuildContext context, List bcvList) async {
@@ -303,8 +388,10 @@ class UniqueBibleState extends State<UniqueBible> {
     final List selected = await showSearch(
         context: context,
         delegate: BibleSearchDelegate(context, this.bibles.bible1, this.interfaceDialog, this.config, compareData));
-    this.searchData = selected[0];
-    _newVerseSelected(this.searchData[selected[1]]);
+    if (selected != null) {
+      this.searchData = selected[0];
+      _newVerseSelected(this.searchData[selected[1]]);
+    }
   }
 
   Future _loadInterlinearView(BuildContext context, List bcvList, [String module]) async {
@@ -365,13 +452,15 @@ class UniqueBibleState extends State<UniqueBible> {
     _setup();
     // update various font text style here
     _verseNoFont = TextStyle(fontSize: (this.config.fontSize - 3), color: Colors.blueAccent);
-    _verseFont = TextStyle(fontSize: this.config.fontSize);
-    _verseFontHebrew = TextStyle(fontFamily: "Ezra SIL", fontSize: (this.config.fontSize + 4));
-    _verseFontGreek = TextStyle(fontSize: (this.config.fontSize + 2));
+    _verseFont = TextStyle(fontSize: this.config.fontSize, color: Colors.black);
+    _verseFontHebrew = TextStyle(fontFamily: "Ezra SIL", fontSize: (this.config.fontSize + 4), color: Colors.black);
+    _verseFontGreek = TextStyle(fontSize: (this.config.fontSize + 2), color: Colors.black);
     _activeVerseNoFont = TextStyle(fontSize: (this.config.fontSize - 3), color: Colors.blue, fontWeight: FontWeight.bold);
     _activeVerseFont = TextStyle(fontSize: this.config.fontSize, color: Colors.indigo, fontWeight: FontWeight.bold);
     _activeVerseFontHebrew = TextStyle(fontFamily: "Ezra SIL", fontSize: (this.config.fontSize + 4), color: Colors.indigo, fontWeight: FontWeight.bold);
     _activeVerseFontGreek = TextStyle(fontSize: (this.config.fontSize + 2), color: Colors.indigo, fontWeight: FontWeight.bold);
+    _interlinearStyle = TextStyle(fontSize: (this.config.fontSize - 3), color: Colors.deepOrange);
+    _interlinearStyleDim = TextStyle(fontSize: (this.config.fontSize - 3), color: Colors.grey, fontStyle: FontStyle.italic);
     // set the same font settings, which is passed to search delegate
     this.config.verseTextStyle = {
       "verseNoFont": _verseNoFont,
@@ -382,6 +471,7 @@ class UniqueBibleState extends State<UniqueBible> {
       "activeVerseFont": _activeVerseFont,
       "activeVerseFontHebrew": _activeVerseFontHebrew,
       "activeVerseFontGreek": _activeVerseFontGreek,
+      "interlinearStyle": _interlinearStyle,
     };
     // update App bar title
     if (this.bibles?.bible1?.bookList != null) {
@@ -437,8 +527,10 @@ class UniqueBibleState extends State<UniqueBible> {
                 context: context,
                 delegate: BibleSearchDelegate(context, this.bibles.bible1, this.interfaceDialog, this.config, this.searchData),
               );
-              this.searchData = selected[0];
-              _newVerseSelected(this.searchData[selected[1]]);
+              if (selected != null) {
+                this.searchData = selected[0];
+                _newVerseSelected(this.searchData[selected[1]]);
+              }
             },
           ),
           IconButton(
@@ -695,6 +787,7 @@ class UniqueBibleState extends State<UniqueBible> {
             ),
             textDirection: verseDirection,
           ),
+          //subtitle: Text(interlinear),
           onTap: () {
             _tapActiveVerse(context, _data[i][0]);
           },

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:unique_bible_app/BibleParser.dart';
-import 'package:unique_bible_app/HtmlWrapper.dart';
+//import 'package:unique_bible_app/HtmlWrapper.dart';
 
 class InterlinearView extends StatelessWidget {
 
@@ -216,10 +216,12 @@ class MorphologyView extends StatelessWidget {
 
 class LexiconView extends StatelessWidget {
 
-  final _parser = HtmlWrapper("ENG", 20.0);
-  final String testing = '''
+  //final _parser = HtmlWrapper("ENG", 20.0);
+  /*final String testing = '''
   <h1>testing</h1><ref onclick="bcv(43,3,16)">TEST</ref>testing
   ''';
+
+   */
 
   @override
   Widget build(BuildContext context) {

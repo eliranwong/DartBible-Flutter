@@ -10,14 +10,14 @@ class Config {
 
   Map verseTextStyle;
 
-  //List<String> allBibleList = ["ABG", "ASV", "BBE", "BSB", "CUV", "CUVs", "ERV", "ISV", "KJV", "LEB", "LXX1", "LXX2", "LXXE", "LXXk", "NET", "OHGB", "T4T", "ULT", "UST", "WEB"];
+  List<String> allBibleList = ["ABG", "ASV", "BBE", "BSB", "CUV", "CUVs", "ERV", "ISV", "KJV", "LEB", "LXX1", "LXX2", "LXXE", "LXXk", "NET", "OHGB", "T4T", "ULT", "UST", "WEB"];
   // the following line is written for personal use only [not for public]
-  List<String> allBibleList = ["ABG", "BBE", "CCB", "CEB", "CEV", "CUV", "CUVs", "CSB", "ESV", "EXP", "ISV", "KJV", "LXX1", "LXX2", "LXXE", "LXXk", "NASB", "NET", "NIV", "NLT", "NRSV", "OHGB", "WEB"];
+  //List<String> allBibleList = ["ABG", "BBE", "CCB", "CEB", "CEV", "CUV", "CUVs", "CSB", "ESV", "EXP", "ISV", "KJV", "LXX1", "LXX2", "LXXE", "LXXk", "NASB", "NET", "NIV", "NLT", "NRSV", "OHGB", "WEB"];
 
   // variables linked with shared preferences
-  //List<String> compareBibleList = ["ASV", "BSB", "ERV", "ISV", "KJV", "LEB", "LXXk", "NET", "OHGB", "WEB"];
+  List<String> compareBibleList = ["ASV", "BSB", "ERV", "ISV", "KJV", "LEB", "LXXk", "NET", "OHGB", "WEB"];
   // the following line is written for personal use only [not for public]
-  List<String> compareBibleList = ["CEV", "CUV", "CSB", "ESV", "EXP", "ISV", "KJV", "LEB", "LXXE", "LXXk", "NASB", "NET", "NIV", "OHGB"];
+  //List<String> compareBibleList = ["CEV", "CUV", "CSB", "ESV", "EXP", "ISV", "KJV", "LEB", "LXXE", "LXXk", "NASB", "NET", "NIV", "OHGB"];
 
   double fontSize = 20.0;
   String abbreviations = "ENG";

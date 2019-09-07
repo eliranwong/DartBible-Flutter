@@ -4,7 +4,7 @@ import 'package:unique_bible_app/config.dart';
 
 class Bibles {
 
-  var bible1, bible2, bible3;
+  var bible1, bible2, bible3, iBible;
 
   String abbreviations;
   Map interfaceBibles = {
