@@ -1,0 +1,17 @@
+enum DialogAction {
+  cancel,
+  share,
+  addFavourite,
+  removeFavourite,
+  copy,
+  addCopy,
+  compareAll,
+  crossReference,
+  interlinearOHGB,
+  morphologyOHGB,
+  interlinearLXX1,
+  morphologyLXX1,
+  interlinearLXX2,
+  morphologyLXX2,
+  interlinearABP,
+}
