@@ -1,18 +1,20 @@
 import 'package:shared_preferences/shared_preferences.dart';
 
 class Config {
+
   SharedPreferences prefs;
 
   String assets = "assets";
 
-  List<String> hebrewBibles = ["OHGB"];
-  List<String> greekBibles = ["ABG", "LXX1", "LXX2", "LXXk", "OHGB"];
+  List<String> hebrewBibles = ["OHGB", "OHGBi"];
+  List<String> greekBibles = ["ABG", "LXX1", "LXX2", "LXXk", "OHGB", "OHGBi"];
+  List<String> interlinearBibles = ["OHGBi"];
 
   Map verseTextStyle;
 
-  List<String> allBibleList = ["ABG", "ASV", "BBE", "BSB", "CUV", "CUVs", "ERV", "ISV", "KJV", "LEB", "LXX1", "LXX2", "LXXE", "LXXk", "NET", "OHGB", "T4T", "ULT", "UST", "WEB"];
+  List<String> allBibleList = ["ABG", "ASV", "BBE", "BSB", "CUV", "CUVs", "ERV", "ISV", "KJV", "LEB", "LXX1", "LXX2", "LXXE", "LXXk", "NET", "OHGB", "OHGBi", "T4T", "ULT", "UST", "WEB"];
   // the following line is written for personal use only [not for public]
-  //List<String> allBibleList = ["ABG", "BBE", "CCB", "CEB", "CEV", "CUV", "CUVs", "CSB", "ESV", "EXP", "ISV", "KJV", "LXX1", "LXX2", "LXXE", "LXXk", "NASB", "NET", "NIV", "NLT", "NRSV", "OHGB", "WEB"];
+  //List<String> allBibleList = ["ABG", "ASV", "BBE", "BSB", "CCB", "CEB", "CEV", "CUV", "CUVs", "CSB", "ESV", "ERV", "EXP", "ISV", "KJV", "LEB", "LXX1", "LXX2", "LXXE", "LXXk", "NASB", "NET", "NIV", "NLT", "NRSV", "OHGB", "OHGBi", "T4T", "ULT", "UST", "WEB"];
 
   // variables linked with shared preferences
   List<String> compareBibleList = ["ASV", "BSB", "ERV", "ISV", "KJV", "LEB", "LXXk", "NET", "OHGB", "WEB"];
@@ -26,7 +28,8 @@ class Config {
   List<List<int>> historyActiveVerse = [[43, 3, 16]];
   List<List<int>> favouriteVerse = [[43, 3, 16]];
   double morphologyVersion = 0.0;
-  int quickAction = 1;
+  int instantAction = 0;
+  int favouriteAction = 1;
 
   Future setDefault() async {
     this.prefs = await SharedPreferences.getInstance();
@@ -79,10 +82,15 @@ class Config {
     } else {
       this.compareBibleList = prefs.getStringList("compareBibleList");
     }
-    if (prefs.getInt("quickAction") == null) {
-      prefs.setInt("quickAction", this.quickAction);
+    if (prefs.getInt("favouriteAction") == null) {
+      prefs.setInt("favouriteAction", this.favouriteAction);
     } else {
-      this.quickAction = prefs.getInt("quickAction");
+      this.favouriteAction = prefs.getInt("favouriteAction");
+    }
+    if (prefs.getInt("instantAction") == null) {
+      prefs.setInt("instantAction", this.instantAction);
+    } else {
+      this.instantAction = prefs.getInt("instantAction");
     }
 
     return true;
@@ -111,7 +119,8 @@ class Config {
     }
     if (prefs.getDouble("morphologyVersion") != null) this.morphologyVersion = prefs.getDouble("morphologyVersion");
     if (prefs.getStringList("compareBibleList") != null) this.compareBibleList = prefs.getStringList("compareBibleList");
-    if (prefs.getInt("quickAction") != null) this.quickAction = prefs.getInt("quickAction");
+    if (prefs.getInt("favouriteAction") != null) this.favouriteAction = prefs.getInt("favouriteAction");
+    if (prefs.getInt("instantAction") != null) this.instantAction = prefs.getInt("instantAction");
 
     return true;
   }
@@ -136,7 +145,10 @@ class Config {
       case "compareBibleList":
         await prefs.setStringList(feature, newSetting as List<String>);
         break;
-      case "quickAction":
+      case "favouriteAction":
+        await prefs.setInt(feature, newSetting as int);
+        break;
+      case "instantAction":
         await prefs.setInt(feature, newSetting as int);
         break;
     }

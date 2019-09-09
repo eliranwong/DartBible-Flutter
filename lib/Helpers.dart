@@ -1,6 +1,12 @@
-import 'package:flutter/services.dart' show rootBundle;
+import 'package:flutter/services.dart' show rootBundle, ByteData;
+import 'package:flutter/material.dart';
 import 'dart:convert';
 import 'package:unique_bible_app/config.dart';
+
+// work with sqLite files
+import 'dart:io';
+import 'package:path/path.dart';
+import 'package:sqflite/sqflite.dart';
 
 class FileIOHelper {
 
@@ -41,6 +47,91 @@ class RegexHelper {
       replacedText = this.replaceAllSmart(replacedText, RegExp(search, multiLine: multiLine, caseSensitive: caseSensitive, unicode: unicode, dotAll: dotAll), replace);
     }
     return replacedText;
+  }
+
+}
+
+class SqliteHelper {
+
+  final Config config;
+
+  SqliteHelper(this.config);
+
+  initMorphologyDb() async {
+    // Construct the path to the app's writable database file:
+    var dbDir = await getDatabasesPath();
+    var dbPath = join(dbDir, "morphology.sqlite");
+
+    double latestMorphologyVersion = 0.2;
+
+    // check if database had been setup in first launch
+    if (this.config.morphologyVersion < latestMorphologyVersion) {
+      // Delete any existing database:
+      await deleteDatabase(dbPath);
+
+      // Create the writable database file from the bundled demo database file:
+      ByteData data = await rootBundle.load("assets/morphology.sqlite");
+      List<int> bytes = data.buffer.asUint8List(data.offsetInBytes, data.lengthInBytes);
+      await File(dbPath).writeAsBytes(bytes);
+
+      // save config to avoid copying the database file again
+      this.config.morphologyVersion = latestMorphologyVersion;
+      this.config.save("morphologyVersion", latestMorphologyVersion);
+    }
+
+    var db = await openDatabase(dbPath);
+    return db;
+  }
+
+}
+
+class InterlinearHelper {
+
+  TextStyle _verseFontGreek, _activeVerseFontGreek, _verseFontHebrew, _activeVerseFontHebrew, _interlinearStyleDim, _interlinearStyle;
+
+  InterlinearHelper(Map verseTextStyle) {
+    _verseFontGreek = verseTextStyle["verseFontGreek"];
+    _activeVerseFontGreek = verseTextStyle["activeVerseFontGreek"];
+    _verseFontHebrew = verseTextStyle["verseFontHebrew"];
+    _activeVerseFontHebrew = verseTextStyle["activeVerseFontHebrew"];
+    _interlinearStyleDim = verseTextStyle["interlinearStyleDim"];
+    _interlinearStyle = verseTextStyle["interlinearStyle"];
+  }
+
+  List<TextSpan> getInterlinearSpan(String text, List bcvList, [bool isActive]) {
+    bool isHebrewBible = (bcvList[0] < 40);
+
+    var originalStyle;
+    if ((isActive == null) || (!isActive)) {
+      originalStyle = _verseFontGreek;
+      if (isHebrewBible) originalStyle = _verseFontHebrew;
+    } else {
+      originalStyle = _activeVerseFontGreek;
+      if (isHebrewBible) originalStyle = _activeVerseFontHebrew;
+    }
+    List<TextSpan> words = <TextSpan>[];
+    List<String> wordList = text.split("｜");
+    for (var word in wordList) {
+      if (word.startsWith("＠")) {
+        if (isHebrewBible) {
+          List<String> glossList = word.substring(1).split(" ");
+          for (var gloss in glossList) {
+            if ((gloss.startsWith("[")) || (gloss.endsWith("]"))) {
+              gloss = gloss.replaceAll(RegExp(r"[\[\]\+\.]"), "");
+              words.add(TextSpan(text: "$gloss ", style: _interlinearStyleDim));
+            } else {
+              words.add(TextSpan(text: "$gloss ", style: _interlinearStyle));
+            }
+          }
+        } else {
+          words.add(TextSpan(text: word.substring(1), style: _interlinearStyle));
+        }
+      } else {
+        words.add(TextSpan(text: word, style: originalStyle));
+      }
+    }
+
+    return words;
   }
 
 }

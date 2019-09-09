@@ -1,7 +1,7 @@
 // Copyright 2019 Eliran Wong. All rights reserved.
 
 //import 'dart:as
-import 'package:flutter/services.dart' show Clipboard, ClipboardData, rootBundle, ByteData;
+import 'package:flutter/services.dart' show Clipboard, ClipboardData;
 import 'package:flutter/material.dart';
 import 'package:share/share.dart';
 import 'package:indexed_list_view/indexed_list_view.dart';
@@ -13,11 +13,9 @@ import 'package:unique_bible_app/BibleSettings.dart';
 import 'package:unique_bible_app/BibleParser.dart';
 import 'package:unique_bible_app/DialogAction.dart';
 import 'package:unique_bible_app/Morphology.dart';
-
-// work with sqLite files
-import 'dart:io';
-import 'package:path/path.dart';
+import 'package:unique_bible_app/Helpers.dart';
 import 'package:sqflite/sqflite.dart';
+
 
 void main() => runApp(MyApp());
 
@@ -25,6 +23,7 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
+      //theme: ThemeData(brightness: Brightness.dark,),
       title: 'Unique Bible App',
       home: UniqueBible(),
     );
@@ -109,7 +108,7 @@ class UniqueBibleState extends State<UniqueBible> {
       this.bibles.bible2.loadData();
 
       this.bibles.iBible = Bible("OHGBi", this.abbreviations);
-      await this.bibles.iBible.loadData();
+      this.bibles.iBible.loadData();
 
       // make sure these function runs on startup only
       _startup = true;
@@ -142,88 +141,55 @@ class UniqueBibleState extends State<UniqueBible> {
         _currentActiveVerse = newBcvList;
         updateHistoryActiveVerse();
       });
-      popUpInterlinear(context, bcvList);
+      if (this.config.instantAction != -1) {
+        List instantActions = [showTip, showInterlinear];
+        instantActions[this.config.instantAction](context, bcvList);
+      }
     }
   }
 
-  popUpTip(BuildContext context, List bcvList) {
+  showTip(BuildContext context, List bcvList) {
     String verseReference = BibleParser(this.abbreviations).bcvToVerseReference(bcvList);
     String message = "'$verseReference' ${this.interfaceMessage[this.abbreviations][0]}";
     final snackBar = SnackBar(content: Text(message));
     Scaffold.of(context).showSnackBar(snackBar);
   }
 
-  Future popUpInterlinear(BuildContext context, List bcvList) async {
-    String verseReference = BibleParser(this.abbreviations).bcvToVerseReference(bcvList);
+  Future showInterlinear(BuildContext context, List bcvList) async {
+    if (this.bibles?.iBible?.data != null) {
+      String verseReference = BibleParser(this.abbreviations).bcvToVerseReference(bcvList);
 
-    var verseDirection = TextDirection.ltr;
-    var originalWordStyle = _verseFontGreek;
-    if (bcvList[0] < 40) {
-      verseDirection = TextDirection.rtl;
-      originalWordStyle = _verseFontHebrew;
-    }
+      var verseDirection = TextDirection.ltr;
+      if (bcvList[0] < 40) verseDirection = TextDirection.rtl;
 
-    List<TextSpan> textContent = getInterlinearSpan(bcvList);
+      String verseText = this.bibles.iBible.openSingleVerse(bcvList);
+      List<TextSpan> textContent = InterlinearHelper(this.config.verseTextStyle).getInterlinearSpan(verseText, bcvList)
+        ..insert(0, TextSpan(text: " "))
+        ..insert(0, TextSpan(text: "$verseReference", style: _highlightStyle))
+        ..insert(0, TextSpan(text: " "))
+      ;
 
-    final selected = await showModalBottomSheet(context: context, builder: (BuildContext context) {
-      return Container(
-        child: Padding(
-          padding: const EdgeInsets.all(10.0),
-          child: ListTile(
-            title: RichText(
-              text: TextSpan(
-                //style: DefaultTextStyle.of(context).style,
-                children: textContent,
+      showModalBottomSheet<void>(context: context, builder: (BuildContext context) {
+        return Container(
+          child: Padding(
+            padding: const EdgeInsets.all(10.0),
+            child: ListTile(
+              title: RichText(
+                text: TextSpan(
+                  //style: DefaultTextStyle.of(context).style,
+                  children: textContent,
+                ),
+                textDirection: verseDirection,
               ),
-              textDirection: verseDirection,
+              //subtitle: Text(verseReference, style: _highlightStyle),
+              onTap: () {
+                _loadInterlinearView(context, bcvList);
+              },
             ),
-            subtitle: Text(verseReference, style: _highlightStyle),
-            onTap: () {
-              Navigator.pop(context, bcvList);
-            },
           ),
-        ),
-      );
-    });
-    if (selected != null) _loadInterlinearView(context, selected);
-  }
-
-  List<TextSpan> getInterlinearSpan(List bcvList) {
-    String text = this.bibles.iBible.openSingleVerse(bcvList);
-    bool isHebrewBible = (bcvList[0] < 40);
-
-    var originalStyle = _verseFontGreek;
-    if (isHebrewBible) originalStyle = _verseFontHebrew;
-    List<TextSpan> words = <TextSpan>[];
-    List<String> wordList = text.split("｜");
-    for (var word in wordList) {
-      if (word.startsWith("＠")) {
-        if (isHebrewBible) {
-          List<String> glossList = word.substring(1).split(" ");
-          for (var gloss in glossList) {
-            if ((gloss.startsWith("[")) || (gloss.endsWith("]"))) {
-              gloss = gloss.replaceAll(RegExp(r"[\[\]\+\.]"), "");
-              words.add(TextSpan(text: "$gloss ", style: _interlinearStyleDim));
-            } else {
-              words.add(TextSpan(text: "$gloss ", style: _interlinearStyle));
-            }
-          }
-        } else {
-          words.add(TextSpan(text: word.substring(1), style: _interlinearStyle));
-        }
-      } else {
-        words.add(TextSpan(text: word, style: originalStyle));
-      }
+        );
+      });
     }
-    /*words = text.split("｜").map((i) {
-      if (i.startsWith("＠")) {
-        return TextSpan(text: i.substring(1), style: _interlinearStyle);
-      }
-      return TextSpan(text: i, style: originalStyle);
-    }).toList();
-     */
-
-    return words;
   }
 
   Future _newVerseSelected(List selected) async {
@@ -332,11 +298,8 @@ class UniqueBibleState extends State<UniqueBible> {
           builder: (context) => BibleSettings(
             this.bibles.bible1,
             _currentActiveVerse,
-            this.config.fontSize,
-            this.abbreviations,
-            this.config.compareBibleList,
             this.interfaceDialog,
-            this.config.quickAction,
+            this.config,
           )),
     );
     if (newBibleSettings != null) {
@@ -351,9 +314,12 @@ class UniqueBibleState extends State<UniqueBible> {
       // Bible comparison list
       this.config.compareBibleList = newBibleSettings.compareBibleList;
       this.config.save("compareBibleList", newBibleSettings.compareBibleList);
+      // Instant action
+      this.config.instantAction = newBibleSettings.instantAction;
+      this.config.save("instantAction", newBibleSettings.instantAction);
       // Quick action
-      this.config.quickAction = newBibleSettings.quickAction;
-      this.config.save("quickAction", newBibleSettings.quickAction);
+      this.config.favouriteAction = newBibleSettings.favouriteAction;
+      this.config.save("favouriteAction", newBibleSettings.favouriteAction);
       // Newly selected verse
       var newVerse = [[newBibleSettings.book, newBibleSettings.chapter, newBibleSettings.verse,], "", newBibleSettings.module];
       _newVerseSelected(newVerse);
@@ -400,9 +366,9 @@ class UniqueBibleState extends State<UniqueBible> {
     final List<Map> morphology = await getMorphology(bcvList, table);
     final selected = await Navigator.push(
       context,
-      MaterialPageRoute(builder: (context) => InterlinearView(morphology, true, this.abbreviations, this.config.fontSize, table)),
+      MaterialPageRoute(builder: (context) => InterlinearView(morphology, true, table, this.config)),
     );
-    print(selected);
+    _newVerseSelected([selected, "", this.bibles.bible1.module]);
   }
 
   Future _loadMorphologyView(BuildContext context, List bcvList, [String module]) async {
@@ -411,9 +377,9 @@ class UniqueBibleState extends State<UniqueBible> {
     final List<Map> morphology = await getMorphology(bcvList, table);
     final selected = await Navigator.push(
       context,
-      MaterialPageRoute(builder: (context) => MorphologyView(morphology, true, this.abbreviations, this.config.fontSize, table)),
+      MaterialPageRoute(builder: (context) => MorphologyView(morphology, true, table, this.config)),
     );
-    print(selected);
+    _newVerseSelected([selected, "", this.bibles.bible1.module]);
   }
 
   bool _toggleParallelBibles() {
@@ -472,6 +438,7 @@ class UniqueBibleState extends State<UniqueBible> {
       "activeVerseFontHebrew": _activeVerseFontHebrew,
       "activeVerseFontGreek": _activeVerseFontGreek,
       "interlinearStyle": _interlinearStyle,
+      "interlinearStyleDim": _interlinearStyleDim,
     };
     // update App bar title
     if (this.bibles?.bible1?.bookList != null) {
@@ -551,14 +518,17 @@ class UniqueBibleState extends State<UniqueBible> {
           ),
         ],
       ),
-      body: SwipeDetector(
-        child: _buildVerses(context),
-        onSwipeLeft: () {
-          goNextChapter();
-        },
-        onSwipeRight: () {
-          goPreviousChapter();
-        },
+      body: Container(
+        color: Colors.white,
+        child: SwipeDetector(
+          child: _buildVerses(context),
+          onSwipeLeft: () {
+            goNextChapter();
+          },
+          onSwipeRight: () {
+            goPreviousChapter();
+          },
+        ),
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () {
@@ -764,6 +734,7 @@ class UniqueBibleState extends State<UniqueBible> {
     if ((i >= 0) && (i < _data.length)) {
       // assign text style here
       var verseData = _data[i];
+
       if ((this.config.hebrewBibles.contains(verseData[2])) && (verseData[0][0] < 40)) {
         verseFont = _verseFontHebrew;
         verseActiveFont = _activeVerseFontHebrew;
@@ -773,17 +744,23 @@ class UniqueBibleState extends State<UniqueBible> {
         verseActiveFont = _activeVerseFontGreek;
       }
       (_parallelBibles) ? verseNo = "[${verseData[0][2]}] [${verseData[2]}] " : verseNo = "[${verseData[0][2]}] ";
+
       verseContent = verseData[1];
+      List<TextSpan> wordSpans;
+
       // check if it is an active verse or not
       if (verseData[0][2] == _currentActiveVerse[2]) {
+        if (this.config.interlinearBibles.contains(verseData[2])) {
+          List<TextSpan> interlinearSpans = InterlinearHelper(this.config.verseTextStyle).getInterlinearSpan(verseContent, verseData[0], true);
+          wordSpans = <TextSpan>[TextSpan(text: verseNo, style: _activeVerseNoFont), ...interlinearSpans];
+        } else {
+          wordSpans = <TextSpan>[TextSpan(text: verseNo, style: _activeVerseNoFont), TextSpan(text: verseContent, style: verseActiveFont)];
+        }
         return ListTile(
           title: RichText(
             text: TextSpan(
               style: DefaultTextStyle.of(context).style,
-              children: <TextSpan>[
-                TextSpan(text: verseNo, style: _activeVerseNoFont),
-                TextSpan(text: verseContent, style: verseActiveFont),
-              ],
+              children: wordSpans,
             ),
             textDirection: verseDirection,
           ),
@@ -796,14 +773,17 @@ class UniqueBibleState extends State<UniqueBible> {
           },
         );
       } else {
+        if (this.config.interlinearBibles.contains(verseData[2])) {
+          List<TextSpan> interlinearSpans = InterlinearHelper(this.config.verseTextStyle).getInterlinearSpan(verseContent, verseData[0]);
+          wordSpans = <TextSpan>[TextSpan(text: verseNo, style: _activeVerseNoFont), ...interlinearSpans];
+        } else {
+          wordSpans = <TextSpan>[TextSpan(text: verseNo, style: _activeVerseNoFont), TextSpan(text: verseContent, style: verseFont)];
+        }
         return ListTile(
           title: RichText(
             text: TextSpan(
               style: DefaultTextStyle.of(context).style,
-              children: <TextSpan>[
-                TextSpan(text: verseNo, style: _verseNoFont),
-                TextSpan(text: verseContent, style: verseFont),
-              ],
+              children: wordSpans,
             ),
             textDirection: verseDirection,
           ),
@@ -837,9 +817,9 @@ class UniqueBibleState extends State<UniqueBible> {
   }
 
   void _tapActiveVerse(context, bcvList) {
-    if (this.config.quickAction != -1) {
-      List activeVerseActions = [addToFavourite, _loadXRef, _loadCompare, _loadInterlinearView, _loadMorphologyView];
-      activeVerseActions[this.config.quickAction](context, bcvList);
+    if (this.config.favouriteAction != -1) {
+      List favouriteActions = [addToFavourite, _loadXRef, _loadCompare, _loadInterlinearView, _loadMorphologyView];
+      favouriteActions[this.config.favouriteAction](context, bcvList);
     }
   }
 
@@ -1075,36 +1055,11 @@ class UniqueBibleState extends State<UniqueBible> {
     });
   }
 
-  initMorphologyDb() async {
-    // Construct the path to the app's writable database file:
-    var dbDir = await getDatabasesPath();
-    var dbPath = join(dbDir, "morphology.sqlite");
-
-    double latestMorphologyVersion = 0.2;
-
-    // check if database had been setup in first launch
-    if (this.config.morphologyVersion < latestMorphologyVersion) {
-      // Delete any existing database:
-      await deleteDatabase(dbPath);
-
-      // Create the writable database file from the bundled demo database file:
-      ByteData data = await rootBundle.load("assets/morphology.sqlite");
-      List<int> bytes = data.buffer.asUint8List(data.offsetInBytes, data.lengthInBytes);
-      await File(dbPath).writeAsBytes(bytes);
-
-      // save config to avoid copying the database file again
-      this.config.morphologyVersion = latestMorphologyVersion;
-      this.config.save("morphologyVersion", latestMorphologyVersion);
-    }
-
-    var db = await openDatabase(dbPath);
-    return db;
-  }
-
   Future getMorphology(List bcvList, String module) async {
-    final Database db = await initMorphologyDb();
+    final Database db = await SqliteHelper(this.config).initMorphologyDb();
     var statement = "SELECT * FROM $module WHERE Book = ? AND Chapter = ? AND Verse = ?";
     List<Map> morphology = await db.rawQuery(statement, bcvList);
+    db.close();
     return morphology;
   }
 

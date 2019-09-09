@@ -11,10 +11,16 @@ class BibleSearchDelegate extends SearchDelegate<List> {
   final _bible;
   final _interfaceDialog;
   String abbreviations;
+  Map interfaceBibleSearch = {
+    "ENG": ["is not properly formatted for search. Please correct and try again."],
+    "TC": ["組成的格式不正確，請更正然後再嘗試"],
+    "SC": ["组成的格式不正确，请更正然后再尝试"],
+  };
 
   var _verseNoFont, _verseFont, _verseFontHebrew, _verseFontGreek;
   var _activeVerseFont, _activeVerseFontHebrew, _activeVerseFontGreek;
-  var hebrewBibles, greekBibles;
+  var hebrewBibles, greekBibles, interlinearBibles;
+  var verseTextStyle;
   List _data = [];
 
   BibleSearchDelegate(BuildContext context, this._bible, this._interfaceDialog, Config config, this._data) {
@@ -29,37 +35,46 @@ class BibleSearchDelegate extends SearchDelegate<List> {
     this.abbreviations = config.abbreviations;
     this.hebrewBibles = config.hebrewBibles;
     this.greekBibles = config.greekBibles;
+    this.interlinearBibles = config.interlinearBibles;
+    this.verseTextStyle = config.verseTextStyle;
   }
 
-  List _fetch(query) {
-    List<dynamic> fetchResults =[];
+  // This is the function which does the search.
+  List _fetch(BuildContext context, String query) {
+    List<dynamic> fetchResults = [];
 
-    // search in a book or books, e.g. John:::Jesus Christ or Matthew, John:::Jesus Christ
-    if (query.contains(":::")) {
-      List queryList = query.split(":::");
-      if (queryList.length >= 2) {
-        if (queryList[0].isNotEmpty) {
-          var bookList = queryList[0].split(",");
-          var bookString = "";
-          for (var book in bookList) {
-            bookString += "${book.trim()} 0; ";
-          }
-          var bookReferenceList = BibleParser(this.abbreviations).extractAllReferences(bookString);
-          if (bookReferenceList.isNotEmpty) {
-            String queryText = queryList.sublist(1).join(":::");
-            if (queryText.isNotEmpty) {
-              return _bible.searchBooks(queryText, bookReferenceList);
+    try {
+      // search in a book or books, e.g. John:::Jesus Christ or Matthew, John:::Jesus Christ
+      if (query.contains(":::")) {
+        List queryList = query.split(":::");
+        if (queryList.length >= 2) {
+          if (queryList[0].isNotEmpty) {
+            var bookList = queryList[0].split(",");
+            var bookString = "";
+            for (var book in bookList) {
+              bookString += "${book.trim()} 0; ";
+            }
+            var bookReferenceList = BibleParser(this.abbreviations).extractAllReferences(bookString);
+            if (bookReferenceList.isNotEmpty) {
+              String queryText = queryList.sublist(1).join(":::");
+              if (queryText.isNotEmpty) {
+                return _bible.searchBooks(queryText, bookReferenceList);
+              }
             }
           }
         }
       }
+
+      // check if the query contains verse references or not.
+      var verseReferenceList = BibleParser(this.abbreviations).extractAllReferences(query);
+      (verseReferenceList.isEmpty) ? fetchResults = _bible.search(query) : fetchResults = _bible.openMultipleVerses(verseReferenceList);
+    } catch (e) {
+      fetchResults = [[[], "['$query' ${interfaceBibleSearch[this.abbreviations]}", ""]];
     }
 
-    // check if the query contains verse references or not.
-    var verseReferenceList = BibleParser(this.abbreviations).extractAllReferences(query);
-    (verseReferenceList.isEmpty) ? fetchResults = _bible.search(query) : fetchResults = _bible.openMultipleVerses(verseReferenceList);
     return fetchResults;
   }
+
 /*
   @override
   ThemeData appBarTheme(BuildContext context) {
@@ -69,6 +84,7 @@ class BibleSearchDelegate extends SearchDelegate<List> {
     return theme;
   }
 */
+
   @override
   List<Widget> buildActions(BuildContext context) {
     return [
@@ -91,12 +107,15 @@ class BibleSearchDelegate extends SearchDelegate<List> {
     );
   }
 
+  // Function triggered when "ENTER" is pressed.
   @override
   Widget buildResults(BuildContext context) {
-    if (query.isNotEmpty) _data = _fetch(query);
+    if (query.isNotEmpty) _data = _fetch(context, query);
     return _buildVerses(context);
   }
 
+  // Results are displayed if _data is not empty.
+  // Display of results changes as users type something in the search field.
   @override
   Widget buildSuggestions(BuildContext context) {
     return _buildVerses(context);
@@ -128,18 +147,21 @@ class BibleSearchDelegate extends SearchDelegate<List> {
     );
   }
 
+  // This function gives RichText widget with search items highlighted.
   Widget _buildVerseText(BuildContext context, List verseData) {
     var verseDirection = TextDirection.ltr;
     var verseFont = _verseFont;
     var activeVerseFont = _activeVerseFont;
     var versePrefix = "";
     var verseContent = "";
+    var verseModule = verseData[2];
+    var verseBcv = verseData[0];
 
-    if ((hebrewBibles.contains(verseData[2])) && (verseData[0][0] < 40)) {
+    if ((hebrewBibles.contains(verseModule)) && (verseBcv[0] < 40)) {
       verseFont = _verseFontHebrew;
       activeVerseFont = _activeVerseFontHebrew;
       verseDirection = TextDirection.rtl;
-    } else if (greekBibles.contains(verseData[2])) {
+    } else if (greekBibles.contains(verseModule)) {
       verseFont = _verseFontGreek;
       activeVerseFont = _activeVerseFontGreek;
     }
@@ -150,24 +172,31 @@ class BibleSearchDelegate extends SearchDelegate<List> {
     if (tempList.length > 1) verseContent = tempList.sublist(1).join("]");
 
     List<TextSpan> textContent = [TextSpan(text: versePrefix, style: _verseNoFont)];
-    if (query.isEmpty) {
-      textContent.add(TextSpan(text: verseContent, style: verseFont));
-    } else {
+    try {
       String searchEntry = query;
       if (query.contains(":::")) searchEntry = query.split(":::").sublist(1).join(":::");
-      var regex = RegexHelper();
-      regex.searchReplace = [
-        ["($searchEntry)", r'％\1％'],
-      ];
-      verseContent = regex.doSearchReplace(verseContent);
-      List<String> textList = verseContent.split("％");
-      for (var text in textList) {
-        if (RegExp(searchEntry).hasMatch(text)) {
-          textContent.add(TextSpan(text: text, style: activeVerseFont));
-        } else {
-          textContent.add(TextSpan(text: text, style: verseFont));
+      if (this.interlinearBibles.contains(verseModule)) {
+        List<TextSpan> interlinearSpan = InterlinearHelper(this.verseTextStyle).getInterlinearSpan(verseContent, verseBcv);
+        textContent = interlinearSpan..insert(0, TextSpan(text: versePrefix, style: _verseNoFont));
+      } else if (searchEntry.isEmpty) {
+        textContent.add(TextSpan(text: verseContent, style: verseFont));
+      } else {
+        var regex = RegexHelper();
+        regex.searchReplace = [
+          ["($searchEntry)", r'％\1％'],
+        ];
+        verseContent = regex.doSearchReplace(verseContent);
+        List<String> textList = verseContent.split("％");
+        for (var text in textList) {
+          if (RegExp(searchEntry).hasMatch(text)) {
+            textContent.add(TextSpan(text: text, style: activeVerseFont));
+          } else {
+            textContent.add(TextSpan(text: text, style: verseFont));
+          }
         }
       }
+    } catch (e) {
+      textContent.add(TextSpan(text: verseContent, style: verseFont));
     }
 
     return RichText(
