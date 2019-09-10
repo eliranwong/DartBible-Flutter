@@ -92,6 +92,10 @@ class UniqueBibleState extends State<UniqueBible> {
     this.config = Config();
   }
 
+  bool isAllBiblesReady() {
+    return ((this.bibles?.bible1?.data != null) && (this.bibles?.bible2?.data != null) && (this.bibles?.bible3?.data != null));
+  }
+
   Future _setup() async {
     if (!_startup) {
       await this.config.setDefault();
@@ -362,25 +366,29 @@ class UniqueBibleState extends State<UniqueBible> {
   }
 
   Future _loadInterlinearView(BuildContext context, List bcvList, [String module]) async {
-    String table;
-    (module == null) ? table = "OHGB" : table = module;
-    final List<Map> morphology = await getMorphology(bcvList, table);
-    final selected = await Navigator.push(
-      context,
-      MaterialPageRoute(builder: (context) => InterlinearView(morphology, true, table, this.config, this.bibles)),
-    );
-    if (selected != null) _newVerseSelected(selected);
+    if (isAllBiblesReady()) {
+      String table;
+      (module == null) ? table = "OHGB" : table = module;
+      final List<Map> morphology = await getMorphology(bcvList, table);
+      final selected = await Navigator.push(
+        context,
+        MaterialPageRoute(builder: (context) => InterlinearView(morphology, true, table, this.config, this.bibles)),
+      );
+      if (selected != null) _newVerseSelected(selected);
+    }
   }
 
   Future _loadMorphologyView(BuildContext context, List bcvList, [String module]) async {
-    String table;
-    (module == null) ? table = "OHGB" : table = module;
-    final List<Map> morphology = await getMorphology(bcvList, table);
-    final selected = await Navigator.push(
-      context,
-      MaterialPageRoute(builder: (context) => MorphologyView(morphology, true, table, this.config, this.bibles)),
-    );
-    if (selected != null) _newVerseSelected(selected);
+    if (isAllBiblesReady()) {
+      String table;
+      (module == null) ? table = "OHGB" : table = module;
+      final List<Map> morphology = await getMorphology(bcvList, table);
+      final selected = await Navigator.push(
+        context,
+        MaterialPageRoute(builder: (context) => MorphologyView(morphology, true, table, this.config, this.bibles)),
+      );
+      if (selected != null) _newVerseSelected(selected);
+    }
   }
 
   bool _toggleParallelBibles() {
