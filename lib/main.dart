@@ -163,7 +163,7 @@ class UniqueBibleState extends State<UniqueBible> {
       if (bcvList[0] < 40) verseDirection = TextDirection.rtl;
 
       String verseText = this.bibles.iBible.openSingleVerse(bcvList);
-      List<TextSpan> textContent = InterlinearHelper(this.config.verseTextStyle).getInterlinearSpan(verseText, bcvList)
+      List<TextSpan> textContent = InterlinearHelper(this.config.verseTextStyle).getInterlinearSpan(verseText, bcvList[0])
         ..insert(0, TextSpan(text: " "))
         ..insert(0, TextSpan(text: "$verseReference", style: _highlightStyle))
         ..insert(0, TextSpan(text: " "))
@@ -197,6 +197,7 @@ class UniqueBibleState extends State<UniqueBible> {
 
     List selectedBcvList = List<int>.from(selected[0]);
     String selectedBible = selected[2];
+    if (selectedBible.isEmpty) selectedBible = this.bibles.bible1.module;
 
     if (selectedBcvList != null && selectedBcvList.isNotEmpty) {
       bool sameVerse = (selectedBcvList.join(".") == _currentActiveVerse.join("."));
@@ -366,9 +367,9 @@ class UniqueBibleState extends State<UniqueBible> {
     final List<Map> morphology = await getMorphology(bcvList, table);
     final selected = await Navigator.push(
       context,
-      MaterialPageRoute(builder: (context) => InterlinearView(morphology, true, table, this.config)),
+      MaterialPageRoute(builder: (context) => InterlinearView(morphology, true, table, this.config, this.bibles)),
     );
-    _newVerseSelected([selected, "", this.bibles.bible1.module]);
+    if (selected != null) _newVerseSelected(selected);
   }
 
   Future _loadMorphologyView(BuildContext context, List bcvList, [String module]) async {
@@ -377,9 +378,9 @@ class UniqueBibleState extends State<UniqueBible> {
     final List<Map> morphology = await getMorphology(bcvList, table);
     final selected = await Navigator.push(
       context,
-      MaterialPageRoute(builder: (context) => MorphologyView(morphology, true, table, this.config)),
+      MaterialPageRoute(builder: (context) => MorphologyView(morphology, true, table, this.config, this.bibles)),
     );
-    _newVerseSelected([selected, "", this.bibles.bible1.module]);
+    if (selected != null) _newVerseSelected(selected);
   }
 
   bool _toggleParallelBibles() {
@@ -429,6 +430,7 @@ class UniqueBibleState extends State<UniqueBible> {
     _interlinearStyleDim = TextStyle(fontSize: (this.config.fontSize - 3), color: Colors.grey, fontStyle: FontStyle.italic);
     // set the same font settings, which is passed to search delegate
     this.config.verseTextStyle = {
+      "HebrewFont": TextStyle(fontFamily: "Ezra SIL"),
       "verseNoFont": _verseNoFont,
       "verseFont": _verseFont,
       "verseFontHebrew": _verseFontHebrew,
@@ -530,6 +532,19 @@ class UniqueBibleState extends State<UniqueBible> {
           },
         ),
       ),
+      bottomNavigationBar: BottomAppBar(
+        color: Colors.white,
+        child: IconButton(
+          tooltip: this.interfaceApp[this.abbreviations][3],
+          icon: const Icon(Icons.layers),
+          onPressed: () {
+            setState(() {
+              showInterlinear(context, _currentActiveVerse);
+            });
+          },
+        ),
+      ),
+      floatingActionButtonLocation: FloatingActionButtonLocation.endDocked,
       floatingActionButton: FloatingActionButton(
         onPressed: () {
           setState(() {
@@ -751,7 +766,7 @@ class UniqueBibleState extends State<UniqueBible> {
       // check if it is an active verse or not
       if (verseData[0][2] == _currentActiveVerse[2]) {
         if (this.config.interlinearBibles.contains(verseData[2])) {
-          List<TextSpan> interlinearSpans = InterlinearHelper(this.config.verseTextStyle).getInterlinearSpan(verseContent, verseData[0], true);
+          List<TextSpan> interlinearSpans = InterlinearHelper(this.config.verseTextStyle).getInterlinearSpan(verseContent, verseData[0][0], true);
           wordSpans = <TextSpan>[TextSpan(text: verseNo, style: _activeVerseNoFont), ...interlinearSpans];
         } else {
           wordSpans = <TextSpan>[TextSpan(text: verseNo, style: _activeVerseNoFont), TextSpan(text: verseContent, style: verseActiveFont)];

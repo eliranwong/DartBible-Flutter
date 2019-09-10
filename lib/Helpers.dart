@@ -98,8 +98,8 @@ class InterlinearHelper {
     _interlinearStyle = verseTextStyle["interlinearStyle"];
   }
 
-  List<TextSpan> getInterlinearSpan(String text, List bcvList, [bool isActive]) {
-    bool isHebrewBible = (bcvList[0] < 40);
+  List<TextSpan> getInterlinearSpan(String text, int book, [bool isActive]) {
+    bool isHebrewBible = (book < 40);
 
     var originalStyle;
     if ((isActive == null) || (!isActive)) {

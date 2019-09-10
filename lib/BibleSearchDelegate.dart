@@ -155,9 +155,8 @@ class BibleSearchDelegate extends SearchDelegate<List> {
     var versePrefix = "";
     var verseContent = "";
     var verseModule = verseData[2];
-    var verseBcv = verseData[0];
 
-    if ((hebrewBibles.contains(verseModule)) && (verseBcv[0] < 40)) {
+    if ((hebrewBibles.contains(verseModule)) && (verseData[0][0] < 40)) {
       verseFont = _verseFontHebrew;
       activeVerseFont = _activeVerseFontHebrew;
       verseDirection = TextDirection.rtl;
@@ -176,7 +175,7 @@ class BibleSearchDelegate extends SearchDelegate<List> {
       String searchEntry = query;
       if (query.contains(":::")) searchEntry = query.split(":::").sublist(1).join(":::");
       if (this.interlinearBibles.contains(verseModule)) {
-        List<TextSpan> interlinearSpan = InterlinearHelper(this.verseTextStyle).getInterlinearSpan(verseContent, verseBcv);
+        List<TextSpan> interlinearSpan = InterlinearHelper(this.verseTextStyle).getInterlinearSpan(verseContent, verseData[0][0]);
         textContent = interlinearSpan..insert(0, TextSpan(text: versePrefix, style: _verseNoFont));
       } else if (searchEntry.isEmpty) {
         textContent.add(TextSpan(text: verseContent, style: verseFont));
