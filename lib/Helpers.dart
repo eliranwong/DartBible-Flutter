@@ -83,6 +83,32 @@ class SqliteHelper {
     return db;
   }
 
+  initToolsDb() async {
+    // Construct the path to the app's writable database file:
+    var dbDir = await getDatabasesPath();
+    var dbPath = join(dbDir, "tools.sqlite");
+
+    double latestToolsVersion = 0.1;
+
+    // check if database had been setup in first launch
+    if (this.config.toolsVersion < latestToolsVersion) {
+      // Delete any existing database:
+      await deleteDatabase(dbPath);
+
+      // Create the writable database file from the bundled demo database file:
+      ByteData data = await rootBundle.load("assets/tools.sqlite");
+      List<int> bytes = data.buffer.asUint8List(data.offsetInBytes, data.lengthInBytes);
+      await File(dbPath).writeAsBytes(bytes);
+
+      // save config to avoid copying the database file again
+      this.config.toolsVersion = latestToolsVersion;
+      this.config.save("toolsVersion", latestToolsVersion);
+    }
+
+    var db = await openDatabase(dbPath);
+    return db;
+  }
+
 }
 
 class InterlinearHelper {

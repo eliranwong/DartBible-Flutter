@@ -12,14 +12,14 @@ class Config {
 
   Map verseTextStyle;
 
-  //List<String> allBibleList = ["ABG", "ASV", "BBE", "BSB", "CUV", "CUVs", "ERV", "ISV", "KJV", "LEB", "LXX1", "LXX2", "LXXE", "LXXk", "NET", "OHGB", "OHGBi", "T4T", "ULT", "UST", "WEB"];
+  List<String> allBibleList = ["ABG", "ASV", "BBE", "BSB", "CUV", "CUVs", "ERV", "ISV", "KJV", "LEB", "LXX1", "LXX2", "LXXE", "LXXk", "NET", "OHGB", "OHGBi", "T4T", "ULT", "UST", "WEB"];
   // the following line is written for personal use only [not for public]
-  List<String> allBibleList = ["ABG", "ASV", "BBE", "BSB", "CCB", "CEB", "CEV", "CUV", "CUVs", "CSB", "ESV", "ERV", "EXP", "ISV", "KJV", "LEB", "LXX1", "LXX2", "LXXE", "LXXk", "NASB", "NET", "NIV", "NLT", "NRSV", "OHGB", "OHGBi", "T4T", "ULT", "UST", "WEB"];
+  //List<String> allBibleList = ["ABG", "ASV", "BBE", "BSB", "CCB", "CEB", "CEV", "CSB", "CUV", "CUVs", "ERV", "ESV", "EXP", "ISV", "KJV", "LEB", "LXX1", "LXX2", "LXXE", "LXXk", "NASB", "NET", "NIV", "NLT", "NRSV", "OHGB", "OHGBi", "T4T", "ULT", "UST", "WEB"];
 
   // variables linked with shared preferences
-  //List<String> compareBibleList = ["ASV", "BSB", "ERV", "ISV", "KJV", "LEB", "LXXk", "NET", "OHGB", "WEB"];
+  List<String> compareBibleList = ["ASV", "BSB", "ERV", "ISV", "KJV", "LEB", "LXXk", "NET", "OHGB", "WEB"];
   // the following line is written for personal use only [not for public]
-  List<String> compareBibleList = ["CEV", "CUV", "CSB", "ESV", "EXP", "ISV", "KJV", "LEB", "LXXE", "LXXk", "NASB", "NET", "NIV", "OHGB"];
+  //List<String> compareBibleList = ["CEV", "CSB", "CUV", "ESV", "EXP", "ISV", "KJV", "LEB", "LXXE", "LXXk", "NASB", "NET", "NIV", "OHGB"];
 
   double fontSize = 20.0;
   String abbreviations = "ENG";
@@ -28,6 +28,7 @@ class Config {
   List<List<int>> historyActiveVerse = [[43, 3, 16]];
   List<List<int>> favouriteVerse = [[43, 3, 16]];
   double morphologyVersion = 0.0;
+  double toolsVersion = 0.0;
   int instantAction = 0;
   int favouriteAction = 1;
 
@@ -77,6 +78,11 @@ class Config {
     } else {
       this.morphologyVersion = prefs.getDouble("morphologyVersion");
     }
+    if (prefs.getDouble("toolsVersion") == null) {
+      prefs.setDouble("toolsVersion", this.toolsVersion);
+    } else {
+      this.toolsVersion = prefs.getDouble("toolsVersion");
+    }
     if (prefs.getStringList("compareBibleList") == null) {
       prefs.setStringList("compareBibleList", this.compareBibleList);
     } else {
@@ -118,6 +124,7 @@ class Config {
       }
     }
     if (prefs.getDouble("morphologyVersion") != null) this.morphologyVersion = prefs.getDouble("morphologyVersion");
+    if (prefs.getDouble("toolsVersion") != null) this.toolsVersion = prefs.getDouble("toolsVersion");
     if (prefs.getStringList("compareBibleList") != null) this.compareBibleList = prefs.getStringList("compareBibleList");
     if (prefs.getInt("favouriteAction") != null) this.favouriteAction = prefs.getInt("favouriteAction");
     if (prefs.getInt("instantAction") != null) this.instantAction = prefs.getInt("instantAction");
@@ -140,6 +147,9 @@ class Config {
         await prefs.setString(feature, newSetting as String);
         break;
       case "morphologyVersion":
+        await prefs.setDouble(feature, newSetting as double);
+        break;
+      case "toolsVersion":
         await prefs.setDouble(feature, newSetting as double);
         break;
       case "compareBibleList":

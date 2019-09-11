@@ -14,4 +14,5 @@ enum DialogAction {
   interlinearLXX2,
   morphologyLXX2,
   interlinearABP,
+  openVerse,
 }

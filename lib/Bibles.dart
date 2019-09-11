@@ -166,32 +166,17 @@ class Bible {
     for (var i in this.data) {
       if (i["bNo"] != 0) books.add(i["bNo"]);
     }
-    var bookList = books.toList();
-    bookList.sort();
-    return bookList;
+    return books.toList()..sort();
   }
 
   List getChapterList(int b) {
-    Set chapters = {};
     var fetchResults = this.data.where((i) => (i["bNo"] == b)).toList();
-    for (var i in fetchResults) {
-      chapters.add(i["cNo"]);
-    }
-    var chapterList = chapters.toList();
-    chapterList.sort();
-    return chapterList;
+    return fetchResults.map((i) => i["cNo"]).toSet().toList()..sort();
   }
 
   List getVerseList(int b, int c) {
-
-    Set verses = {};
     var fetchResults = this.data.where((i) => ((i["bNo"] == b) && (i["cNo"] == c))).toList();
-    for (var i in fetchResults) {
-      verses.add(i["vNo"]);
-    }
-    var verseList = verses.toList();
-    verseList.sort();
-    return verseList;
+    return fetchResults.map((i) => i["vNo"]).toSet().toList()..sort();
   }
 
   String openSingleVerse(List bcvList) {

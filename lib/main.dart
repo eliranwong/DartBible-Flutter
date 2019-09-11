@@ -9,6 +9,7 @@ import 'package:swipedetector/swipedetector.dart';
 import 'package:unique_bible_app/config.dart';
 import 'package:unique_bible_app/Bibles.dart';
 import 'package:unique_bible_app/BibleSearchDelegate.dart';
+import 'package:unique_bible_app/TopicSearchDelegate.dart';
 import 'package:unique_bible_app/BibleSettings.dart';
 import 'package:unique_bible_app/BibleParser.dart';
 import 'package:unique_bible_app/DialogAction.dart';
@@ -68,6 +69,12 @@ class UniqueBibleState extends State<UniqueBible> {
     "ENG": ["Unique Bible App", "Navigation menu", "Search", "Quick swap", "Settings", "Parallel mode", "Favourites", "History", "Books", "Chapters"],
     "TC": ["跨平台聖經工具", "菜單", "搜索", "快速轉換", "設定", "平衡模式", "收藏", "歷史", "書卷", "章"],
     "SC": ["跨平台圣经工具", "菜单", "搜索", "快速转换", "设定", "平衡模式", "收藏", "历史", "书卷", "章"],
+  };
+
+  Map interfaceBottom = {
+    "ENG": ["Popover Interlinear", "Bible Topics"],
+    "TC": ["原文逐字翻譯", "聖經主題"],
+    "SC": ["原文逐字翻译", "圣经主题"],
   };
 
   Map interfaceMessage = {
@@ -367,8 +374,7 @@ class UniqueBibleState extends State<UniqueBible> {
 
   Future _loadInterlinearView(BuildContext context, List bcvList, [String module]) async {
     if (isAllBiblesReady()) {
-      String table;
-      (module == null) ? table = "OHGB" : table = module;
+      String table = module ?? "OHGB";
       final List<Map> morphology = await getMorphology(bcvList, table);
       final selected = await Navigator.push(
         context,
@@ -380,14 +386,48 @@ class UniqueBibleState extends State<UniqueBible> {
 
   Future _loadMorphologyView(BuildContext context, List bcvList, [String module]) async {
     if (isAllBiblesReady()) {
-      String table;
-      (module == null) ? table = "OHGB" : table = module;
+      String table = module ?? "OHGB";
       final List<Map> morphology = await getMorphology(bcvList, table);
       final selected = await Navigator.push(
         context,
         MaterialPageRoute(builder: (context) => MorphologyView(morphology, true, table, this.config, this.bibles)),
       );
       if (selected != null) _newVerseSelected(selected);
+    }
+  }
+
+  Future _loadTopics(BuildContext context, List bcvList, [String module]) async {
+    if (this.bibles?.bible1?.data != null) {
+      String table = module ?? "EXLBT";
+      final List<Map> tools = await getTools(bcvList, table);
+      final List selected = await showSearch(
+        context: context,
+        delegate: TopicSearchDelegate(context, tools, this.config),
+      );
+      if ((selected != null) && (selected.isNotEmpty)) _loadTopicVerses(context, selected[0]);
+    }
+  }
+
+  Future _loadTopicVerses(BuildContext context, String entry) async {
+    final Database db = await SqliteHelper(this.config).initToolsDb();
+    var statement = "SELECT Book, Chapter, Verse, toVerse FROM EXLBT WHERE Entry = ?";
+    List<Map> tools = await db.rawQuery(statement, [entry]);
+    db.close();
+    List<String> bcvStrings = tools.map((i) {
+      if (i["Verse"] == i["toVerse"]) {
+        return "${i["Book"]}.${i["Chapter"]}.${i["Verse"]}";
+      } else {
+        return "${i["Book"]}.${i["Chapter"]}.${i["Verse"]}.${i["Chapter"]}.${i["toVerse"]}";;
+      }
+    }).toSet().toList();
+    List<List> bcvLists = bcvStrings.map((i) => i.split(".").map((i) => int.parse(i)).toList()).toList();
+    List verseData = this.bibles.bible1.openMultipleVerses(bcvLists);
+    final List selected = await showSearch(
+        context: context,
+        delegate: BibleSearchDelegate(context, this.bibles.bible1, this.interfaceDialog, this.config, verseData));
+    if (selected != null) {
+      this.searchData = selected[0];
+      _newVerseSelected(this.searchData[selected[1]]);
     }
   }
 
@@ -542,15 +582,22 @@ class UniqueBibleState extends State<UniqueBible> {
       ),
       bottomNavigationBar: BottomAppBar(
         color: Colors.white,
-        child: IconButton(
-          tooltip: this.interfaceApp[this.abbreviations][3],
-          icon: const Icon(Icons.layers),
-          onPressed: () {
-            setState(() {
+        child: Row(children: <Widget>[
+          IconButton(
+            tooltip: this.interfaceBottom[this.abbreviations][1],
+            icon: const Icon(Icons.chat_bubble_outline),
+            onPressed: () {
+              _loadTopics(context, _currentActiveVerse);
+            },
+          ),
+          IconButton(
+            tooltip: this.interfaceBottom[this.abbreviations][0],
+            icon: const Icon(Icons.layers),
+            onPressed: () {
               showInterlinear(context, _currentActiveVerse);
-            });
-          },
-        ),
+            },
+          ),
+        ]),
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.endDocked,
       floatingActionButton: FloatingActionButton(
@@ -1084,6 +1131,26 @@ class UniqueBibleState extends State<UniqueBible> {
     List<Map> morphology = await db.rawQuery(statement, bcvList);
     db.close();
     return morphology;
+  }
+
+  Future getTools(List bcvList, String module) async {
+    List bcvList2 = [...bcvList, bcvList[2]];
+    final Database db = await SqliteHelper(this.config).initToolsDb();
+    var statement = "SELECT Tool, Entry, Topic FROM $module WHERE Book = ? AND Chapter = ? AND Verse <= ? AND toVerse >= ?";
+    List<Map> tools = await db.rawQuery(statement, bcvList2);
+    db.close();
+
+    List<String> entries = <String>[];
+    List<Map> toolsFiltered = <Map>[];
+    for (var tool in tools) {
+      String entry = tool["Entry"];
+      if (!(entries.contains(entry))) {
+        entries.add(entry);
+        toolsFiltered.add(tool);
+      }
+    }
+
+    return toolsFiltered;
   }
 
 }
