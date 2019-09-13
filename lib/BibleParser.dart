@@ -1,4 +1,4 @@
-import 'package:unique_bible_app/Helpers.dart';
+import 'Helpers.dart';
 
 class BibleParser {
 

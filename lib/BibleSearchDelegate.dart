@@ -1,10 +1,10 @@
 import 'package:flutter/services.dart' show Clipboard, ClipboardData;
 import 'package:flutter/material.dart';
 import 'package:share/share.dart';
-import 'package:unique_bible_app/BibleParser.dart';
-import 'package:unique_bible_app/DialogAction.dart';
-import 'package:unique_bible_app/config.dart';
-import 'package:unique_bible_app/Helpers.dart';
+import 'BibleParser.dart';
+import 'DialogAction.dart';
+import 'config.dart';
+import 'Helpers.dart';
 
 class BibleSearchDelegate extends SearchDelegate<List> {
 

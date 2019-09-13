@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
-import 'package:unique_bible_app/config.dart';
+import 'config.dart';
 
 class LocationSearchDelegate extends SearchDelegate<List> {
 

@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:sqflite/sqflite.dart';
-import 'package:unique_bible_app/BibleParser.dart';
-import 'package:unique_bible_app/config.dart';
-import 'package:unique_bible_app/Helpers.dart';
-import 'package:unique_bible_app/Bibles.dart';
+import 'BibleParser.dart';
+import 'config.dart';
+import 'Helpers.dart';
+import 'Bibles.dart';
 
 class InterlinearView extends StatefulWidget {
   final List<Map> _data;

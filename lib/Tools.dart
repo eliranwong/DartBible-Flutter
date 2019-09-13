@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:sqflite/sqflite.dart';
-import 'package:unique_bible_app/config.dart';
-import 'package:unique_bible_app/Bibles.dart';
-import 'package:unique_bible_app/Helpers.dart';
-import 'package:unique_bible_app/BibleSearchDelegate.dart';
-import 'package:unique_bible_app/BibleParser.dart';
+import 'config.dart';
+import 'Bibles.dart';
+import 'Helpers.dart';
+import 'BibleSearchDelegate.dart';
+import 'BibleParser.dart';
 import 'package:photo_view/photo_view.dart';
 
 class ToolMenu extends StatelessWidget {
@@ -211,26 +211,62 @@ class Timeline extends StatefulWidget {
 
   final String _file;
   final String _title;
+  final List _timelines;
 
-  Timeline(this._file, this._title);
+  Timeline(this._file, this._title, this._timelines);
 
   @override
-  TimelineState createState() => TimelineState(this._file, this._title);
+  TimelineState createState() => TimelineState(this._file, this._title, this._timelines);
 }
 
 class TimelineState extends State<Timeline> {
 
-  final String _file;
-  final String _title;
+  String _file;
+  String _title;
+  final List _timelines;
 
-  TimelineState(this._file, this._title);
+  TimelineState(this._file, this._title, this._timelines);
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-        child: PhotoView(
-          imageProvider: AssetImage("assets/timelines/$_file.png"),
-        )
+    return Scaffold(
+      appBar: AppBar(
+        title: Text(_title),
+        actions: <Widget>[
+          IconButton(
+            tooltip: "Previous",
+            icon: const Icon(Icons.keyboard_arrow_left),
+            onPressed: () {
+              int newIndex = int.parse(_file) - 1;
+              if (newIndex >= 0) {
+                setState(() {
+                  _file = newIndex.toString();
+                  _title = _timelines[newIndex][1];
+                });
+              }
+            },
+          ),
+          IconButton(
+            tooltip: "Next",
+            icon: const Icon(Icons.keyboard_arrow_right),
+            onPressed: () {
+              int newIndex = int.parse(_file) + 1;
+              if (newIndex < _timelines.length) {
+                setState(() {
+                  _file = newIndex.toString();
+                  _title = _timelines[newIndex][1];
+                });
+              }
+            },
+          ),
+        ],
+      ),
+      body: Container(
+          child: PhotoView(
+            imageProvider: AssetImage("assets/timelines/$_file.png"),
+        minScale: PhotoViewComputedScale.contained * 0.8,
+          )
+      ),
     );
   }
 

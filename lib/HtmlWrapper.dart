@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/gestures.dart';
-import 'package:unique_bible_app/Helpers.dart';
-import 'package:unique_bible_app/BibleParser.dart';
+import 'Helpers.dart';
+import 'BibleParser.dart';
 
 // This wrapper deals with simple html elements only.
 class HtmlWrapper {

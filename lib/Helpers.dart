@@ -1,7 +1,7 @@
 import 'package:flutter/services.dart' show rootBundle, ByteData;
 import 'package:flutter/material.dart';
 import 'dart:convert';
-import 'package:unique_bible_app/config.dart';
+import 'config.dart';
 
 // work with sqLite files
 import 'dart:io';
@@ -88,7 +88,7 @@ class SqliteHelper {
     var dbDir = await getDatabasesPath();
     var dbPath = join(dbDir, "tools.sqlite");
 
-    double latestToolsVersion = 0.5;
+    double latestToolsVersion = 0.6;
 
     // check if database had been setup in first launch
     if (this.config.toolsVersion < latestToolsVersion) {

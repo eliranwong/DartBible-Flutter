@@ -1,6 +1,6 @@
-import 'package:unique_bible_app/Helpers.dart';
-import 'package:unique_bible_app/BibleParser.dart';
-import 'package:unique_bible_app/config.dart';
+import 'Helpers.dart';
+import 'BibleParser.dart';
+import 'config.dart';
 
 class Bibles {
 

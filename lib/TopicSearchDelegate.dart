@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:sqflite/sqflite.dart';
-import 'package:unique_bible_app/config.dart';
-import 'package:unique_bible_app/Helpers.dart';
+import 'config.dart';
+import 'Helpers.dart';
 
 class TopicSearchDelegate extends SearchDelegate<List> {
 

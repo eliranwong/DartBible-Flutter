@@ -7,18 +7,18 @@ import 'package:share/share.dart';
 import 'package:indexed_list_view/indexed_list_view.dart';
 import 'package:swipedetector/swipedetector.dart';
 import 'package:sqflite/sqflite.dart';
-import 'package:unique_bible_app/config.dart';
-import 'package:unique_bible_app/Bibles.dart';
-import 'package:unique_bible_app/BibleSearchDelegate.dart';
-import 'package:unique_bible_app/TopicSearchDelegate.dart';
-import 'package:unique_bible_app/PeopleSearchDelegate.dart';
-import 'package:unique_bible_app/LocationSearchDelegate.dart';
-import 'package:unique_bible_app/BibleSettings.dart';
-import 'package:unique_bible_app/BibleParser.dart';
-import 'package:unique_bible_app/DialogAction.dart';
-import 'package:unique_bible_app/Morphology.dart';
-import 'package:unique_bible_app/Helpers.dart';
-import 'package:unique_bible_app/Tools.dart';
+import 'config.dart';
+import 'Bibles.dart';
+import 'BibleSearchDelegate.dart';
+import 'TopicSearchDelegate.dart';
+import 'PeopleSearchDelegate.dart';
+import 'LocationSearchDelegate.dart';
+import 'BibleSettings.dart';
+import 'BibleParser.dart';
+import 'DialogAction.dart';
+import 'Morphology.dart';
+import 'Helpers.dart';
+import 'Tools.dart';
 
 
 void main() => runApp(MyApp());
@@ -103,7 +103,7 @@ class UniqueBibleState extends State<UniqueBible> {
   }
 
   bool isAllBiblesReady() {
-    return ((this.bibles?.bible1?.data != null) && (this.bibles?.bible2?.data != null) && (this.bibles?.bible3?.data != null));
+    return ((this.bibles?.bible1?.data != null) && (this.bibles?.bible2?.data != null) && (this.bibles?.iBible?.data != null));
   }
 
   Future _setup() async {
@@ -722,7 +722,10 @@ class UniqueBibleState extends State<UniqueBible> {
                 "Precious Bible Promises III",
                 "Precious Bible Promises IV",
                 "Take Words with You",
-                "Alphabetical Order",
+                "Index",
+                "When you ...",
+                "當你 ……",
+                "当你 ……",
               ];
               _loadTools(context, title, "PROMISES", menu, Icon(Icons.games));
             },
@@ -951,7 +954,7 @@ class UniqueBibleState extends State<UniqueBible> {
       ["23", "John"],
       ["24", "4 Gospels"],
     ];
-    List<Widget> timelineRowList = timelines.map((i) => _buildTimelineRow(context, i[0], i[1])).toList();
+    List<Widget> timelineRowList = timelines.map((i) => _buildTimelineRow(context, i[0], i[1], timelines)).toList();
     return ExpansionTile(
       title: Text(this.interfaceApp[this.abbreviations][10]),
       //initiallyExpanded: true,
@@ -960,13 +963,13 @@ class UniqueBibleState extends State<UniqueBible> {
     );
   }
 
-  Widget _buildTimelineRow(BuildContext context, String file, String title) {
+  Widget _buildTimelineRow(BuildContext context, String file, String title, List timelines) {
     return ListTile(
       title: Text(title),
       onTap: () {
         Navigator.push(
           context,
-          MaterialPageRoute(builder: (context) => Timeline(file, title)),
+          MaterialPageRoute(builder: (context) => Timeline(file, title, timelines)),
         );
       },
     );
@@ -1054,7 +1057,7 @@ class UniqueBibleState extends State<UniqueBible> {
         );
       } else {
         if (this.config.interlinearBibles.contains(verseData[2])) {
-          List<TextSpan> interlinearSpans = InterlinearHelper(this.config.verseTextStyle).getInterlinearSpan(verseContent, verseData[0]);
+          List<TextSpan> interlinearSpans = InterlinearHelper(this.config.verseTextStyle).getInterlinearSpan(verseContent, verseData[0][0]);
           wordSpans = <TextSpan>[TextSpan(text: verseNo, style: _activeVerseNoFont), ...interlinearSpans];
         } else {
           wordSpans = <TextSpan>[TextSpan(text: verseNo, style: _activeVerseNoFont), TextSpan(text: verseContent, style: verseFont)];
