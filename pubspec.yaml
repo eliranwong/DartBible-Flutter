@@ -29,6 +29,8 @@ dependencies:
   sqflite: ^1.1.6+4
   share: ^0.6.2+1
   swipedetector: ^1.2.0
+  photo_view: ^0.5.0
+  url_launcher: ^5.1.2
 
 flutter_icons:
   android: true
@@ -91,4 +93,6 @@ flutter:
     - assets/bible/
     - assets/xRef/
     - assets/images/
+    - assets/timelines/
     - assets/morphology.sqlite
+    - assets/tools.sqlite
