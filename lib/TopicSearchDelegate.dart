@@ -84,7 +84,7 @@ class TopicSearchDelegate extends SearchDelegate<List> {
     var itemData = _data[i];
 
     return ListTile(
-      leading: Icon(Icons.chat_bubble_outline),
+      leading: Icon(Icons.title),
       title: Text(itemData["Topic"], style: _config.verseTextStyle["verseFont"]),
       subtitle: Text(itemData["Tool"], style: TextStyle(fontSize: (_config.fontSize - 5))),
 

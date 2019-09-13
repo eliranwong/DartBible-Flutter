@@ -679,4 +679,5 @@ class WordView extends StatelessWidget {
       */
     );
   }
+
 }
