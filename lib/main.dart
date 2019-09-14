@@ -724,7 +724,7 @@ class UniqueBibleState extends State<UniqueBible> {
       //color: Colors.grey[200],
       //shape: const CircularNotchedRectangle(),
       child: Container(
-        color: Colors.grey[config.backgroundColor],
+        color: Colors.grey[config.backgroundColor + 100],
         child: Row(children: <Widget>[
           IconButton(
             tooltip: this.interfaceBottom[this.abbreviations][0],
