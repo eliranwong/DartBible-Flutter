@@ -354,7 +354,7 @@ class UniqueBibleState extends State<UniqueBible> {
     var xRefData = await this.bibles.crossReference(bcvList);
     final List selected = await showSearch(
         context: context,
-        delegate: BibleSearchDelegate(context, this.bibles.bible1, this.interfaceDialog, this.config, xRefData));
+        delegate: BibleSearchDelegate(context, this.bibles.bible1, this.interfaceDialog, this.config, xRefData, _currentActiveVerse));
     if (selected != null) {
       this.searchData = selected[0];
       _newVerseSelected(this.searchData[selected[1]]);
@@ -368,7 +368,7 @@ class UniqueBibleState extends State<UniqueBible> {
     var compareData = await this.bibles.compareBibles(this.config.compareBibleList, bcvList);
     final List selected = await showSearch(
         context: context,
-        delegate: BibleSearchDelegate(context, this.bibles.bible1, this.interfaceDialog, this.config, compareData));
+        delegate: BibleSearchDelegate(context, this.bibles.bible1, this.interfaceDialog, this.config, compareData, _currentActiveVerse));
     if (selected != null) {
       this.searchData = selected[0];
       _newVerseSelected(this.searchData[selected[1]]);
@@ -403,7 +403,7 @@ class UniqueBibleState extends State<UniqueBible> {
     if (this.bibles?.bible1?.data != null) {
       final selected = await Navigator.push(
         context,
-        MaterialPageRoute(builder: (context) => ToolMenu(title, table, menu, this.config, this.bibles.bible1, icon, this.interfaceDialog)),
+        MaterialPageRoute(builder: (context) => ToolMenu(title, table, menu, this.config, this.bibles.bible1, icon, this.interfaceDialog, _currentActiveVerse)),
       );
       if (selected != null) {
         this.searchData = selected[0];
@@ -435,7 +435,7 @@ class UniqueBibleState extends State<UniqueBible> {
     List verseData = this.bibles.bible1.openMultipleVerses(bcvLists);
     final List selected = await showSearch(
         context: context,
-        delegate: BibleSearchDelegate(context, this.bibles.bible1, this.interfaceDialog, this.config, verseData));
+        delegate: BibleSearchDelegate(context, this.bibles.bible1, this.interfaceDialog, this.config, verseData, _currentActiveVerse));
     if (selected != null) {
       this.searchData = selected[0];
       _newVerseSelected(this.searchData[selected[1]]);
@@ -469,7 +469,7 @@ class UniqueBibleState extends State<UniqueBible> {
     List verseData = this.bibles.bible1.openMultipleVerses(bcvLists);
     final List selected = await showSearch(
         context: context,
-        delegate: BibleSearchDelegate(context, this.bibles.bible1, this.interfaceDialog, this.config, verseData));
+        delegate: BibleSearchDelegate(context, this.bibles.bible1, this.interfaceDialog, this.config, verseData, _currentActiveVerse));
     if (selected != null) {
       this.searchData = selected[0];
       _newVerseSelected(this.searchData[selected[1]]);
@@ -483,7 +483,7 @@ class UniqueBibleState extends State<UniqueBible> {
     db.close();
     final selected = await Navigator.push(
       context,
-      MaterialPageRoute(builder: (context) => Relationship(name, tools, this.config, this.bibles.bible1, this.interfaceDialog)),
+      MaterialPageRoute(builder: (context) => Relationship(name, tools, this.config, this.bibles.bible1, this.interfaceDialog, _currentActiveVerse)),
     );
     if (selected != null) {
       this.searchData = selected[0];
@@ -519,7 +519,7 @@ class UniqueBibleState extends State<UniqueBible> {
     List verseData = this.bibles.bible1.openMultipleVerses(bcvLists);
     final List selected = await showSearch(
         context: context,
-        delegate: BibleSearchDelegate(context, this.bibles.bible1, this.interfaceDialog, this.config, verseData));
+        delegate: BibleSearchDelegate(context, this.bibles.bible1, this.interfaceDialog, this.config, verseData, _currentActiveVerse));
     if (selected != null) {
       this.searchData = selected[0];
       _newVerseSelected(this.searchData[selected[1]]);
@@ -622,12 +622,12 @@ class UniqueBibleState extends State<UniqueBible> {
         leading: Builder(
           builder: (BuildContext context) {
             return IconButton(
+              //tooltip: MaterialLocalizations.of(context).openAppDrawerTooltip,
+              tooltip: this.interfaceApp[this.abbreviations][1],
               icon: const Icon(Icons.menu),
               onPressed: () {
                 Scaffold.of(context).openDrawer();
               },
-              //tooltip: MaterialLocalizations.of(context).openAppDrawerTooltip,
-              tooltip: this.interfaceApp[this.abbreviations][1],
             );
           },
         ),
@@ -638,7 +638,7 @@ class UniqueBibleState extends State<UniqueBible> {
             onPressed: () async {
               final List selected = await showSearch(
                 context: context,
-                delegate: BibleSearchDelegate(context, this.bibles.bible1, this.interfaceDialog, this.config, this.searchData),
+                delegate: BibleSearchDelegate(context, this.bibles.bible1, this.interfaceDialog, this.config, this.searchData, _currentActiveVerse),
               );
               if (selected != null) {
                 this.searchData = selected[0];

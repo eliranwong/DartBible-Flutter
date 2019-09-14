@@ -9,6 +9,12 @@ class PeopleSearchDelegate extends SearchDelegate<List> {
   Config _config;
   String abbreviations;
 
+  Map interface = {
+    "ENG": ["Clear", "Search"],
+    "TC": ["清空", "搜索"],
+    "SC": ["清空", "搜索"],
+  };
+
   PeopleSearchDelegate(BuildContext context, this._data, this._config) {
     this.abbreviations = _config.abbreviations;
   }
@@ -25,6 +31,7 @@ class PeopleSearchDelegate extends SearchDelegate<List> {
   List<Widget> buildActions(BuildContext context) {
     return [
       IconButton(
+        tooltip: this.interface[this.abbreviations][0],
         icon: Icon(Icons.clear),
         onPressed: () {
           query = '';
@@ -74,7 +81,7 @@ class PeopleSearchDelegate extends SearchDelegate<List> {
       leading: icon,
       title: Text(itemData["Name"], style: _config.verseTextStyle["verseFont"]),
       trailing: IconButton(
-        //tooltip: interfaceBibleSettings[this.abbreviations][2],
+        tooltip: interface[this.abbreviations][1],
         icon: const Icon(Icons.search),
         onPressed: () {
           close(context, [1, itemData["PersonID"]]);

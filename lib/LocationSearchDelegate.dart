@@ -7,6 +7,12 @@ class LocationSearchDelegate extends SearchDelegate<List> {
   List _data;
   Config _config;
   String abbreviations;
+
+  Map interfaceBibleSearch = {
+    "ENG": ["is not properly formatted for search. Please correct and try again.", "Clear", "Search"],
+    "TC": ["組成的格式不正確，請更正然後再嘗試", "清空", "搜索"],
+    "SC": ["组成的格式不正确，请更正然后再尝试", "清空", "搜索"],
+  };
   
   List locations = [
     {"LocationID": "BL1", "Name": "Abana"},
@@ -1180,6 +1186,7 @@ class LocationSearchDelegate extends SearchDelegate<List> {
   List<Widget> buildActions(BuildContext context) {
     return [
       IconButton(
+        tooltip: this.interfaceBibleSearch[this.abbreviations][1],
         icon: Icon(Icons.clear),
         onPressed: () {
           query = '';
@@ -1228,7 +1235,7 @@ class LocationSearchDelegate extends SearchDelegate<List> {
       leading: Icon(Icons.pin_drop),
       title: Text(itemData["Name"], style: _config.verseTextStyle["verseFont"]),
       trailing: IconButton(
-        //tooltip: interfaceBibleSettings[this.abbreviations][2],
+        tooltip: this.interfaceBibleSearch[this.abbreviations][2],
         icon: const Icon(Icons.search),
         onPressed: () {
           close(context, [itemData["LocationID"]]);

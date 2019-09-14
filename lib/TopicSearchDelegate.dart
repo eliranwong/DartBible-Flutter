@@ -9,6 +9,12 @@ class TopicSearchDelegate extends SearchDelegate<List> {
   Config _config;
   String abbreviations;
 
+  Map interface = {
+    "ENG": ["Clear"],
+    "TC": ["清空"],
+    "SC": ["清空"],
+  };
+
   TopicSearchDelegate(BuildContext context, this._data, this._config) {
     this.abbreviations = _config.abbreviations;
   }
@@ -39,6 +45,7 @@ class TopicSearchDelegate extends SearchDelegate<List> {
   List<Widget> buildActions(BuildContext context) {
     return [
       IconButton(
+        tooltip: this.interface[this.abbreviations][0],
         icon: Icon(Icons.clear),
         onPressed: () {
           query = '';

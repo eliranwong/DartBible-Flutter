@@ -29,7 +29,7 @@ class InterlinearViewState extends State<InterlinearView> {
   final Bibles _bibles;
   double _fontSize;
   String abbreviations;
-  final Map interfaceBibleSettings = {
+  final Map interface = {
     "ENG": ["Interlinear", "More"],
     "TC": ["原文逐字翻譯", "更多"],
     "SC": ["原文逐字翻译", "更多"],
@@ -48,13 +48,13 @@ class InterlinearViewState extends State<InterlinearView> {
       verseRef = BibleParser(this.abbreviations).bcvToVerseReference(
           [_data[0]["Book"], _data[0]["Chapter"], _data[0]["Verse"]]);
     final title =
-        "${interfaceBibleSettings[this.abbreviations][0]} - $verseRef";
+        "${interface[this.abbreviations][0]} - $verseRef";
     return Scaffold(
       appBar: AppBar(
         title: Text(title),
         actions: <Widget>[
           IconButton(
-            tooltip: interfaceBibleSettings[this.abbreviations][1],
+            tooltip: interface[this.abbreviations][1],
             icon: const Icon(Icons.unfold_more),
             onPressed: () {
               _loadMorphologyView(context);
@@ -96,7 +96,7 @@ class InterlinearViewState extends State<InterlinearView> {
                 _loadLexiconView(context, wordData["LexicalEntry"]);
               },
               trailing: IconButton(
-                //tooltip: interfaceBibleSettings[this.abbreviations][2],
+                tooltip: interface[this.abbreviations][1],
                 icon: const Icon(Icons.more_vert),
                 onPressed: () {
                   Navigator.push(
@@ -161,10 +161,10 @@ class MorphologyViewState extends State<MorphologyView> {
   final Bibles _bibles;
   double _fontSize;
   String abbreviations;
-  final Map interfaceBibleSettings = {
-    "ENG": ["Morphology", "Less", "Search"],
-    "TC": ["原文形態學", "翻譯", "搜索"],
-    "SC": ["原文形态学", "翻译", "搜索"],
+  final Map interface = {
+    "ENG": ["Morphology", "Less", "Search", "More"],
+    "TC": ["原文形態學", "翻譯", "搜索", "更多"],
+    "SC": ["原文形态学", "翻译", "搜索", "更多"],
   };
 
   MorphologyViewState(
@@ -212,13 +212,13 @@ class MorphologyViewState extends State<MorphologyView> {
       verseRef = BibleParser(this.abbreviations).bcvToVerseReference(
           [_data[0]["Book"], _data[0]["Chapter"], _data[0]["Verse"]]);
     final title =
-        "${interfaceBibleSettings[this.abbreviations][0]} - $verseRef";
+        "${interface[this.abbreviations][0]} - $verseRef";
     return Scaffold(
       appBar: AppBar(
         title: Text(title),
         actions: <Widget>[
           IconButton(
-            tooltip: interfaceBibleSettings[this.abbreviations][1],
+            tooltip: interface[this.abbreviations][1],
             icon: const Icon(Icons.unfold_less),
             onPressed: () {
               if (_firstOpened) {
@@ -277,7 +277,7 @@ class MorphologyViewState extends State<MorphologyView> {
                 _loadLexiconView(context, wordData["LexicalEntry"]);
               },
               trailing: IconButton(
-                tooltip: interfaceBibleSettings[this.abbreviations][2],
+                tooltip: interface[this.abbreviations][3],
                 icon: const Icon(Icons.more_vert),
                 onPressed: () {
                   Navigator.push(
@@ -297,7 +297,7 @@ class MorphologyViewState extends State<MorphologyView> {
                 searchMorphology(context, lexicalEntry, morphology.split(", "));
               },
               trailing: IconButton(
-                tooltip: interfaceBibleSettings[this.abbreviations][2],
+                tooltip: interface[this.abbreviations][2],
                 icon: const Icon(Icons.search),
                 onPressed: () {
                   _loadMorphologySearchView(context, lexemeText,
@@ -377,6 +377,12 @@ class MorphologySearchViewState extends State<MorphologySearchView> {
   var lexicalEntry = "";
   List<String> morphologyItems, selectedMorphologyItems;
 
+  final Map interface = {
+    "ENG": ["Search"],
+    "TC": ["搜索"],
+    "SC": ["翻译"],
+  };
+
   MorphologySearchViewState(this._lexeme, this._lexicalEntry, this._morphology,
       this._module, this._config, this._bibles) {
     morphologyItems = _morphology.split(", ").toList();
@@ -421,7 +427,7 @@ class MorphologySearchViewState extends State<MorphologySearchView> {
         title: Text("Search"),
         actions: <Widget>[
           IconButton(
-            tooltip: 'Save',
+            tooltip: interface[_config.abbreviations][0],
             icon: const Icon(Icons.search),
             onPressed: () {
               searchMorphology(context);
@@ -488,7 +494,7 @@ class MorphologySearchResultsState extends State<MorphologySearchResults> {
   final Bibles _bibles;
   double _fontSize;
   String abbreviations;
-  final Map interfaceBibleSettings = {
+  final Map interface = {
     "ENG": ["Found", "words", "More"],
     "TC": ["找到", "個字", "更多"],
     "SC": ["找到", "个字", "更多"],
@@ -503,7 +509,7 @@ class MorphologySearchResultsState extends State<MorphologySearchResults> {
   @override
   Widget build(BuildContext context) {
     final title =
-        "${interfaceBibleSettings[this.abbreviations][0]} ${_data.length} ${interfaceBibleSettings[this.abbreviations][1]}";
+        "${interface[this.abbreviations][0]} ${_data.length} ${interface[this.abbreviations][1]}";
     return Scaffold(
       appBar: AppBar(
         title: Text(title),
@@ -544,7 +550,7 @@ class MorphologySearchResultsState extends State<MorphologySearchResults> {
                 Navigator.pop(context, [bcvList, "", _bibles.bible1.module]);
               },
               trailing: IconButton(
-                //tooltip: interfaceBibleSettings[this.abbreviations][2],
+                tooltip: interface[this.abbreviations][2],
                 icon: const Icon(Icons.more_vert),
                 onPressed: () {
                   Navigator.push(
@@ -584,6 +590,8 @@ class WordView extends StatelessWidget {
   }
 
   Widget _buildKeys(BuildContext context) {
+    Text originalWord = ((_module == "OHGB") && (_data["Book"] < 40)) ? Text(_data["Word"], style: _config.verseTextStyle["HebrewFont"]) : Text(_data["Word"]);
+
     List bcvList = [_data["Book"], _data["Chapter"], _data["Verse"]];
 
     List<Bible> bibleList = [_bibles.bible1, _bibles.bible2, _bibles.iBible];
@@ -604,7 +612,7 @@ class WordView extends StatelessWidget {
         children: verseList,
       ),
       ExpansionTile(
-        title: Text(_data["Word"], style: _config.verseTextStyle["HebrewFont"]),
+        title: originalWord,
         initiallyExpanded: true,
         backgroundColor: Theme.of(context).accentColor.withOpacity(0.025),
         children: dataList,

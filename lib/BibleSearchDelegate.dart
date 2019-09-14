@@ -8,13 +8,14 @@ import 'Helpers.dart';
 
 class BibleSearchDelegate extends SearchDelegate<List> {
 
+  final _bcvList;
   final _bible;
   final _interfaceDialog;
   String abbreviations;
   Map interfaceBibleSearch = {
-    "ENG": ["is not properly formatted for search. Please correct and try again."],
-    "TC": ["組成的格式不正確，請更正然後再嘗試"],
-    "SC": ["组成的格式不正确，请更正然后再尝试"],
+    "ENG": ["is not properly formatted for search. Please correct and try again.", "Clear"],
+    "TC": ["組成的格式不正確，請更正然後再嘗試", "清空"],
+    "SC": ["组成的格式不正确，请更正然后再尝试", "清空"],
   };
 
   var _verseNoFont, _verseFont, _verseFontHebrew, _verseFontGreek;
@@ -23,7 +24,7 @@ class BibleSearchDelegate extends SearchDelegate<List> {
   var verseTextStyle;
   List _data = [];
 
-  BibleSearchDelegate(BuildContext context, this._bible, this._interfaceDialog, Config config, this._data) {
+  BibleSearchDelegate(BuildContext context, this._bible, this._interfaceDialog, Config config, this._data, this._bcvList) {
     _verseNoFont = config.verseTextStyle["verseNoFont"];
     _verseFont = config.verseTextStyle["verseFont"];
     _verseFontHebrew = config.verseTextStyle["verseFontHebrew"];
@@ -48,18 +49,21 @@ class BibleSearchDelegate extends SearchDelegate<List> {
       if (query.contains(":::")) {
         List queryList = query.split(":::");
         if (queryList.length >= 2) {
+          List bookReferenceList;
           if (queryList[0].isNotEmpty) {
+            String bookString = "";
             var bookList = queryList[0].split(",");
-            var bookString = "";
             for (var book in bookList) {
               bookString += "${book.trim()} 0; ";
             }
-            var bookReferenceList = BibleParser(this.abbreviations).extractAllReferences(bookString);
-            if (bookReferenceList.isNotEmpty) {
-              String queryText = queryList.sublist(1).join(":::");
-              if (queryText.isNotEmpty) {
-                return _bible.searchBooks(queryText, bookReferenceList);
-              }
+            bookReferenceList = BibleParser(this.abbreviations).extractAllReferences(bookString);
+          } else {
+            bookReferenceList = [_bcvList];
+          }
+          if (bookReferenceList.isNotEmpty) {
+            String queryText = queryList.sublist(1).join(":::");
+            if (queryText.isNotEmpty) {
+              return _bible.searchBooks(queryText, bookReferenceList);
             }
           }
         }
@@ -69,7 +73,7 @@ class BibleSearchDelegate extends SearchDelegate<List> {
       var verseReferenceList = BibleParser(this.abbreviations).extractAllReferences(query);
       (verseReferenceList.isEmpty) ? fetchResults = _bible.search(query) : fetchResults = _bible.openMultipleVerses(verseReferenceList);
     } catch (e) {
-      fetchResults = [[[], "['$query' ${interfaceBibleSearch[this.abbreviations]}", ""]];
+      fetchResults = [[[], "['$query' ${interfaceBibleSearch[this.abbreviations][0]}", ""]];
     }
 
     return fetchResults;
@@ -89,6 +93,7 @@ class BibleSearchDelegate extends SearchDelegate<List> {
   List<Widget> buildActions(BuildContext context) {
     return [
       IconButton(
+        tooltip: this.interfaceBibleSearch[this.abbreviations][1],
         icon: Icon(Icons.clear),
         onPressed: () {
           query = '';

@@ -32,7 +32,8 @@ class BibleSettingsState extends State<BibleSettings> {
       "Font Size",
       "Versions for Comparison",
       "Favourite Action",
-      "Instant Action"
+      "Instant Action",
+      "Save",
     ],
     "TC": [
       "設定",
@@ -44,7 +45,8 @@ class BibleSettingsState extends State<BibleSettings> {
       "字體大小",
       "版本比較選項",
       "常用功能",
-      "即時功能"
+      "即時功能",
+      "存檔",
     ],
     "SC": [
       "设定",
@@ -56,7 +58,8 @@ class BibleSettingsState extends State<BibleSettings> {
       "字体大小",
       "版本比较选项",
       "常用功能",
-      "即时功能"
+      "即时功能",
+      "存档",
     ],
   };
 
@@ -229,7 +232,7 @@ class BibleSettingsState extends State<BibleSettings> {
         title: Text(this._interface[0]),
         actions: <Widget>[
           IconButton(
-            tooltip: 'Save',
+            tooltip: _interface[10],
             icon: const Icon(Icons.check),
             onPressed: () {
               Navigator.pop(
@@ -462,7 +465,6 @@ class BibleSettingsState extends State<BibleSettings> {
           }
         });
       },
-      //secondary: const Icon(Icons.more_vert),
     );
   }
 }

@@ -15,8 +15,9 @@ class ToolMenu extends StatelessWidget {
   final Bible _bible;
   final Icon _icon;
   final Map _interfaceDialog;
+  final List _bcvList;
 
-  ToolMenu(this._title, this._module, this._data, this._config, this._bible, this._icon, this._interfaceDialog);
+  ToolMenu(this._title, this._module, this._data, this._config, this._bible, this._icon, this._interfaceDialog, this._bcvList);
 
   @override
   Widget build(BuildContext context) {
@@ -58,7 +59,7 @@ class ToolMenu extends StatelessWidget {
 
     final selected = await Navigator.push(
       context,
-      MaterialPageRoute(builder: (context) => ToolView(_data[tool], tools, _config, _bible, _interfaceDialog)),
+      MaterialPageRoute(builder: (context) => ToolView(_data[tool], tools, _config, _bible, _interfaceDialog, _icon, _bcvList)),
     );
     if (selected != null) Navigator.pop(context, selected);
   }
@@ -71,8 +72,10 @@ class ToolView extends StatelessWidget {
   final Config _config;
   final Bible _bible;
   final Map _interfaceDialog;
+  final Icon _icon;
+  final List _bcvList;
 
-  ToolView(this._title, this._data, this._config, this._bible, this._interfaceDialog);
+  ToolView(this._title, this._data, this._config, this._bible, this._interfaceDialog, this._icon, this._bcvList);
 
   @override
   Widget build(BuildContext context) {
@@ -97,6 +100,7 @@ class ToolView extends StatelessWidget {
     Map itemData = _data[i];
     String topic = itemData["Topic"].replaceAll("％", "\n");
     return ListTile(
+      leading: _icon,
       title: Text(topic, style: _config.verseTextStyle["verseFont"]),
 
       onTap: () {
@@ -112,7 +116,7 @@ class ToolView extends StatelessWidget {
     List passages = _bible.openMultipleVerses(bcvLists, topic);
     final List selected = await showSearch(
         context: context,
-        delegate: BibleSearchDelegate(context, _bible, _interfaceDialog, _config, passages));
+        delegate: BibleSearchDelegate(context, _bible, _interfaceDialog, _config, passages, _bcvList));
     if (selected != null) Navigator.pop(context, selected);
   }
 
@@ -124,11 +128,12 @@ class Relationship extends StatefulWidget {
   final Config _config;
   final Bible _bible;
   final Map _interfaceDialog;
+  final List _bcvList;
 
-  Relationship(this._title, this._data, this._config, this._bible, this._interfaceDialog);
+  Relationship(this._title, this._data, this._config, this._bible, this._interfaceDialog, this._bcvList);
 
   @override
-  RelationshipState createState() => RelationshipState(this._title, this._data, this._config, this._bible, this._interfaceDialog);
+  RelationshipState createState() => RelationshipState(this._title, this._data, this._config, this._bible, this._interfaceDialog, this._bcvList);
 }
 
 class RelationshipState extends State<Relationship> {
@@ -137,8 +142,14 @@ class RelationshipState extends State<Relationship> {
   final Config _config;
   final Bible _bible;
   final Map _interfaceDialog;
+  final List _bcvList;
+  final Map interface = {
+    "ENG": ["Search"],
+    "TC": ["搜索"],
+    "SC": ["搜索"],
+  };
 
-  RelationshipState(this._title, this._data, this._config, this._bible, this._interfaceDialog);
+  RelationshipState(this._title, this._data, this._config, this._bible, this._interfaceDialog, this._bcvList);
 
   @override
   Widget build(BuildContext context) {
@@ -167,7 +178,7 @@ class RelationshipState extends State<Relationship> {
       title: Text(itemData["Name"], style: _config.verseTextStyle["verseFont"]),
       subtitle: Text(itemData["Relationship"], style: TextStyle(fontSize: _config.fontSize - 4)),
       trailing: IconButton(
-        //tooltip: interfaceBibleSettings[this.abbreviations][2],
+        tooltip: interface[_config.abbreviations][0],
         icon: const Icon(Icons.search),
         onPressed: () {
           _loadPeopleVerses(context, itemData["PersonID"]);
@@ -201,7 +212,7 @@ class RelationshipState extends State<Relationship> {
     List verseData = _bible.openMultipleVerses(bcvLists);
     final List selected = await showSearch(
         context: context,
-        delegate: BibleSearchDelegate(context, _bible, _interfaceDialog, _config, verseData));
+        delegate: BibleSearchDelegate(context, _bible, _interfaceDialog, _config, verseData, _bcvList));
     if (selected != null) Navigator.pop(context, selected);
   }
 
@@ -224,6 +235,11 @@ class TimelineState extends State<Timeline> {
   String _file;
   String _title;
   final List _timelines;
+  final Map interface = {
+    "ENG": ["Previous", "Next"],
+    "TC": ["上一個", "下一個"],
+    "SC": ["上一个", "下一个"],
+  };
 
   TimelineState(this._file, this._title, this._timelines);
 

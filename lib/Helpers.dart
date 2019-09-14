@@ -88,7 +88,7 @@ class SqliteHelper {
     var dbDir = await getDatabasesPath();
     var dbPath = join(dbDir, "tools.sqlite");
 
-    double latestToolsVersion = 0.6;
+    double latestToolsVersion = 0.7;
 
     // check if database had been setup in first launch
     if (this.config.toolsVersion < latestToolsVersion) {
