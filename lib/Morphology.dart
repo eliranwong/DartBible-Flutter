@@ -88,30 +88,33 @@ class InterlinearViewState extends State<InterlinearView> {
     word = Text(wordData["Word"], style: originalStyle);
     return Center(
       child: Card(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: <Widget>[
-            ListTile(
-              leading: Icon(Icons.album),
-              title: word,
-              subtitle: Text(wordData["Interlinear"], style: textStyle),
-              onTap: () {
-                _loadLexiconView(context, wordData["LexicalEntry"]);
-              },
-              trailing: IconButton(
-                tooltip: interface[this.abbreviations][1],
-                icon: const Icon(Icons.more_vert),
-                onPressed: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                        builder: (context) =>
-                            WordView(wordData, _module, _config, _bibles)),
-                  );
+        child: Container(
+          color: Colors.grey[_config.backgroundColor + 100],
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: <Widget>[
+              ListTile(
+                leading: Icon(Icons.album),
+                title: word,
+                subtitle: Text(wordData["Interlinear"], style: textStyle),
+                onTap: () {
+                  _loadLexiconView(context, wordData["LexicalEntry"]);
                 },
-              ),
-            )
-          ],
+                trailing: IconButton(
+                  tooltip: interface[this.abbreviations][1],
+                  icon: const Icon(Icons.more_vert),
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                          builder: (context) =>
+                              WordView(wordData, _module, _config, _bibles)),
+                    );
+                  },
+                ),
+              )
+            ],
+          ),
         ),
       ),
     );
@@ -270,48 +273,51 @@ class MorphologyViewState extends State<MorphologyView> {
       lexicalEntry = wordData["LexicalEntry"].split(",").toList()[0];
     return Center(
       child: Card(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: <Widget>[
-            ListTile(
-              leading: Icon(Icons.album),
-              title: word,
-              subtitle: Text(
-                  "${wordData["Transliteration"]} [${wordData["Pronunciation"]}]",
-                  style: textStyle),
-              onTap: () {
-                _loadLexiconView(context, wordData["LexicalEntry"]);
-              },
-              trailing: IconButton(
-                tooltip: interface[this.abbreviations][3],
-                icon: const Icon(Icons.more_vert),
-                onPressed: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                        builder: (context) =>
-                            WordView(wordData, _module, _config, _bibles)),
-                  );
+        child: Container(
+          color: Colors.grey[_config.backgroundColor + 100],
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: <Widget>[
+              ListTile(
+                leading: Icon(Icons.album),
+                title: word,
+                subtitle: Text(
+                    "${wordData["Transliteration"]} [${wordData["Pronunciation"]}]",
+                    style: textStyle),
+                onTap: () {
+                  _loadLexiconView(context, wordData["LexicalEntry"]);
                 },
+                trailing: IconButton(
+                  tooltip: interface[this.abbreviations][3],
+                  icon: const Icon(Icons.more_vert),
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                          builder: (context) =>
+                              WordView(wordData, _module, _config, _bibles)),
+                    );
+                  },
+                ),
               ),
-            ),
-            ListTile(
-              leading: Icon(Icons.label_outline),
-              title: lexeme,
-              subtitle: Text(morphology, style: textStyle),
-              onTap: () {
-                searchMorphology(context, lexicalEntry, morphology.split(", "));
-              },
-              trailing: IconButton(
-                tooltip: interface[this.abbreviations][2],
-                icon: const Icon(Icons.search),
-                onPressed: () {
-                  _loadMorphologySearchView(context, lexemeText,
-                      wordData["LexicalEntry"], morphology);
+              ListTile(
+                leading: Icon(Icons.label_outline),
+                title: lexeme,
+                subtitle: Text(morphology, style: textStyle),
+                onTap: () {
+                  searchMorphology(context, lexicalEntry, morphology.split(", "));
                 },
+                trailing: IconButton(
+                  tooltip: interface[this.abbreviations][2],
+                  icon: const Icon(Icons.search),
+                  onPressed: () {
+                    _loadMorphologySearchView(context, lexemeText,
+                        wordData["LexicalEntry"], morphology);
+                  },
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
@@ -556,30 +562,33 @@ class MorphologySearchResultsState extends State<MorphologySearchResults> {
         BibleParser(this.abbreviations).bcvToVerseReference(bcvList);
     return Center(
       child: Card(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: <Widget>[
-            ListTile(
-              leading: Icon(Icons.album),
-              title: word,
-              subtitle: Text(verseReference, style: textStyle),
-              onTap: () {
-                Navigator.pop(context, [bcvList, "", _bibles.bible1.module]);
-              },
-              trailing: IconButton(
-                tooltip: interface[this.abbreviations][2],
-                icon: const Icon(Icons.more_vert),
-                onPressed: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                        builder: (context) =>
-                            WordView(wordData, _module, _config, _bibles)),
-                  );
+        child: Container(
+          color: Colors.grey[_config.backgroundColor + 100],
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: <Widget>[
+              ListTile(
+                leading: Icon(Icons.album),
+                title: word,
+                subtitle: Text(verseReference, style: textStyle),
+                onTap: () {
+                  Navigator.pop(context, [bcvList, "", _bibles.bible1.module]);
                 },
+                trailing: IconButton(
+                  tooltip: interface[this.abbreviations][2],
+                  icon: const Icon(Icons.more_vert),
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                          builder: (context) =>
+                              WordView(wordData, _module, _config, _bibles)),
+                    );
+                  },
+                ),
               ),
-            )
-          ],
+            ],
+          ),
         ),
       ),
     );

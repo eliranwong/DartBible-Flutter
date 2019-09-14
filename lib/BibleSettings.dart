@@ -117,7 +117,7 @@ class BibleSettingsState extends State<BibleSettings> {
     "40"
   ];
 
-  List colorDegree = ["0", "100", "200", "300", "400", "500", "600", "700", "800", "900"];
+  List colorDegree = ["0", "100", "200", "300", "400", "500", "600", "700"];
 
   Map interfaceMap = {"English": "ENG", "繁體中文": "TC", "简体中文": "SC"};
 
