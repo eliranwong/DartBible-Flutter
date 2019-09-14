@@ -679,10 +679,6 @@ class UniqueBibleState extends State<UniqueBible> {
             tooltip: this.interfaceApp[this.abbreviations][1],
             icon: const Icon(Icons.menu),
             onPressed: () {
-              setState(() {
-                _selectedBook = _currentActiveVerse[0];
-                _displayAllBooks = false;
-              });
               Scaffold.of(context).openDrawer();
             },
           );
