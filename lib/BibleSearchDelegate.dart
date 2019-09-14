@@ -23,6 +23,7 @@ class BibleSearchDelegate extends SearchDelegate<List> {
   var hebrewBibles, greekBibles, interlinearBibles;
   var verseTextStyle;
   List _data = [];
+  int _backgroundColor;
 
   BibleSearchDelegate(BuildContext context, this._bible, this._interfaceDialog, Config config, this._data, this._bcvList) {
     _verseNoFont = config.verseTextStyle["verseNoFont"];
@@ -38,6 +39,8 @@ class BibleSearchDelegate extends SearchDelegate<List> {
     this.greekBibles = config.greekBibles;
     this.interlinearBibles = config.interlinearBibles;
     this.verseTextStyle = config.verseTextStyle;
+
+    this._backgroundColor = config.backgroundColor;
   }
 
   // This is the function which does the search.
@@ -127,12 +130,15 @@ class BibleSearchDelegate extends SearchDelegate<List> {
   }
 
   Widget _buildVerses(BuildContext context) {
-    return ListView.builder(
-        padding: const EdgeInsets.all(16.0),
-        itemCount: _data.length,
-        itemBuilder: (context, i) {
-          return _buildVerseRow(i, context);
-        });
+    return Container(
+      color: Colors.blueGrey[_backgroundColor],
+      child: ListView.builder(
+          padding: const EdgeInsets.all(16.0),
+          itemCount: _data.length,
+          itemBuilder: (context, i) {
+            return _buildVerseRow(i, context);
+          }),
+    );
   }
 
   Widget _buildVerseRow(int i, BuildContext context) {

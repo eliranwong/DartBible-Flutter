@@ -34,6 +34,7 @@ class BibleSettingsState extends State<BibleSettings> {
       "Favourite Action",
       "Instant Action",
       "Save",
+      "Background Brightness",
     ],
     "TC": [
       "設定",
@@ -47,6 +48,7 @@ class BibleSettingsState extends State<BibleSettings> {
       "常用功能",
       "即時功能",
       "存檔",
+      "背景顏色深淺",
     ],
     "SC": [
       "设定",
@@ -60,6 +62,7 @@ class BibleSettingsState extends State<BibleSettings> {
       "常用功能",
       "即时功能",
       "存档",
+      "背景颜色深浅",
     ],
   };
 
@@ -74,7 +77,8 @@ class BibleSettingsState extends State<BibleSettings> {
       _chapterValue,
       _verseValue,
       _fontSizeValue,
-      _interfaceValue;
+      _interfaceValue,
+      _colorDegreeValue;
 
   List fontSizeList = [
     "7",
@@ -112,6 +116,9 @@ class BibleSettingsState extends State<BibleSettings> {
     "39",
     "40"
   ];
+
+  List colorDegree = ["0", "100", "200", "300", "400", "500", "600", "700", "800", "900"];
+
   Map interfaceMap = {"English": "ENG", "繁體中文": "TC", "简体中文": "SC"};
 
   Map _instantActionMap = {
@@ -136,6 +143,7 @@ class BibleSettingsState extends State<BibleSettings> {
     this._interface = interfaceBibleSettings[this.abbreviations];
     var interfaceMapReverse = {"ENG": "English", "TC": "繁體中文", "SC": "简体中文"};
     this._interfaceValue = interfaceMapReverse[this.abbreviations];
+    this._colorDegreeValue = config.backgroundColor.toString();
 
     this._parser = BibleParser(this.abbreviations);
     this._abbreviations = this._parser.standardAbbreviation;
@@ -247,6 +255,7 @@ class BibleSettingsState extends State<BibleSettings> {
                     this._compareBibleList,
                     this._favouriteAction,
                     this._instantAction,
+                    this._colorDegreeValue,
                   ));
             },
           ),
@@ -261,192 +270,215 @@ class BibleSettingsState extends State<BibleSettings> {
     List<Widget> versionRowList =
         moduleList.map((i) => _buildVersionRow(context, i)).toList();
 
-    return Padding(
-      padding: const EdgeInsets.all(24.0),
-      child: ListView(
-        children: <Widget>[
-          ListTile(
-            title: Text(this._interface[1]),
-            trailing: DropdownButton<String>(
-              value: this._interfaceValue,
-              onChanged: (String newValue) {
-                if (this._interfaceValue != newValue) {
-                  setState(() {
-                    this.updateInterface(newValue);
-                  });
-                }
-              },
-              items: <String>[...interfaceMap.keys.toList()]
-                  .map<DropdownMenuItem<String>>((String value) {
-                return DropdownMenuItem<String>(
-                  value: value,
-                  child: Text(value),
-                );
-              }).toList(),
+    return Container(
+      color: Colors.blueGrey[int.parse(_colorDegreeValue)],
+      child: Padding(
+        padding: const EdgeInsets.all(24.0),
+        child: ListView(
+          children: <Widget>[
+            ListTile(
+              title: Text(this._interface[1]),
+              trailing: DropdownButton<String>(
+                value: this._interfaceValue,
+                onChanged: (String newValue) {
+                  if (this._interfaceValue != newValue) {
+                    setState(() {
+                      this.updateInterface(newValue);
+                    });
+                  }
+                },
+                items: <String>[...interfaceMap.keys.toList()]
+                    .map<DropdownMenuItem<String>>((String value) {
+                  return DropdownMenuItem<String>(
+                    value: value,
+                    child: Text(value),
+                  );
+                }).toList(),
+              ),
             ),
-          ),
-          ListTile(
-            title: Text(this._interface[6]),
-            trailing: DropdownButton<String>(
-              value: this._fontSizeValue,
-              onChanged: (String newValue) {
-                if (this._verseValue != newValue) {
-                  setState(() {
-                    this._fontSizeValue = newValue;
-                  });
-                }
-              },
-              items: <String>[...fontSizeList]
-                  .map<DropdownMenuItem<String>>((String value) {
-                return DropdownMenuItem<String>(
-                  value: value,
-                  child: Text(value),
-                );
-              }).toList(),
+            ListTile(
+              title: Text(this._interface[11]),
+              trailing: DropdownButton<String>(
+                value: _colorDegreeValue,
+                onChanged: (String newValue) {
+                  if (this._colorDegreeValue != newValue) {
+                    setState(() {
+                      this._colorDegreeValue = newValue;
+                    });
+                  }
+                },
+                items: <String>[...colorDegree]
+                    .map<DropdownMenuItem<String>>((String value) {
+                  return DropdownMenuItem<String>(
+                    value: value,
+                    child: Text(value),
+                  );
+                }).toList(),
+              ),
             ),
-          ),
-          ListTile(
-            title: Text(this._interface[2]),
-            trailing: DropdownButton<String>(
-              value: this._moduleValue,
-              onChanged: (String newValue) {
-                if (this._moduleValue != newValue) {
-                  onModuleChanged(newValue);
-                }
-              },
-              items: <String>[...moduleList]
-                  .map<DropdownMenuItem<String>>((String value) {
-                return DropdownMenuItem<String>(
-                  value: value,
-                  child: Text(value),
-                );
-              }).toList(),
+            ListTile(
+              title: Text(this._interface[6]),
+              trailing: DropdownButton<String>(
+                value: this._fontSizeValue,
+                onChanged: (String newValue) {
+                  if (this._verseValue != newValue) {
+                    setState(() {
+                      this._fontSizeValue = newValue;
+                    });
+                  }
+                },
+                items: <String>[...fontSizeList]
+                    .map<DropdownMenuItem<String>>((String value) {
+                  return DropdownMenuItem<String>(
+                    value: value,
+                    child: Text(value),
+                  );
+                }).toList(),
+              ),
             ),
-          ),
-          ListTile(
-            title: Text(this._interface[3]),
-            trailing: DropdownButton<String>(
-              value: this._bookValue,
-              onChanged: (String newValue) {
-                if (this._bookValue != newValue) {
-                  setState(() {
-                    this._bookValue = newValue;
-                    this._chapterList =
-                        this._bible.getChapterList(int.parse(getBookNo()));
-                    this._chapterList =
-                        this._chapterList.map((i) => (i).toString()).toList();
-                    this._chapterValue = "1";
-                    this._verseList = this._bible.getVerseList(
-                        int.parse(getBookNo()), int.parse(this._chapterValue));
-                    this._verseList =
-                        this._verseList.map((i) => (i).toString()).toList();
-                    this._verseValue = "1";
-                  });
-                }
-              },
-              items: <String>[...this._bookList]
-                  .map<DropdownMenuItem<String>>((String value) {
-                return DropdownMenuItem<String>(
-                  value: value,
-                  child: Text(value),
-                );
-              }).toList(),
+            ListTile(
+              title: Text(this._interface[2]),
+              trailing: DropdownButton<String>(
+                value: this._moduleValue,
+                onChanged: (String newValue) {
+                  if (this._moduleValue != newValue) {
+                    onModuleChanged(newValue);
+                  }
+                },
+                items: <String>[...moduleList]
+                    .map<DropdownMenuItem<String>>((String value) {
+                  return DropdownMenuItem<String>(
+                    value: value,
+                    child: Text(value),
+                  );
+                }).toList(),
+              ),
             ),
-          ),
-          ListTile(
-            title: Text(this._interface[4]),
-            trailing: DropdownButton<String>(
-              value: this._chapterValue,
-              onChanged: (String newValue) {
-                if (this._chapterValue != newValue) {
-                  setState(() {
-                    this._chapterValue = newValue;
-                    this._verseList = this._bible.getVerseList(
-                        int.parse(getBookNo()), int.parse(this._chapterValue));
-                    this._verseList =
-                        this._verseList.map((i) => (i).toString()).toList();
-                    this._verseValue = "1";
-                  });
-                }
-              },
-              items: <String>[...this._chapterList]
-                  .map<DropdownMenuItem<String>>((String value) {
-                return DropdownMenuItem<String>(
-                  value: value,
-                  child: Text(value),
-                );
-              }).toList(),
+            ListTile(
+              title: Text(this._interface[3]),
+              trailing: DropdownButton<String>(
+                value: this._bookValue,
+                onChanged: (String newValue) {
+                  if (this._bookValue != newValue) {
+                    setState(() {
+                      this._bookValue = newValue;
+                      this._chapterList =
+                          this._bible.getChapterList(int.parse(getBookNo()));
+                      this._chapterList =
+                          this._chapterList.map((i) => (i).toString()).toList();
+                      this._chapterValue = "1";
+                      this._verseList = this._bible.getVerseList(
+                          int.parse(getBookNo()), int.parse(this._chapterValue));
+                      this._verseList =
+                          this._verseList.map((i) => (i).toString()).toList();
+                      this._verseValue = "1";
+                    });
+                  }
+                },
+                items: <String>[...this._bookList]
+                    .map<DropdownMenuItem<String>>((String value) {
+                  return DropdownMenuItem<String>(
+                    value: value,
+                    child: Text(value),
+                  );
+                }).toList(),
+              ),
             ),
-          ),
-          ListTile(
-            title: Text(this._interface[5]),
-            trailing: DropdownButton<String>(
-              value: this._verseValue,
-              onChanged: (String newValue) {
-                if (this._verseValue != newValue) {
-                  setState(() {
-                    this._verseValue = newValue;
-                  });
-                }
-              },
-              items: <String>[...this._verseList]
-                  .map<DropdownMenuItem<String>>((String value) {
-                return DropdownMenuItem<String>(
-                  value: value,
-                  child: Text(value),
-                );
-              }).toList(),
+            ListTile(
+              title: Text(this._interface[4]),
+              trailing: DropdownButton<String>(
+                value: this._chapterValue,
+                onChanged: (String newValue) {
+                  if (this._chapterValue != newValue) {
+                    setState(() {
+                      this._chapterValue = newValue;
+                      this._verseList = this._bible.getVerseList(
+                          int.parse(getBookNo()), int.parse(this._chapterValue));
+                      this._verseList =
+                          this._verseList.map((i) => (i).toString()).toList();
+                      this._verseValue = "1";
+                    });
+                  }
+                },
+                items: <String>[...this._chapterList]
+                    .map<DropdownMenuItem<String>>((String value) {
+                  return DropdownMenuItem<String>(
+                    value: value,
+                    child: Text(value),
+                  );
+                }).toList(),
+              ),
             ),
-          ),
-          ListTile(
-            title: Text(this._interface[9]),
-            trailing: DropdownButton<String>(
-              value: this._instantActionList[this._instantAction],
-              onChanged: (String newValue) {
-                if (this._instantActionList[this._instantAction] != newValue) {
-                  setState(() {
-                    this._instantAction =
-                        this._instantActionList.indexOf(newValue);
-                  });
-                }
-              },
-              items: <String>[...this._instantActionList]
-                  .map<DropdownMenuItem<String>>((String value) {
-                return DropdownMenuItem<String>(
-                  value: value,
-                  child: Text(value),
-                );
-              }).toList(),
+            ListTile(
+              title: Text(this._interface[5]),
+              trailing: DropdownButton<String>(
+                value: this._verseValue,
+                onChanged: (String newValue) {
+                  if (this._verseValue != newValue) {
+                    setState(() {
+                      this._verseValue = newValue;
+                    });
+                  }
+                },
+                items: <String>[...this._verseList]
+                    .map<DropdownMenuItem<String>>((String value) {
+                  return DropdownMenuItem<String>(
+                    value: value,
+                    child: Text(value),
+                  );
+                }).toList(),
+              ),
             ),
-          ),
-          ListTile(
-            title: Text(this._interface[8]),
-            trailing: DropdownButton<String>(
-              value: this._favouriteActionList[this._favouriteAction],
-              onChanged: (String newValue) {
-                if (this._favouriteActionList[this._favouriteAction] !=
-                    newValue) {
-                  setState(() {
-                    this._favouriteAction =
-                        this._favouriteActionList.indexOf(newValue);
-                  });
-                }
-              },
-              items: <String>[...this._favouriteActionList]
-                  .map<DropdownMenuItem<String>>((String value) {
-                return DropdownMenuItem<String>(
-                  value: value,
-                  child: Text(value),
-                );
-              }).toList(),
+            ListTile(
+              title: Text(this._interface[9]),
+              trailing: DropdownButton<String>(
+                value: this._instantActionList[this._instantAction],
+                onChanged: (String newValue) {
+                  if (this._instantActionList[this._instantAction] != newValue) {
+                    setState(() {
+                      this._instantAction =
+                          this._instantActionList.indexOf(newValue);
+                    });
+                  }
+                },
+                items: <String>[...this._instantActionList]
+                    .map<DropdownMenuItem<String>>((String value) {
+                  return DropdownMenuItem<String>(
+                    value: value,
+                    child: Text(value),
+                  );
+                }).toList(),
+              ),
             ),
-          ),
-          ExpansionTile(
-            title: Text(this._interface[7]),
-            backgroundColor: Theme.of(context).accentColor.withOpacity(0.025),
-            children: versionRowList,
-          ),
-        ],
+            ListTile(
+              title: Text(this._interface[8]),
+              trailing: DropdownButton<String>(
+                value: this._favouriteActionList[this._favouriteAction],
+                onChanged: (String newValue) {
+                  if (this._favouriteActionList[this._favouriteAction] !=
+                      newValue) {
+                    setState(() {
+                      this._favouriteAction =
+                          this._favouriteActionList.indexOf(newValue);
+                    });
+                  }
+                },
+                items: <String>[...this._favouriteActionList]
+                    .map<DropdownMenuItem<String>>((String value) {
+                  return DropdownMenuItem<String>(
+                    value: value,
+                    child: Text(value),
+                  );
+                }).toList(),
+              ),
+            ),
+            ExpansionTile(
+              title: Text(this._interface[7]),
+              backgroundColor: Theme.of(context).accentColor.withOpacity(0.025),
+              children: versionRowList,
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -470,10 +502,10 @@ class BibleSettingsState extends State<BibleSettings> {
 }
 
 class BibleSettingsParser {
-  final String module, _book, _chapter, _verse, abbreviations, _fontSize;
+  final String module, _book, _chapter, _verse, abbreviations, _fontSize, _backgroundColor;
   final List<String> _compareBibleList;
   final int _instantAction, _quickAction;
-  int book, chapter, verse, instantAction, favouriteAction;
+  int book, chapter, verse, instantAction, favouriteAction, backgroundColor;
   double fontSize;
   List<String> compareBibleList;
 
@@ -486,7 +518,8 @@ class BibleSettingsParser {
       this._fontSize,
       this._compareBibleList,
       this._quickAction,
-      this._instantAction) {
+      this._instantAction,
+      this._backgroundColor,) {
     this.book = int.parse(this._book);
     this.chapter = int.parse(this._chapter);
     this.verse = int.parse(this._verse);
@@ -494,5 +527,6 @@ class BibleSettingsParser {
     this.compareBibleList = this._compareBibleList..sort();
     this.favouriteAction = this._quickAction - 1;
     this.instantAction = this._instantAction - 1;
+    this.backgroundColor = int.parse(this._backgroundColor);
   }
 }

@@ -12,14 +12,14 @@ class Config {
 
   Map verseTextStyle;
 
-  //List<String> allBibleList = ["ABG", "ASV", "BBE", "BSB", "CUV", "CUVs", "ERV", "ISV", "KJV", "LEB", "LXX1", "LXX2", "LXXE", "LXXk", "NET", "OHGB", "OHGBi", "T4T", "ULT", "UST", "WEB"];
+  List<String> allBibleList = ["ABG", "ASV", "BBE", "BSB", "CUV", "CUVs", "ERV", "ISV", "KJV", "LEB", "LXX1", "LXX2", "LXXE", "LXXk", "NET", "OHGB", "OHGBi", "T4T", "ULT", "UST", "WEB"];
   // the following line is written for personal use only [not for public]
-  List<String> allBibleList = ["ABG", "ASV", "BBE", "BSB", "CCB", "CEB", "CEV", "CSB", "CUV", "CUVs", "ERV", "ESV", "EXP", "ISV", "KJV", "LEB", "LXX1", "LXX2", "LXXE", "LXXk", "NASB", "NET", "NIV", "NLT", "NRSV", "OHGB", "OHGBi", "T4T", "ULT", "UST", "WEB"];
+  //List<String> allBibleList = ["ABG", "ASV", "BBE", "BSB", "CCB", "CEB", "CEV", "CSB", "CUV", "CUVs", "ERV", "ESV", "EXP", "ISV", "KJV", "LEB", "LXX1", "LXX2", "LXXE", "LXXk", "NASB", "NET", "NIV", "NLT", "NRSV", "OHGB", "OHGBi", "T4T", "ULT", "UST", "WEB"];
 
   // variables linked with shared preferences
-  //List<String> compareBibleList = ["ASV", "BSB", "ERV", "ISV", "KJV", "LEB", "LXXk", "NET", "OHGB", "WEB"];
+  List<String> compareBibleList = ["ASV", "BSB", "ERV", "ISV", "KJV", "LEB", "LXXk", "NET", "OHGB", "WEB"];
   // the following line is written for personal use only [not for public]
-  List<String> compareBibleList = ["CEV", "CSB", "CUV", "ESV", "EXP", "ISV", "KJV", "LEB", "LXXE", "LXXk", "NASB", "NET", "NIV", "OHGB"];
+  //List<String> compareBibleList = ["CEV", "CSB", "CUV", "ESV", "EXP", "ISV", "KJV", "LEB", "LXXE", "LXXk", "NASB", "NET", "NIV", "OHGB"];
 
   double fontSize = 20.0;
   String abbreviations = "ENG";
@@ -31,6 +31,7 @@ class Config {
   double toolsVersion = 0.0;
   int instantAction = 0;
   int favouriteAction = 1;
+  int backgroundColor = 0;
 
   Future setDefault() async {
     this.prefs = await SharedPreferences.getInstance();
@@ -98,6 +99,11 @@ class Config {
     } else {
       this.instantAction = prefs.getInt("instantAction");
     }
+    if (prefs.getInt("backgroundColor") == null) {
+      prefs.setInt("backgroundColor", this.backgroundColor);
+    } else {
+      this.backgroundColor = prefs.getInt("backgroundColor");
+    }
 
     return true;
   }
@@ -128,6 +134,7 @@ class Config {
     if (prefs.getStringList("compareBibleList") != null) this.compareBibleList = prefs.getStringList("compareBibleList");
     if (prefs.getInt("favouriteAction") != null) this.favouriteAction = prefs.getInt("favouriteAction");
     if (prefs.getInt("instantAction") != null) this.instantAction = prefs.getInt("instantAction");
+    if (prefs.getInt("backgroundColor") != null) this.backgroundColor = prefs.getInt("backgroundColor");
 
     return true;
   }
@@ -159,6 +166,9 @@ class Config {
         await prefs.setInt(feature, newSetting as int);
         break;
       case "instantAction":
+        await prefs.setInt(feature, newSetting as int);
+        break;
+      case "backgroundColor":
         await prefs.setInt(feature, newSetting as int);
         break;
     }

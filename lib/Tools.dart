@@ -25,7 +25,10 @@ class ToolMenu extends StatelessWidget {
       appBar: AppBar(
         title: Text(_title[_config.abbreviations]),
       ),
-      body: _buildItems(context),
+      body: Container(
+        color: Colors.blueGrey[_config.backgroundColor],
+        child: _buildItems(context),
+      ),
     );
   }
 
@@ -83,7 +86,10 @@ class ToolView extends StatelessWidget {
       appBar: AppBar(
         title: Text(_title),
       ),
-      body: _buildItems(context),
+      body: Container(
+        color: Colors.blueGrey[_config.backgroundColor],
+        child: _buildItems(context),
+      ),
     );
   }
 
@@ -157,7 +163,10 @@ class RelationshipState extends State<Relationship> {
       appBar: AppBar(
         title: Text(_title),
       ),
-      body: _buildItems(context),
+      body: Container(
+        color: Colors.blueGrey[_config.backgroundColor],
+        child: _buildItems(context),
+      ),
     );
   }
 

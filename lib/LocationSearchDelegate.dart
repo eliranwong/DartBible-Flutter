@@ -1220,12 +1220,15 @@ class LocationSearchDelegate extends SearchDelegate<List> {
   }
 
   Widget _buildItems(BuildContext context) {
-    return ListView.builder(
-        padding: const EdgeInsets.all(16.0),
-        itemCount: _data.length,
-        itemBuilder: (context, i) {
-          return _buildItemRow(i, context);
-        });
+    return Container(
+      color: Colors.blueGrey[_config.backgroundColor],
+      child: ListView.builder(
+          padding: const EdgeInsets.all(16.0),
+          itemCount: _data.length,
+          itemBuilder: (context, i) {
+            return _buildItemRow(i, context);
+          }),
+    );
   }
 
   Widget _buildItemRow(int i, BuildContext context) {

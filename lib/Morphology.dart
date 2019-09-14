@@ -62,7 +62,10 @@ class InterlinearViewState extends State<InterlinearView> {
           ),
         ],
       ),
-      body: _buildCardList(context),
+      body: Container(
+        color: Colors.blueGrey[_config.backgroundColor],
+        child: _buildCardList(context),
+      ),
     );
   }
 
@@ -131,7 +134,7 @@ class InterlinearViewState extends State<InterlinearView> {
   Future _loadLexiconView(BuildContext context, String lexicalEntry) async {
     final selected = await Navigator.push(
       context,
-      MaterialPageRoute(builder: (context) => LexiconView(lexicalEntry)),
+      MaterialPageRoute(builder: (context) => LexiconView(lexicalEntry, _config)),
     );
     if (selected != null) Navigator.pop(context, selected);
   }
@@ -235,7 +238,10 @@ class MorphologyViewState extends State<MorphologyView> {
           ),
         ],
       ),
-      body: _buildCardList(context),
+      body: Container(
+        color: Colors.blueGrey[_config.backgroundColor],
+        child: _buildCardList(context),
+      ),
     );
   }
 
@@ -325,7 +331,7 @@ class MorphologyViewState extends State<MorphologyView> {
   Future _loadLexiconView(BuildContext context, String lexicalEntry) async {
     final selected = await Navigator.push(
       context,
-      MaterialPageRoute(builder: (context) => LexiconView(lexicalEntry)),
+      MaterialPageRoute(builder: (context) => LexiconView(lexicalEntry, _config)),
     );
     if (selected != null) Navigator.pop(context, selected);
   }
@@ -333,8 +339,9 @@ class MorphologyViewState extends State<MorphologyView> {
 
 class LexiconView extends StatelessWidget {
   final String lexicalEntries;
+  final Config _config;
 
-  LexiconView(this.lexicalEntries);
+  LexiconView(this.lexicalEntries, this._config);
 
   @override
   Widget build(BuildContext context) {
@@ -343,12 +350,16 @@ class LexiconView extends StatelessWidget {
         appBar: AppBar(
           title: Text(title),
         ),
-        body: Center(
-          //The following line is created for testing only.
-          //child: _parser.buildRichText(context, _parser.convertHtmlText(testing)),
-          child: Text(
-              "Entry: $lexicalEntries\n\nThis page is reserved for lexical studies.\n\nLexicons will be available in coming versions."),
-        ));
+        body: Container(
+          color: Colors.blueGrey[_config.backgroundColor],
+          child: Center(
+            //The following line is created for testing only.
+            //child: _parser.buildRichText(context, _parser.convertHtmlText(testing)),
+            child: Text(
+                "Entry: $lexicalEntries\n\nThis page is reserved for lexical studies.\n\nLexicons will be available in coming versions."),
+          ),
+        ),
+    );
   }
 }
 
@@ -435,7 +446,10 @@ class MorphologySearchViewState extends State<MorphologySearchView> {
           ),
         ],
       ),
-      body: _buildMorphology(context),
+      body: Container(
+        color: Colors.blueGrey[_config.backgroundColor],
+        child: _buildMorphology(context),
+      ),
     );
   }
 
@@ -514,7 +528,10 @@ class MorphologySearchResultsState extends State<MorphologySearchResults> {
       appBar: AppBar(
         title: Text(title),
       ),
-      body: _buildCardList(context),
+      body: Container(
+        color: Colors.blueGrey[_config.backgroundColor],
+        child: _buildCardList(context),
+      ),
     );
   }
 
@@ -585,7 +602,10 @@ class WordView extends StatelessWidget {
       appBar: AppBar(
         title: title,
       ),
-      body: _buildKeys(context),
+      body: Container(
+        color: Colors.blueGrey[_config.backgroundColor],
+        child: _buildKeys(context),
+      ),
     );
   }
 
