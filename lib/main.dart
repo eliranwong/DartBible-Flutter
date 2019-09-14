@@ -40,6 +40,9 @@ class UniqueBible extends StatefulWidget {
 }
 
 class UniqueBibleState extends State<UniqueBible> {
+
+  final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
+
   bool _startup = false;
   bool _parallelBibles = false;
   List<dynamic> _data = [
@@ -50,6 +53,8 @@ class UniqueBibleState extends State<UniqueBible> {
     ]
   ];
   List<int> _currentActiveVerse = [0, 0, 0];
+  int _selectedBook;
+  bool _displayAllBooks = false;
 
   Bibles bibles;
   var scrollController;
@@ -557,9 +562,7 @@ class UniqueBibleState extends State<UniqueBible> {
         : _data = this.bibles.bible1.openSingleChapter(_currentActiveVerse);
   }
 
-  @override
-  build(BuildContext context) {
-    _setup();
+  void _updateTextStyle() {
     // update various font text style here
     _verseNoFont = TextStyle(fontSize: (this.config.fontSize - 3), color: Colors.blueAccent);
     _verseFont = TextStyle(fontSize: this.config.fontSize, color: Colors.black);
@@ -585,6 +588,9 @@ class UniqueBibleState extends State<UniqueBible> {
       "interlinearStyle": _interlinearStyle,
       "interlinearStyleDim": _interlinearStyleDim,
     };
+  }
+
+  void _updateAppBarTitle() {
     // update App bar title
     if (this.bibles?.bible1?.bookList != null) {
       if (_parallelBibles) {
@@ -593,79 +599,38 @@ class UniqueBibleState extends State<UniqueBible> {
         this.interfaceApp[this.abbreviations][0] = "${BibleParser(this.abbreviations).bcvToChapterReference(_currentActiveVerse)} [${this.bibles.bible1.module}]";
       }
     }
+  }
+
+  @override
+  build(BuildContext context) {
+
+    _setup();
+    _updateTextStyle();
+    _updateAppBarTitle();
+
     return Scaffold(
-      drawer: Drawer(
-        // Add a ListView to the drawer. This ensures the user can scroll
-        // through the options in the drawer if there isn't enough vertical
-        // space to fit everything.
-        child: ListView(
-          // Important: Remove any padding from the ListView.
-          padding: EdgeInsets.zero,
-          children: <Widget>[
-            UserAccountsDrawerHeader(
-                //decoration: BoxDecoration(color: Colors.blue,),
-                currentAccountPicture: const CircleAvatar(
-                  backgroundImage: AssetImage("assets/images/account.png"),
-                ),
-                accountName: const Text("Eliran Wong"),
-                accountEmail: const Text("support@BibleTools.app")),
-            _buildTimelineList(context),
-            _buildFavouriteList(context),
-            _buildHistoryList(context),
-            _buildBookList(context),
-            _buildChapterList(context),
-          ],
-        ),
+      key: _scaffoldKey,
+      drawer: _buildDrawer(),
+      /*
+      // trigger actions when drawer is opened or closed:
+      // find a fix of drawerCallback at:
+      // https://juejin.im/post/5be5356bf265da61602c6f68
+      drawer: DrawerController(
+        child: _buildDrawer(),
+        alignment: DrawerAlignment.start,
+        drawerCallback: (isOpen) {
+          if (!isOpen) {
+            setState(() {
+              _selectedBook = _currentActiveVerse[0];
+              _displayAllBooks = false;
+            });
+          }
+        },
       ),
-      appBar: AppBar(
-        title: Text(this.interfaceApp[this.abbreviations][0]),
-        leading: Builder(
-          builder: (BuildContext context) {
-            return IconButton(
-              //tooltip: MaterialLocalizations.of(context).openAppDrawerTooltip,
-              tooltip: this.interfaceApp[this.abbreviations][1],
-              icon: const Icon(Icons.menu),
-              onPressed: () {
-                Scaffold.of(context).openDrawer();
-              },
-            );
-          },
-        ),
-        actions: <Widget>[
-          IconButton(
-            tooltip: this.interfaceApp[this.abbreviations][2],
-            icon: const Icon(Icons.search),
-            onPressed: () async {
-              final List selected = await showSearch(
-                context: context,
-                delegate: BibleSearchDelegate(context, this.bibles.bible1, this.interfaceDialog, this.config, this.searchData, _currentActiveVerse),
-              );
-              if (selected != null) {
-                this.searchData = selected[0];
-                _newVerseSelected(this.searchData[selected[1]]);
-              }
-            },
-          ),
-          IconButton(
-            tooltip: this.interfaceApp[this.abbreviations][3],
-            icon: const Icon(Icons.swap_calls),
-            onPressed: () {
-              setState(() {
-                _swapBibles();
-              });
-            },
-          ),
-          IconButton(
-            tooltip: this.interfaceApp[this.abbreviations][4],
-            icon: const Icon(Icons.more_vert),
-            onPressed: () {
-              _openBibleSettings(context);
-            },
-          ),
-        ],
-      ),
+      */
+      appBar: _buildAppBar(),
       body: Container(
-        color: Colors.white,
+        //color: Colors.white,
         child: SwipeDetector(
           child: _buildVerses(context),
           onSwipeLeft: () {
@@ -676,93 +641,7 @@ class UniqueBibleState extends State<UniqueBible> {
           },
         ),
       ),
-      bottomNavigationBar: BottomAppBar(
-        color: Colors.white,
-        child: Row(children: <Widget>[
-          IconButton(
-            tooltip: this.interfaceBottom[this.abbreviations][0],
-            icon: const Icon(Icons.layers),
-            onPressed: () {
-              showInterlinear(context, _currentActiveVerse);
-            },
-          ),
-          IconButton(
-            tooltip: this.interfaceBottom[this.abbreviations][1],
-            icon: const Icon(Icons.title),
-            onPressed: () {
-              _loadTopics(context, _currentActiveVerse);
-            },
-          ),
-          IconButton(
-            tooltip: this.interfaceBottom[this.abbreviations][4],
-            icon: const Icon(Icons.people),
-            onPressed: () {
-              _loadPeople(context, _currentActiveVerse);
-            },
-          ),
-          IconButton(
-            tooltip: this.interfaceBottom[this.abbreviations][5],
-            icon: const Icon(Icons.pin_drop),
-            onPressed: () {
-              _loadLocation(context, _currentActiveVerse);
-            },
-          ),
-          IconButton(
-            tooltip: this.interfaceBottom[this.abbreviations][2],
-            icon: const Icon(Icons.games),
-            onPressed: () {
-              Map title = {
-                "ENG": this.interfaceBottom["ENG"][2],
-                "TC": this.interfaceBottom["TC"][2],
-                "SC": this.interfaceBottom["SC"][2],
-              };
-              List menu = [
-                "Precious Bible Promises I",
-                "Precious Bible Promises II",
-                "Precious Bible Promises III",
-                "Precious Bible Promises IV",
-                "Take Words with You",
-                "Index",
-                "When you ...",
-                "當你 ……",
-                "当你 ……",
-              ];
-              _loadTools(context, title, "PROMISES", menu, Icon(Icons.games));
-            },
-          ),
-          IconButton(
-            tooltip: this.interfaceBottom[this.abbreviations][3],
-            icon: const Icon(Icons.compare),
-            onPressed: () {
-              Map title = {
-                "ENG": this.interfaceBottom["ENG"][3],
-                "TC": this.interfaceBottom["TC"][3],
-                "SC": this.interfaceBottom["SC"][3],
-              };
-              List menu = [
-                "History of Israel I",
-                "History of Israel II",
-                "Gospels I",
-                "Gospels II",
-                "摩西五經",
-                "撒母耳記，列王紀，歷代志",
-                "詩篇",
-                "福音書（可，太，路〔順序〕，約） x 54",
-                "福音書（可，太，路〔不順序〕） x 14",
-                "福音書（可，太） x 11",
-                "福音書（可，太，約） x 4",
-                "福音書（可，路） x 7",
-                "福音書（太，路） x 32",
-                "福音書（可〔獨家記載〕） x 5",
-                "福音書（太〔獨家記載〕） x 30",
-                "福音書（路〔獨家記載〕） x 39",
-                "福音書（約〔獨家記載〕） x 61",
-              ];
-              _loadTools(context, title, "PARALLEL", menu, Icon(Icons.compare));
-            },
-          ),
-        ]),
-      ),
+      bottomNavigationBar: _buildBottomAppBar(),
       floatingActionButtonLocation: FloatingActionButtonLocation.endDocked,
       floatingActionButton: FloatingActionButton(
         onPressed: () {
@@ -774,6 +653,82 @@ class UniqueBibleState extends State<UniqueBible> {
         tooltip: this.interfaceApp[this.abbreviations][5],
         child: Icon(Icons.add),
       ),
+    );
+  }
+
+  Widget _buildDrawer() {
+    return Drawer(
+      // Add a ListView to the drawer. This ensures the user can scroll
+      // through the options in the drawer if there isn't enough vertical
+      // space to fit everything.
+      child: ListView(
+        // Important: Remove any padding from the ListView.
+        padding: EdgeInsets.zero,
+        children: <Widget>[
+          UserAccountsDrawerHeader(
+            //decoration: BoxDecoration(color: Colors.blue,),
+            currentAccountPicture: const CircleAvatar(
+              backgroundImage: AssetImage("assets/images/account.png"),
+            ),
+            accountName: const Text("Eliran Wong"),
+            accountEmail: const Text("support@BibleTools.app"),
+          ),
+          _buildTimelineList(context),
+          _buildFavouriteList(context),
+          _buildHistoryList(context),
+          _buildBookList(context),
+          _buildChapterList(context),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildTimelineList(BuildContext context) {
+    List timelines = [
+      ["0", "2210-2090 BCE"],
+      ["1", "2090-1970 BCE"],
+      ["2", "1970-1850 BCE"],
+      ["3", "1850-1730 BCE"],
+      ["4", "1750-1630 BCE"],
+      ["5", "1630-1510 BCE"],
+      ["6", "1510-1390 BCE"],
+      ["7", "1410-1290 BCE"],
+      ["8", "1290-1170 BCE"],
+      ["9", "1170-1050 BCE"],
+      ["10", "1050-930 BCE"],
+      ["11", "930-810 BCE"],
+      ["12", "810-690 BCE"],
+      ["13", "690-570 BCE"],
+      ["14", "570-450 BCE"],
+      ["15", "470-350 BCE"],
+      ["16", "350-230 BCE"],
+      ["17", "240-120 BCE"],
+      ["18", "120-1 BCE"],
+      ["19", "10-110 CE"],
+      ["20", "Matthew"],
+      ["21", "Mark"],
+      ["22", "Luke"],
+      ["23", "John"],
+      ["24", "4 Gospels"],
+    ];
+    List<Widget> timelineRowList = timelines.map((i) => _buildTimelineRow(context, i[0], i[1], timelines)).toList();
+    return ExpansionTile(
+      title: Text(this.interfaceApp[this.abbreviations][10]),
+      //initiallyExpanded: true,
+      backgroundColor: Theme.of(context).accentColor.withOpacity(0.025),
+      children: timelineRowList,
+    );
+  }
+
+  Widget _buildTimelineRow(BuildContext context, String file, String title, List timelines) {
+    return ListTile(
+      title: Text(title),
+      onTap: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (context) => Timeline(file, title, timelines)),
+        );
+      },
     );
   }
 
@@ -853,38 +808,65 @@ class UniqueBibleState extends State<UniqueBible> {
     if ((_currentActiveVerse.join(".") == "0.0.0") || (this.bibles?.bible1?.bookList == null)) {
       bookRowList = [_emptyRow(context)];
     } else {
-      List bookList = this.bibles.bible1.bookList;
-      bookRowList = bookList.map((i) => _buildBookRow(context, i)).toList();
+      bookRowList = [
+        Container(
+          margin: const EdgeInsets.all(10.0),
+          child: Wrap(
+            spacing: 3.0,
+            children: _buildBookChips(),
+          ),
+        ),
+      ];
     }
     return ExpansionTile(
       title: Text(this.interfaceApp[this.abbreviations][8]),
+      initiallyExpanded: true,
       backgroundColor: Theme.of(context).accentColor.withOpacity(0.025),
       children: bookRowList,
+      //onExpansionChanged: ,
     );
   }
 
-  Widget _buildBookRow(BuildContext context, int book) {
-    var parser = BibleParser(this.abbreviations);
-    var abb = parser.standardAbbreviation[book.toString()];
-    Widget bookText;
-    (book == _currentActiveVerse[0]) ? bookText = Text(abb, style: _highlightStyle) : bookText = Text(abb);
-
-    return ListTile(
-      title: bookText,
-      onTap: () {
-        Navigator.pop(context);
-        _scrollToCurrentActiveVerse();
-        _newVerseSelected([
-          [book, 1, 1],
-          "",
-          this.bibles.bible1.module
-        ]);
-      },
-      onLongPress: () {
-        var selectedBcvList = [book, 1, 1];
-        _addToFavouriteDialog(context, selectedBcvList);
-      },
-    );
+  List<Widget> _buildBookChips() {
+    List bookList = this.bibles.bible1.bookList;
+    List<Widget> bookChips;
+    BibleParser parser = BibleParser(this.abbreviations);
+    int currentBook = _currentActiveVerse[0];
+    String abb;
+    if (_displayAllBooks) {
+      bookChips = List<Widget>.generate(
+        bookList.length,
+            (int index) {
+          int book = bookList[index];
+          abb = parser.standardAbbreviation[book.toString()];
+          return ChoiceChip(
+            label: Text(abb),
+            selected: (book == currentBook),
+            onSelected: (bool selected) {
+              setState(() {
+                _displayAllBooks = false;
+                _selectedBook = book;
+              });
+            },
+          );
+        },
+      ).toList();
+    } else {
+      int book = _selectedBook ?? currentBook;
+      abb = parser.standardAbbreviation[book.toString()];
+      bookChips = [
+        ChoiceChip(
+          label: Text(abb),
+          selected: true,
+          onSelected: (bool selected) {
+            setState(() {
+              _displayAllBooks = true;
+            });
+          },
+        )
+      ];
+    }
+    return bookChips;
   }
 
   Widget _buildChapterList(BuildContext context) {
@@ -892,10 +874,49 @@ class UniqueBibleState extends State<UniqueBible> {
     if ((_currentActiveVerse.join(".") == "0.0.0") || (this.bibles?.bible1?.bookList == null)) {
       chapterRowList = [_emptyRow(context)];
     } else {
-      List chapterList =
-          this.bibles.bible1.getChapterList(_currentActiveVerse[0]);
-      chapterRowList =
-          chapterList.map((i) => _buildChapterRow(context, i)).toList();
+      List chapterList;
+      int selectedChapter, selectedBook;
+      int currentBook = _currentActiveVerse[0];
+      if ((_selectedBook != null) && (_selectedBook != currentBook)) {
+        chapterList = this.bibles.bible1.getChapterList(_selectedBook);
+        (chapterList.isNotEmpty) ? selectedChapter = chapterList[0] : selectedChapter = 0;
+        selectedBook = _selectedBook;
+        _selectedBook = currentBook;
+      } else {
+        chapterList = this.bibles.bible1.getChapterList(currentBook);
+        selectedChapter = _currentActiveVerse[1];
+        selectedBook = currentBook;
+      }
+      chapterRowList = [
+        Container(
+          margin: const EdgeInsets.all(10.0),
+          child: Wrap(
+            spacing: 3.0,
+            children: List<Widget>.generate(
+              chapterList.length,
+                  (int index) {
+                int chapter = chapterList[index];
+                return ChoiceChip(
+                  label: Text(chapter.toString()),
+                  selected: (chapter == selectedChapter),
+                  onSelected: (bool selected) {
+                    List verses = this.bibles.bible1.getVerseList(selectedBook, chapter);
+                    if (verses.isNotEmpty) {
+                      Navigator.pop(context);
+                      _scrollToCurrentActiveVerse();
+                      _newVerseSelected([
+                        [selectedBook, chapter, verses[0]],
+                        "",
+                        this.bibles.bible1.module
+                      ]);
+                    }
+                  },
+                );
+              },
+            ).toList(),
+          ),
+        ),
+      ];
     }
     return ExpansionTile(
       title: Text(this.interfaceApp[this.abbreviations][9]),
@@ -905,82 +926,156 @@ class UniqueBibleState extends State<UniqueBible> {
     );
   }
 
-  Widget _buildChapterRow(BuildContext context, int chapter) {
-    Widget chapterText;
-    (chapter == _currentActiveVerse[1]) ? chapterText = Text(chapter.toString(), style: _highlightStyle) : chapterText = Text(chapter.toString());
-    return ListTile(
-      title: chapterText,
-      onTap: () {
-        Navigator.pop(context);
-        _scrollToCurrentActiveVerse();
-        _newVerseSelected([
-          [_currentActiveVerse[0], chapter, 1],
-          "",
-          this.bibles.bible1.module
-        ]);
-      },
-      onLongPress: () {
-        List<int> selectedBcvList = [_currentActiveVerse[0], chapter, 1];
-        _addToFavouriteDialog(context, selectedBcvList);
-      },
-    );
-  }
-
-  Widget _buildTimelineList(BuildContext context) {
-    List timelines = [
-      ["0", "2210-2090 BCE"],
-      ["1", "2090-1970 BCE"],
-      ["2", "1970-1850 BCE"],
-      ["3", "1850-1730 BCE"],
-      ["4", "1750-1630 BCE"],
-      ["5", "1630-1510 BCE"],
-      ["6", "1510-1390 BCE"],
-      ["7", "1410-1290 BCE"],
-      ["8", "1290-1170 BCE"],
-      ["9", "1170-1050 BCE"],
-      ["10", "1050-930 BCE"],
-      ["11", "930-810 BCE"],
-      ["12", "810-690 BCE"],
-      ["13", "690-570 BCE"],
-      ["14", "570-450 BCE"],
-      ["15", "470-350 BCE"],
-      ["16", "350-230 BCE"],
-      ["17", "240-120 BCE"],
-      ["18", "120-1 BCE"],
-      ["19", "10-110 CE"],
-      ["20", "Matthew"],
-      ["21", "Mark"],
-      ["22", "Luke"],
-      ["23", "John"],
-      ["24", "4 Gospels"],
-    ];
-    List<Widget> timelineRowList = timelines.map((i) => _buildTimelineRow(context, i[0], i[1], timelines)).toList();
-    return ExpansionTile(
-      title: Text(this.interfaceApp[this.abbreviations][10]),
-      //initiallyExpanded: true,
-      backgroundColor: Theme.of(context).accentColor.withOpacity(0.025),
-      children: timelineRowList,
-    );
-  }
-
-  Widget _buildTimelineRow(BuildContext context, String file, String title, List timelines) {
-    return ListTile(
-      title: Text(title),
-      onTap: () {
-        Navigator.push(
-          context,
-          MaterialPageRoute(builder: (context) => Timeline(file, title, timelines)),
-        );
-      },
-    );
-  }
-
   Widget _emptyRow(BuildContext context) {
     return ListTile(
       title: Text("... loading ..."),
       onTap: () {
         Navigator.pop(context);
       },
+    );
+  }
+
+  Widget _buildAppBar() {
+    return AppBar(
+      title: Text(this.interfaceApp[this.abbreviations][0]),
+      leading: Builder(
+        builder: (BuildContext context) {
+          return IconButton(
+            //tooltip: MaterialLocalizations.of(context).openAppDrawerTooltip,
+            tooltip: this.interfaceApp[this.abbreviations][1],
+            icon: const Icon(Icons.menu),
+            onPressed: () {
+              setState(() {
+                _selectedBook = _currentActiveVerse[0];
+                _displayAllBooks = false;
+              });
+              Scaffold.of(context).openDrawer();
+            },
+          );
+        },
+      ),
+      actions: <Widget>[
+        IconButton(
+          tooltip: this.interfaceApp[this.abbreviations][2],
+          icon: const Icon(Icons.search),
+          onPressed: () async {
+            final List selected = await showSearch(
+              context: context,
+              delegate: BibleSearchDelegate(context, this.bibles.bible1, this.interfaceDialog, this.config, this.searchData, _currentActiveVerse),
+            );
+            if (selected != null) {
+              this.searchData = selected[0];
+              _newVerseSelected(this.searchData[selected[1]]);
+            }
+          },
+        ),
+        IconButton(
+          tooltip: this.interfaceApp[this.abbreviations][3],
+          icon: const Icon(Icons.swap_calls),
+          onPressed: () {
+            setState(() {
+              _swapBibles();
+            });
+          },
+        ),
+        IconButton(
+          tooltip: this.interfaceApp[this.abbreviations][4],
+          icon: const Icon(Icons.more_vert),
+          onPressed: () {
+            _openBibleSettings(context);
+          },
+        ),
+      ],
+    );
+  }
+
+  Widget _buildBottomAppBar() {
+    return BottomAppBar(
+      color: Colors.white,
+      child: Row(children: <Widget>[
+        IconButton(
+          tooltip: this.interfaceBottom[this.abbreviations][0],
+          icon: const Icon(Icons.layers),
+          onPressed: () {
+            showInterlinear(context, _currentActiveVerse);
+          },
+        ),
+        IconButton(
+          tooltip: this.interfaceBottom[this.abbreviations][1],
+          icon: const Icon(Icons.title),
+          onPressed: () {
+            _loadTopics(context, _currentActiveVerse);
+          },
+        ),
+        IconButton(
+          tooltip: this.interfaceBottom[this.abbreviations][4],
+          icon: const Icon(Icons.people),
+          onPressed: () {
+            _loadPeople(context, _currentActiveVerse);
+          },
+        ),
+        IconButton(
+          tooltip: this.interfaceBottom[this.abbreviations][5],
+          icon: const Icon(Icons.pin_drop),
+          onPressed: () {
+            _loadLocation(context, _currentActiveVerse);
+          },
+        ),
+        IconButton(
+          tooltip: this.interfaceBottom[this.abbreviations][2],
+          icon: const Icon(Icons.games),
+          onPressed: () {
+            Map title = {
+              "ENG": this.interfaceBottom["ENG"][2],
+              "TC": this.interfaceBottom["TC"][2],
+              "SC": this.interfaceBottom["SC"][2],
+            };
+            List menu = [
+              "Precious Bible Promises I",
+              "Precious Bible Promises II",
+              "Precious Bible Promises III",
+              "Precious Bible Promises IV",
+              "Take Words with You",
+              "Index",
+              "When you ...",
+              "當你 ……",
+              "当你 ……",
+            ];
+            _loadTools(context, title, "PROMISES", menu, Icon(Icons.games));
+          },
+        ),
+        IconButton(
+          tooltip: this.interfaceBottom[this.abbreviations][3],
+          icon: const Icon(Icons.compare),
+          onPressed: () {
+            Map title = {
+              "ENG": this.interfaceBottom["ENG"][3],
+              "TC": this.interfaceBottom["TC"][3],
+              "SC": this.interfaceBottom["SC"][3],
+            };
+            List menu = [
+              "History of Israel I",
+              "History of Israel II",
+              "Gospels I",
+              "Gospels II",
+              "摩西五經",
+              "撒母耳記，列王紀，歷代志",
+              "詩篇",
+              "福音書（可，太，路〔順序〕，約） x 54",
+              "福音書（可，太，路〔不順序〕） x 14",
+              "福音書（可，太） x 11",
+              "福音書（可，太，約） x 4",
+              "福音書（可，路） x 7",
+              "福音書（太，路） x 32",
+              "福音書（可〔獨家記載〕） x 5",
+              "福音書（太〔獨家記載〕） x 30",
+              "福音書（路〔獨家記載〕） x 39",
+              "福音書（約〔獨家記載〕） x 61",
+            ];
+            _loadTools(context, title, "PARALLEL", menu, Icon(Icons.compare));
+          },
+        ),
+      ]),
     );
   }
 
@@ -1376,3 +1471,51 @@ class UniqueBibleState extends State<UniqueBible> {
   }
 
 }
+
+/*
+class MyDrawer extends StatefulWidget {
+
+  @override
+  _MyDrawerState createState() => _MyDrawerState();
+
+}
+
+class _MyDrawerState extends State<MyDrawer> {
+
+  @override
+  void initState() {
+    super.initState();
+    //print("open");
+  }
+
+  @override
+  void dispose() {
+    //print("close");
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Drawer(
+      // Add a ListView to the drawer. This ensures the user can scroll
+      // through the options in the drawer if there isn't enough vertical
+      // space to fit everything.
+      child: ListView(
+        // Important: Remove any padding from the ListView.
+        padding: EdgeInsets.zero,
+        children: <Widget>[
+          UserAccountsDrawerHeader(
+            //decoration: BoxDecoration(color: Colors.blue,),
+            currentAccountPicture: const CircleAvatar(
+              backgroundImage: AssetImage("assets/images/account.png"),
+            ),
+            accountName: const Text("Eliran Wong"),
+            accountEmail: const Text("support@BibleTools.app"),
+          ),
+        ],
+      ),
+    );
+  }
+
+}
+*/
