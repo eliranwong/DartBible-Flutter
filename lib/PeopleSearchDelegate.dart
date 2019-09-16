@@ -78,14 +78,14 @@ class PeopleSearchDelegate extends SearchDelegate<List> {
 
   Widget _buildItemRow(int i, BuildContext context) {
     var itemData = _data[i];
-    Icon icon = (itemData["Sex"] == "F") ? Icon(Icons.person_outline) : Icon(Icons.person);
+    Icon icon = (itemData["Sex"] == "F") ? Icon(Icons.person_outline, color: _config.myColors["black"],) : Icon(Icons.person, color: _config.myColors["black"],);
 
     return ListTile(
       leading: icon,
       title: Text(itemData["Name"], style: _config.verseTextStyle["verseFont"]),
       trailing: IconButton(
         tooltip: interface[this.abbreviations][1],
-        icon: const Icon(Icons.search),
+        icon: Icon(Icons.search, color: _config.myColors["black"],),
         onPressed: () {
           close(context, [1, itemData["PersonID"]]);
         },

@@ -117,7 +117,7 @@ class BibleSettingsState extends State<BibleSettings> {
     "40"
   ];
 
-  List colorDegree = ["0", "100", "200", "300", "400", "500", "600", "700"];
+  List colorDegree = ["0", "100", "200", "300", "400", "500", "600", "700", "800", "900"];
 
   Map interfaceMap = {"English": "ENG", "繁體中文": "TC", "简体中文": "SC"};
 
@@ -129,21 +129,22 @@ class BibleSettingsState extends State<BibleSettings> {
   Map _favouriteActionMap;
   List _instantActionList, _favouriteActionList;
   int _instantAction, _favouriteAction;
+  Config _config;
 
-  BibleSettingsState(Bible bible, List bcvList, Map favouriteActionMap, Config config) {
+  BibleSettingsState(Bible bible, List bcvList, Map favouriteActionMap, this._config) {
     // The following line is used instead of "this._compareBibleList = compareBibleList";
     // Reason: To avoid direct update of original config settings
     // This allows users to cancel the changes made by pressing the "back" button
-    this._compareBibleList = List<String>.from(config.compareBibleList);
+    this._compareBibleList = List<String>.from(_config.compareBibleList);
 
-    this._fontSizeValue = config.fontSize
+    this._fontSizeValue = _config.fontSize
         .toString()
-        .substring(0, (config.fontSize.toString().length - 2));
-    this.abbreviations = config.abbreviations;
+        .substring(0, (_config.fontSize.toString().length - 2));
+    this.abbreviations = _config.abbreviations;
     this._interface = interfaceBibleSettings[this.abbreviations];
     var interfaceMapReverse = {"ENG": "English", "TC": "繁體中文", "SC": "简体中文"};
     this._interfaceValue = interfaceMapReverse[this.abbreviations];
-    this._colorDegreeValue = config.backgroundColor.toString();
+    this._colorDegreeValue = _config.backgroundColor.toString();
 
     this._parser = BibleParser(this.abbreviations);
     this._abbreviations = this._parser.standardAbbreviation;
@@ -159,11 +160,11 @@ class BibleSettingsState extends State<BibleSettings> {
     this._favouriteActionList =
         this._favouriteActionMap[this.abbreviations].sublist(4);
     this._favouriteActionList.insert(0, "---");
-    this._favouriteAction = config.favouriteAction + 1;
+    this._favouriteAction = _config.favouriteAction + 1;
 
     this._instantActionList = this._instantActionMap[this.abbreviations];
     this._instantActionList.insert(0, "---");
-    this._instantAction = config.instantAction + 1;
+    this._instantAction = _config.instantAction + 1;
 
     updateSettingsValues();
   }
@@ -235,40 +236,64 @@ class BibleSettingsState extends State<BibleSettings> {
 
   @override
   build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(this._interface[0]),
-        actions: <Widget>[
-          IconButton(
-            tooltip: _interface[10],
-            icon: const Icon(Icons.check),
-            onPressed: () {
-              Navigator.pop(
-                  context,
-                  BibleSettingsParser(
-                    this._moduleValue,
-                    getBookNo(),
-                    this._chapterValue,
-                    this._verseValue,
-                    this.interfaceMap[this._interfaceValue],
-                    this._fontSizeValue,
-                    this._compareBibleList,
-                    this._favouriteAction,
-                    this._instantAction,
-                    this._colorDegreeValue,
-                  ));
-            },
-          ),
-        ],
+    return Theme(
+      data: ThemeData(
+        canvasColor: (int.parse(_colorDegreeValue) >= 500) ? Colors.blueGrey[int.parse(_colorDegreeValue) - 200] : Colors.blueGrey[int.parse(_colorDegreeValue)],
+        unselectedWidgetColor: (int.parse(_colorDegreeValue) >= 500) ? Colors.blue[300] : Colors.blue[700],
+        accentColor: (int.parse(_colorDegreeValue) >= 500) ? Colors.blueAccent[100] : Colors.blueAccent[700],
+        dividerColor: (int.parse(_colorDegreeValue) >= 500) ? Colors.grey[400] : Colors.grey[700],
       ),
-      body: _bibleSettings(context),
+      child: Scaffold(
+        appBar: AppBar(
+          backgroundColor: (int.parse(_colorDegreeValue) >= 500) ? Colors.blueGrey[int.parse(_colorDegreeValue) - 200] : Colors.blue[600],
+          title: Text(this._interface[0]),
+          actions: <Widget>[
+            IconButton(
+              tooltip: _interface[10],
+              icon: const Icon(Icons.check),
+              onPressed: () {
+                Navigator.pop(
+                    context,
+                    BibleSettingsParser(
+                      this._moduleValue,
+                      getBookNo(),
+                      this._chapterValue,
+                      this._verseValue,
+                      this.interfaceMap[this._interfaceValue],
+                      this._fontSizeValue,
+                      this._compareBibleList,
+                      this._favouriteAction,
+                      this._instantAction,
+                      this._colorDegreeValue,
+                    ));
+              },
+            ),
+          ],
+        ),
+        body: _bibleSettings(context),
+      ),
     );
   }
 
   Widget _bibleSettings(BuildContext context) {
+    TextStyle style = (int.parse(_colorDegreeValue) >= 500) ? TextStyle(color: Colors.grey[300]) : TextStyle(color: Colors.black);
+
+    Color dropdownBackground = (int.parse(_colorDegreeValue) >= 500) ? Colors.blueGrey[int.parse(_colorDegreeValue) - 200] : Colors.blueGrey[int.parse(_colorDegreeValue)];
+    Color dropdownBorder = (int.parse(_colorDegreeValue) >= 500) ? Colors.grey[400] : Colors.grey[700];
+    Color dropdownDisabled = (int.parse(_colorDegreeValue) >= 500) ? Colors.blueAccent[100] : Colors.blueAccent[700];
+    Color dropdownEnabled = (int.parse(_colorDegreeValue) >= 500) ? Colors.blueAccent[100] : Colors.blueAccent[700];
+
+    Widget dropdownUnderline = Container(
+      decoration: BoxDecoration(
+          border: Border(bottom: BorderSide(color: dropdownBorder))
+      ),
+    );
+
     List moduleList = Bibles(this.abbreviations).getALLBibleList();
     List<Widget> versionRowList =
-        moduleList.map((i) => _buildVersionRow(context, i)).toList();
+        moduleList.map((i) => _buildVersionRow(context, i, dropdownBackground)).toList();
+
+
 
     return Container(
       color: Colors.blueGrey[int.parse(_colorDegreeValue)],
@@ -277,8 +302,12 @@ class BibleSettingsState extends State<BibleSettings> {
         child: ListView(
           children: <Widget>[
             ListTile(
-              title: Text(this._interface[1]),
+              title: Text(this._interface[1], style: style),
               trailing: DropdownButton<String>(
+                style: style,
+                underline: dropdownUnderline,
+                iconDisabledColor: dropdownDisabled,
+                iconEnabledColor: dropdownEnabled,
                 value: this._interfaceValue,
                 onChanged: (String newValue) {
                   if (this._interfaceValue != newValue) {
@@ -297,8 +326,12 @@ class BibleSettingsState extends State<BibleSettings> {
               ),
             ),
             ListTile(
-              title: Text(this._interface[11]),
+              title: Text(this._interface[11], style: style),
               trailing: DropdownButton<String>(
+                style: style,
+                underline: dropdownUnderline,
+                iconDisabledColor: dropdownDisabled,
+                iconEnabledColor: dropdownEnabled,
                 value: _colorDegreeValue,
                 onChanged: (String newValue) {
                   if (this._colorDegreeValue != newValue) {
@@ -317,8 +350,12 @@ class BibleSettingsState extends State<BibleSettings> {
               ),
             ),
             ListTile(
-              title: Text(this._interface[6]),
+              title: Text(this._interface[6], style: style),
               trailing: DropdownButton<String>(
+                style: style,
+                underline: dropdownUnderline,
+                iconDisabledColor: dropdownDisabled,
+                iconEnabledColor: dropdownEnabled,
                 value: this._fontSizeValue,
                 onChanged: (String newValue) {
                   if (this._verseValue != newValue) {
@@ -337,8 +374,12 @@ class BibleSettingsState extends State<BibleSettings> {
               ),
             ),
             ListTile(
-              title: Text(this._interface[2]),
+              title: Text(this._interface[2], style: style),
               trailing: DropdownButton<String>(
+                style: style,
+                underline: dropdownUnderline,
+                iconDisabledColor: dropdownDisabled,
+                iconEnabledColor: dropdownEnabled,
                 value: this._moduleValue,
                 onChanged: (String newValue) {
                   if (this._moduleValue != newValue) {
@@ -355,8 +396,12 @@ class BibleSettingsState extends State<BibleSettings> {
               ),
             ),
             ListTile(
-              title: Text(this._interface[3]),
+              title: Text(this._interface[3], style: style),
               trailing: DropdownButton<String>(
+                style: style,
+                underline: dropdownUnderline,
+                iconDisabledColor: dropdownDisabled,
+                iconEnabledColor: dropdownEnabled,
                 value: this._bookValue,
                 onChanged: (String newValue) {
                   if (this._bookValue != newValue) {
@@ -385,8 +430,12 @@ class BibleSettingsState extends State<BibleSettings> {
               ),
             ),
             ListTile(
-              title: Text(this._interface[4]),
+              title: Text(this._interface[4], style: style),
               trailing: DropdownButton<String>(
+                style: style,
+                underline: dropdownUnderline,
+                iconDisabledColor: dropdownDisabled,
+                iconEnabledColor: dropdownEnabled,
                 value: this._chapterValue,
                 onChanged: (String newValue) {
                   if (this._chapterValue != newValue) {
@@ -410,8 +459,12 @@ class BibleSettingsState extends State<BibleSettings> {
               ),
             ),
             ListTile(
-              title: Text(this._interface[5]),
+              title: Text(this._interface[5], style: style),
               trailing: DropdownButton<String>(
+                style: style,
+                underline: dropdownUnderline,
+                iconDisabledColor: dropdownDisabled,
+                iconEnabledColor: dropdownEnabled,
                 value: this._verseValue,
                 onChanged: (String newValue) {
                   if (this._verseValue != newValue) {
@@ -430,8 +483,12 @@ class BibleSettingsState extends State<BibleSettings> {
               ),
             ),
             ListTile(
-              title: Text(this._interface[9]),
+              title: Text(this._interface[9], style: style),
               trailing: DropdownButton<String>(
+                style: style,
+                underline: dropdownUnderline,
+                iconDisabledColor: dropdownDisabled,
+                iconEnabledColor: dropdownEnabled,
                 value: this._instantActionList[this._instantAction],
                 onChanged: (String newValue) {
                   if (this._instantActionList[this._instantAction] != newValue) {
@@ -451,8 +508,12 @@ class BibleSettingsState extends State<BibleSettings> {
               ),
             ),
             ListTile(
-              title: Text(this._interface[8]),
+              title: Text(this._interface[8], style: style,),
               trailing: DropdownButton<String>(
+                style: style,
+                underline: dropdownUnderline,
+                iconDisabledColor: dropdownDisabled,
+                iconEnabledColor: dropdownEnabled,
                 value: this._favouriteActionList[this._favouriteAction],
                 onChanged: (String newValue) {
                   if (this._favouriteActionList[this._favouriteAction] !=
@@ -473,7 +534,7 @@ class BibleSettingsState extends State<BibleSettings> {
               ),
             ),
             ExpansionTile(
-              title: Text(this._interface[7]),
+              title: Text(this._interface[7], style: style),
               backgroundColor: Theme.of(context).accentColor.withOpacity(0.025),
               children: versionRowList,
             ),
@@ -483,22 +544,28 @@ class BibleSettingsState extends State<BibleSettings> {
     );
   }
 
-  Widget _buildVersionRow(BuildContext context, String version) {
-    return CheckboxListTile(
-      title: Text(version),
-      value: (this._compareBibleList.contains(version)),
-      onChanged: (bool value) {
-        setState(() {
-          if (value) {
-            this._compareBibleList.add(version);
-          } else {
-            var versionIndex = this._compareBibleList.indexOf(version);
-            this._compareBibleList.removeAt(versionIndex);
-          }
-        });
-      },
+  Widget _buildVersionRow(BuildContext context, String version, Color dropdownBackground) {
+    return Container(
+      color: dropdownBackground,
+      child: CheckboxListTile(
+        title: Text(version, style: TextStyle(color: (int.parse(_colorDegreeValue) >= 700) ? Colors.blue[300] : Colors.blue[700]),),
+        //activeColor: (int.parse(_colorDegreeValue) >= 500) ? Colors.blueGrey[int.parse(_colorDegreeValue) - 200] : Colors.blue[600],
+        //checkColor: (int.parse(_colorDegreeValue) >= 500) ? Colors.grey[300] : Colors.black,
+        value: (this._compareBibleList.contains(version)),
+        onChanged: (bool value) {
+          setState(() {
+            if (value) {
+              this._compareBibleList.add(version);
+            } else {
+              var versionIndex = this._compareBibleList.indexOf(version);
+              this._compareBibleList.removeAt(versionIndex);
+            }
+          });
+        },
+      ),
     );
   }
+
 }
 
 class BibleSettingsParser {

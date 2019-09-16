@@ -94,9 +94,9 @@ class TopicSearchDelegate extends SearchDelegate<List> {
     var itemData = _data[i];
 
     return ListTile(
-      leading: Icon(Icons.title),
+      leading: Icon(Icons.title, color: _config.myColors["black"],),
       title: Text(itemData["Topic"], style: _config.verseTextStyle["verseFont"]),
-      subtitle: Text(itemData["Tool"], style: TextStyle(fontSize: (_config.fontSize - 5))),
+      subtitle: Text(itemData["Tool"], style: TextStyle(fontSize: (_config.fontSize - 5), color: _config.myColors["grey"],)),
 
       onTap: () {
         close(context, [itemData["Entry"]]);

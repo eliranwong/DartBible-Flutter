@@ -1235,11 +1235,11 @@ class LocationSearchDelegate extends SearchDelegate<List> {
     var itemData = _data[i];
 
     return ListTile(
-      leading: Icon(Icons.pin_drop),
+      leading: Icon(Icons.pin_drop, color: _config.myColors["black"],),
       title: Text(itemData["Name"], style: _config.verseTextStyle["verseFont"]),
       trailing: IconButton(
         tooltip: this.interfaceBibleSearch[this.abbreviations][2],
-        icon: const Icon(Icons.search),
+        icon: Icon(Icons.search, color: _config.myColors["black"],),
         onPressed: () {
           close(context, [itemData["LocationID"]]);
         },

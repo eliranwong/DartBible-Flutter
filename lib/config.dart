@@ -1,3 +1,4 @@
+import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class Config {
@@ -10,16 +11,14 @@ class Config {
   List<String> greekBibles = ["ABG", "LXX1", "LXX2", "LXXk", "OHGB", "OHGBi"];
   List<String> interlinearBibles = ["OHGBi"];
 
-  Map verseTextStyle;
-
-  List<String> allBibleList = ["ABG", "ASV", "BBE", "BSB", "CUV", "CUVs", "ERV", "ISV", "KJV", "LEB", "LXX1", "LXX2", "LXXE", "LXXk", "NET", "OHGB", "OHGBi", "T4T", "ULT", "UST", "WEB"];
+  //List<String> allBibleList = ["ABG", "ASV", "BBE", "BSB", "CUV", "CUVs", "ERV", "ISV", "KJV", "LEB", "LXX1", "LXX2", "LXXE", "LXXk", "NET", "OHGB", "OHGBi", "T4T", "ULT", "UST", "WEB"];
   // the following line is written for personal use only [not for public]
-  //List<String> allBibleList = ["ABG", "ASV", "BBE", "BSB", "CCB", "CEB", "CEV", "CSB", "CUV", "CUVs", "ERV", "ESV", "EXP", "ISV", "KJV", "LEB", "LXX1", "LXX2", "LXXE", "LXXk", "NASB", "NET", "NIV", "NLT", "NRSV", "OHGB", "OHGBi", "T4T", "ULT", "UST", "WEB"];
+  List<String> allBibleList = ["ABG", "ASV", "BBE", "BSB", "CCB", "CEB", "CEV", "CSB", "CUV", "CUVs", "ERV", "ESV", "EXP", "ISV", "KJV", "LEB", "LXX1", "LXX2", "LXXE", "LXXk", "NASB", "NET", "NIV", "NLT", "NRSV", "OHGB", "OHGBi", "T4T", "ULT", "UST", "WEB"];
 
   // variables linked with shared preferences
-  List<String> compareBibleList = ["ASV", "BSB", "ERV", "ISV", "KJV", "LEB", "LXXk", "NET", "OHGB", "WEB"];
+  //List<String> compareBibleList = ["ASV", "BSB", "ERV", "ISV", "KJV", "LEB", "LXXk", "NET", "OHGB", "WEB"];
   // the following line is written for personal use only [not for public]
-  //List<String> compareBibleList = ["CEV", "CSB", "CUV", "ESV", "EXP", "ISV", "KJV", "LEB", "LXXE", "LXXk", "NASB", "NET", "NIV", "OHGB"];
+  List<String> compareBibleList = ["CEV", "CSB", "CUV", "ESV", "EXP", "ISV", "KJV", "LEB", "LXXE", "LXXk", "NASB", "NET", "NIV", "OHGB"];
 
   double fontSize = 20.0;
   String abbreviations = "ENG";
@@ -32,6 +31,24 @@ class Config {
   int instantAction = 0;
   int favouriteAction = 1;
   int backgroundColor = 0;
+
+  Map myColors;
+  Map verseTextStyle;
+  ThemeData mainTheme;
+
+  void updateThemeData() {
+    if (this.myColors != null) {
+      mainTheme = ThemeData(
+        primaryColor: this.myColors["appBarColor"],
+        appBarTheme: AppBarTheme(color: this.myColors["appBarColor"]),
+        scaffoldBackgroundColor: Colors.blueGrey[this.backgroundColor],
+        unselectedWidgetColor: this.myColors["blue"],
+        accentColor: this.myColors["blueAccent"],
+        dividerColor: this.myColors["grey"],
+        cardColor: (this.backgroundColor >= 500) ? this.myColors["appBarColor"] : Colors.grey[300],
+      );
+    }
+  }
 
   Future setDefault() async {
     this.prefs = await SharedPreferences.getInstance();

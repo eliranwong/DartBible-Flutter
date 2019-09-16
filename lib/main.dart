@@ -62,6 +62,7 @@ class UniqueBibleState extends State<UniqueBible> {
   var _verseNoFont, _verseFont, _verseFontHebrew, _verseFontGreek;
   var _activeVerseNoFont, _activeVerseFont, _activeVerseFontHebrew, _activeVerseFontGreek;
   var _interlinearStyle, _interlinearStyleDim;
+  Color _appBarColor, _bottomAppBarColor, _backgroundColor;
   final _highlightStyle = TextStyle(
       fontWeight: FontWeight.bold,
       //fontStyle: FontStyle.italic,
@@ -559,17 +560,55 @@ class UniqueBibleState extends State<UniqueBible> {
   }
 
   void _updateTextStyle() {
+    // adjustment with changes of brightness
+    _backgroundColor = Colors.blueGrey[config.backgroundColor];
+    Color blueAccent, indigo, black, blue, deepOrange, grey;
+    if (this.config.backgroundColor >= 500) {
+      blueAccent = Colors.blueAccent[100];
+      indigo = Colors.indigo[100];
+      black = Colors.grey[300];
+      blue = Colors.blue[300];
+      deepOrange = Colors.deepOrange[300];
+      grey = Colors.grey[400];
+      _appBarColor = Colors.blueGrey[this.config.backgroundColor - 200];
+      _bottomAppBarColor = Colors.grey[500];
+    } else {
+      blueAccent = Colors.blueAccent[700];
+      indigo = Colors.indigo[700];
+      black = Colors.black;
+      blue = Colors.blue[700];
+      deepOrange = Colors.deepOrange[700];
+      grey = Colors.grey[700];
+      //_appBarColor = Theme.of(context).appBarTheme.color;
+      _appBarColor = Colors.blue[600];
+      _bottomAppBarColor = Colors.grey[config.backgroundColor + 100];
+    }
+
+    // define a set of colors
+    this.config.myColors = {
+      "blueAccent": blueAccent,
+      "indigo": indigo,
+      "black": black,
+      "blue": blue,
+      "deepOrange": deepOrange,
+      "grey": grey,
+      "appBarColor": _appBarColor,
+      "bottomAppBarColor": _bottomAppBarColor,
+      "background": _backgroundColor,
+    };
+
     // update various font text style here
-    _verseNoFont = TextStyle(fontSize: (this.config.fontSize - 3), color: Colors.blueAccent);
-    _verseFont = TextStyle(fontSize: this.config.fontSize, color: Colors.black);
-    _verseFontHebrew = TextStyle(fontFamily: "Ezra SIL", fontSize: (this.config.fontSize + 4), color: Colors.black);
-    _verseFontGreek = TextStyle(fontSize: (this.config.fontSize + 2), color: Colors.black);
-    _activeVerseNoFont = TextStyle(fontSize: (this.config.fontSize - 3), color: Colors.blue, fontWeight: FontWeight.bold);
-    _activeVerseFont = TextStyle(fontSize: this.config.fontSize, color: Colors.indigo, fontWeight: FontWeight.bold);
-    _activeVerseFontHebrew = TextStyle(fontFamily: "Ezra SIL", fontSize: (this.config.fontSize + 4), color: Colors.indigo, fontWeight: FontWeight.bold);
-    _activeVerseFontGreek = TextStyle(fontSize: (this.config.fontSize + 2), color: Colors.indigo, fontWeight: FontWeight.bold);
-    _interlinearStyle = TextStyle(fontSize: (this.config.fontSize - 3), color: Colors.deepOrange);
-    _interlinearStyleDim = TextStyle(fontSize: (this.config.fontSize - 3), color: Colors.grey, fontStyle: FontStyle.italic);
+    _verseNoFont = TextStyle(fontSize: (this.config.fontSize - 3), color: blueAccent);
+    _verseFont = TextStyle(fontSize: this.config.fontSize, color: black);
+    _verseFontHebrew = TextStyle(fontFamily: "Ezra SIL", fontSize: (this.config.fontSize + 4), color: black);
+    _verseFontGreek = TextStyle(fontSize: (this.config.fontSize + 2), color: black);
+    _activeVerseNoFont = TextStyle(fontSize: (this.config.fontSize - 3), color: blue, fontWeight: FontWeight.bold);
+    _activeVerseFont = TextStyle(fontSize: this.config.fontSize, color: indigo, fontWeight: FontWeight.bold);
+    _activeVerseFontHebrew = TextStyle(fontFamily: "Ezra SIL", fontSize: (this.config.fontSize + 4), color: indigo, fontWeight: FontWeight.bold);
+    _activeVerseFontGreek = TextStyle(fontSize: (this.config.fontSize + 2), color: indigo, fontWeight: FontWeight.bold);
+    _interlinearStyle = TextStyle(fontSize: (this.config.fontSize - 3), color: deepOrange);
+    _interlinearStyleDim = TextStyle(fontSize: (this.config.fontSize - 3), color: grey, fontStyle: FontStyle.italic);
+
     // set the same font settings, which is passed to search delegate
     this.config.verseTextStyle = {
       "HebrewFont": TextStyle(fontFamily: "Ezra SIL"),
@@ -584,6 +623,8 @@ class UniqueBibleState extends State<UniqueBible> {
       "interlinearStyle": _interlinearStyle,
       "interlinearStyleDim": _interlinearStyleDim,
     };
+
+    config.updateThemeData();
   }
 
   void _updateAppBarTitle() {
@@ -643,7 +684,7 @@ class UniqueBibleState extends State<UniqueBible> {
       */
       appBar: _buildAppBar(),
       body: Container(
-        color: Colors.blueGrey[config.backgroundColor],
+        color: _backgroundColor,
         child: SwipeDetector(
           child: _buildVerses(context),
           onSwipeLeft: () {
@@ -657,6 +698,7 @@ class UniqueBibleState extends State<UniqueBible> {
       bottomNavigationBar: _buildBottomAppBar(),
       floatingActionButtonLocation: FloatingActionButtonLocation.endDocked,
       floatingActionButton: FloatingActionButton(
+        backgroundColor: _appBarColor,
         onPressed: () {
           setState(() {
             _parallelBibles = _toggleParallelBibles();
@@ -670,7 +712,9 @@ class UniqueBibleState extends State<UniqueBible> {
   }
 
   Widget _buildAppBar() {
+    //original color: Theme.of(context).appBarTheme.color
     return AppBar(
+      backgroundColor: _appBarColor,
       title: Text(this.interfaceApp[this.abbreviations][0]),
       leading: Builder(
         builder: (BuildContext context) {
@@ -724,7 +768,7 @@ class UniqueBibleState extends State<UniqueBible> {
       //color: Colors.grey[200],
       //shape: const CircularNotchedRectangle(),
       child: Container(
-        color: Colors.grey[config.backgroundColor + 100],
+        color: _bottomAppBarColor,
         child: Row(children: <Widget>[
           IconButton(
             tooltip: this.interfaceBottom[this.abbreviations][0],
@@ -774,7 +818,7 @@ class UniqueBibleState extends State<UniqueBible> {
                 "當你 ……",
                 "当你 ……",
               ];
-              _loadTools(context, title, "PROMISES", menu, Icon(Icons.games));
+              _loadTools(context, title, "PROMISES", menu, Icon(Icons.games, color: this.config.myColors["black"],));
             },
           ),
           IconButton(
@@ -805,7 +849,7 @@ class UniqueBibleState extends State<UniqueBible> {
                 "福音書（路〔獨家記載〕） x 39",
                 "福音書（約〔獨家記載〕） x 61",
               ];
-              _loadTools(context, title, "PARALLEL", menu, Icon(Icons.compare));
+              _loadTools(context, title, "PARALLEL", menu, Icon(Icons.compare, color: this.config.myColors["black"],));
             },
           ),
         ]
@@ -888,9 +932,9 @@ class UniqueBibleState extends State<UniqueBible> {
       } else {
         if (this.config.interlinearBibles.contains(verseData[2])) {
           List<TextSpan> interlinearSpans = InterlinearHelper(this.config.verseTextStyle).getInterlinearSpan(verseContent, verseData[0][0]);
-          wordSpans = <TextSpan>[TextSpan(text: verseNo, style: _activeVerseNoFont), ...interlinearSpans];
+          wordSpans = <TextSpan>[TextSpan(text: verseNo, style: _verseNoFont), ...interlinearSpans];
         } else {
-          wordSpans = <TextSpan>[TextSpan(text: verseNo, style: _activeVerseNoFont), TextSpan(text: verseContent, style: verseFont)];
+          wordSpans = <TextSpan>[TextSpan(text: verseNo, style: _verseNoFont), TextSpan(text: verseContent, style: verseFont)];
         }
         return ListTile(
           title: RichText(

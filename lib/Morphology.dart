@@ -49,22 +49,22 @@ class InterlinearViewState extends State<InterlinearView> {
           [_data[0]["Book"], _data[0]["Chapter"], _data[0]["Verse"]]);
     final title =
         "${interface[this.abbreviations][0]} - $verseRef";
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(title),
-        actions: <Widget>[
-          IconButton(
-            tooltip: interface[this.abbreviations][1],
-            icon: const Icon(Icons.unfold_more),
-            onPressed: () {
-              _loadMorphologyView(context);
-            },
-          ),
-        ],
-      ),
-      body: Container(
-        color: Colors.blueGrey[_config.backgroundColor],
-        child: _buildCardList(context),
+    return Theme(
+      data: _config.mainTheme,
+      child: Scaffold(
+        appBar: AppBar(
+          title: Text(title),
+          actions: <Widget>[
+            IconButton(
+              tooltip: interface[this.abbreviations][1],
+              icon: const Icon(Icons.unfold_more),
+              onPressed: () {
+                _loadMorphologyView(context);
+              },
+            ),
+          ],
+        ),
+        body: _buildCardList(context),
       ),
     );
   }
@@ -80,7 +80,7 @@ class InterlinearViewState extends State<InterlinearView> {
 
   Widget _buildCard(BuildContext context, int i) {
     final wordData = _data[i];
-    final textStyle = TextStyle(fontSize: (_fontSize - 2));
+    final textStyle = TextStyle(fontSize: (_fontSize - 2), color: _config.myColors["grey"],);
     TextStyle originalStyle = ((wordData["Book"] < 40) && (_module == "OHGB"))
         ? _config.verseTextStyle["verseFontHebrew"]
         : _config.verseTextStyle["verseFontGreek"];
@@ -88,33 +88,30 @@ class InterlinearViewState extends State<InterlinearView> {
     word = Text(wordData["Word"], style: originalStyle);
     return Center(
       child: Card(
-        child: Container(
-          color: Colors.grey[_config.backgroundColor + 100],
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: <Widget>[
-              ListTile(
-                leading: Icon(Icons.album),
-                title: word,
-                subtitle: Text(wordData["Interlinear"], style: textStyle),
-                onTap: () {
-                  _loadLexiconView(context, wordData["LexicalEntry"]);
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: <Widget>[
+            ListTile(
+              leading: Icon(Icons.album, color: _config.myColors["black"],),
+              title: word,
+              subtitle: Text(wordData["Interlinear"], style: textStyle),
+              onTap: () {
+                _loadLexiconView(context, wordData["LexicalEntry"]);
+              },
+              trailing: IconButton(
+                tooltip: interface[this.abbreviations][1],
+                icon: Icon(Icons.more_vert, color: _config.myColors["black"],),
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                        builder: (context) =>
+                            WordView(wordData, _module, _config, _bibles)),
+                  );
                 },
-                trailing: IconButton(
-                  tooltip: interface[this.abbreviations][1],
-                  icon: const Icon(Icons.more_vert),
-                  onPressed: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                          builder: (context) =>
-                              WordView(wordData, _module, _config, _bibles)),
-                    );
-                  },
-                ),
-              )
-            ],
-          ),
+              ),
+            )
+          ],
         ),
       ),
     );
@@ -219,31 +216,31 @@ class MorphologyViewState extends State<MorphologyView> {
           [_data[0]["Book"], _data[0]["Chapter"], _data[0]["Verse"]]);
     final title =
         "${interface[this.abbreviations][0]} - $verseRef";
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(title),
-        actions: <Widget>[
-          IconButton(
-            tooltip: interface[this.abbreviations][1],
-            icon: const Icon(Icons.unfold_less),
-            onPressed: () {
-              if (_firstOpened) {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                      builder: (context) => InterlinearView(
-                          _data, false, _module, _config, _bibles)),
-                );
-              } else {
-                Navigator.pop(context, null);
-              }
-            },
-          ),
-        ],
-      ),
-      body: Container(
-        color: Colors.blueGrey[_config.backgroundColor],
-        child: _buildCardList(context),
+    return Theme(
+      data: _config.mainTheme,
+      child: Scaffold(
+        appBar: AppBar(
+          title: Text(title),
+          actions: <Widget>[
+            IconButton(
+              tooltip: interface[this.abbreviations][1],
+              icon: const Icon(Icons.unfold_less),
+              onPressed: () {
+                if (_firstOpened) {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                        builder: (context) => InterlinearView(
+                            _data, false, _module, _config, _bibles)),
+                  );
+                } else {
+                  Navigator.pop(context, null);
+                }
+              },
+            ),
+          ],
+        ),
+        body: _buildCardList(context),
       ),
     );
   }
@@ -261,7 +258,7 @@ class MorphologyViewState extends State<MorphologyView> {
     final wordData = _data[i];
     String morphology = wordData["Morphology"].replaceAll(",", ", ");
     morphology = morphology.substring(0, (morphology.length - 2));
-    final textStyle = TextStyle(fontSize: (_fontSize - 2));
+    final textStyle = TextStyle(fontSize: (_fontSize - 2), color: _config.myColors["grey"],);
     TextStyle originalStyle = ((wordData["Book"] < 40) && (_module == "OHGB"))
         ? _config.verseTextStyle["verseFontHebrew"]
         : _config.verseTextStyle["verseFontGreek"];
@@ -273,51 +270,48 @@ class MorphologyViewState extends State<MorphologyView> {
       lexicalEntry = wordData["LexicalEntry"].split(",").toList()[0];
     return Center(
       child: Card(
-        child: Container(
-          color: Colors.grey[_config.backgroundColor + 100],
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: <Widget>[
-              ListTile(
-                leading: Icon(Icons.album),
-                title: word,
-                subtitle: Text(
-                    "${wordData["Transliteration"]} [${wordData["Pronunciation"]}]",
-                    style: textStyle),
-                onTap: () {
-                  _loadLexiconView(context, wordData["LexicalEntry"]);
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: <Widget>[
+            ListTile(
+              leading: Icon(Icons.album, color: _config.myColors["black"],),
+              title: word,
+              subtitle: Text(
+                  "${wordData["Transliteration"]} [${wordData["Pronunciation"]}]",
+                  style: textStyle),
+              onTap: () {
+                _loadLexiconView(context, wordData["LexicalEntry"]);
+              },
+              trailing: IconButton(
+                tooltip: interface[this.abbreviations][3],
+                icon: Icon(Icons.more_vert, color: _config.myColors["black"],),
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                        builder: (context) =>
+                            WordView(wordData, _module, _config, _bibles)),
+                  );
                 },
-                trailing: IconButton(
-                  tooltip: interface[this.abbreviations][3],
-                  icon: const Icon(Icons.more_vert),
-                  onPressed: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                          builder: (context) =>
-                              WordView(wordData, _module, _config, _bibles)),
-                    );
-                  },
-                ),
               ),
-              ListTile(
-                leading: Icon(Icons.label_outline),
-                title: lexeme,
-                subtitle: Text(morphology, style: textStyle),
-                onTap: () {
-                  searchMorphology(context, lexicalEntry, morphology.split(", "));
+            ),
+            ListTile(
+              leading: Icon(Icons.label_outline, color: _config.myColors["black"],),
+              title: lexeme,
+              subtitle: Text(morphology, style: textStyle),
+              onTap: () {
+                searchMorphology(context, lexicalEntry, morphology.split(", "));
+              },
+              trailing: IconButton(
+                tooltip: interface[this.abbreviations][2],
+                icon: Icon(Icons.search, color: _config.myColors["black"],),
+                onPressed: () {
+                  _loadMorphologySearchView(context, lexemeText,
+                      wordData["LexicalEntry"], morphology);
                 },
-                trailing: IconButton(
-                  tooltip: interface[this.abbreviations][2],
-                  icon: const Icon(Icons.search),
-                  onPressed: () {
-                    _loadMorphologySearchView(context, lexemeText,
-                        wordData["LexicalEntry"], morphology);
-                  },
-                ),
               ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );
@@ -352,19 +346,19 @@ class LexiconView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final title = 'Lexicon';
-    return Scaffold(
+    return Theme(
+      data: _config.mainTheme,
+      child: Scaffold(
         appBar: AppBar(
           title: Text(title),
         ),
-        body: Container(
-          color: Colors.blueGrey[_config.backgroundColor],
-          child: Center(
-            //The following line is created for testing only.
-            //child: _parser.buildRichText(context, _parser.convertHtmlText(testing)),
-            child: Text(
-                "Entry: $lexicalEntries\n\nThis page is reserved for lexical studies.\n\nLexicons will be available in coming versions."),
-          ),
+        body: Center(
+          //The following line is created for testing only.
+          //child: _parser.buildRichText(context, _parser.convertHtmlText(testing)),
+          child: Text(
+              "Entry: $lexicalEntries\n\nThis page is reserved for lexical studies.\n\nLexicons will be available in coming versions.", style: TextStyle(color: _config.myColors["black"]),),
         ),
+      ),
     );
   }
 }
@@ -439,22 +433,22 @@ class MorphologySearchViewState extends State<MorphologySearchView> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Text("Search"),
-        actions: <Widget>[
-          IconButton(
-            tooltip: interface[_config.abbreviations][0],
-            icon: const Icon(Icons.search),
-            onPressed: () {
-              searchMorphology(context);
-            },
-          ),
-        ],
-      ),
-      body: Container(
-        color: Colors.blueGrey[_config.backgroundColor],
-        child: _buildMorphology(context),
+    return Theme(
+      data: _config.mainTheme,
+      child: Scaffold(
+        appBar: AppBar(
+          title: Text("Search"),
+          actions: <Widget>[
+            IconButton(
+              tooltip: interface[_config.abbreviations][0],
+              icon: const Icon(Icons.search),
+              onPressed: () {
+                searchMorphology(context);
+              },
+            ),
+          ],
+        ),
+        body: _buildMorphology(context),
       ),
     );
   }
@@ -464,8 +458,8 @@ class MorphologySearchViewState extends State<MorphologySearchView> {
         morphologyItems.map((i) => _buildMorphologyRow(i)).toList();
     return ListView(children: <Widget>[
       ListTile(
-        title: Text(_lexeme),
-        subtitle: Text(lexicalEntry),
+        title: Text(_lexeme, style: TextStyle(color: _config.myColors["black"]),),
+        subtitle: Text(lexicalEntry, style: TextStyle(color: _config.myColors["grey"]),),
       ),
       ExpansionTile(
         title: Text("+"),
@@ -478,7 +472,7 @@ class MorphologySearchViewState extends State<MorphologySearchView> {
 
   Widget _buildMorphologyRow(String item) {
     return CheckboxListTile(
-        title: Text(item),
+        title: Text(item, style: TextStyle(color: _config.myColors["black"]),),
         value: (selectedMorphologyItems.contains(item)),
         onChanged: (bool value) {
           setState(() {
@@ -530,13 +524,13 @@ class MorphologySearchResultsState extends State<MorphologySearchResults> {
   Widget build(BuildContext context) {
     final title =
         "${interface[this.abbreviations][0]} ${_data.length} ${interface[this.abbreviations][1]}";
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(title),
-      ),
-      body: Container(
-        color: Colors.blueGrey[_config.backgroundColor],
-        child: _buildCardList(context),
+    return Theme(
+      data: _config.mainTheme,
+      child: Scaffold(
+        appBar: AppBar(
+          title: Text(title),
+        ),
+        body: _buildCardList(context),
       ),
     );
   }
@@ -552,7 +546,7 @@ class MorphologySearchResultsState extends State<MorphologySearchResults> {
 
   Widget _buildCard(BuildContext context, int i) {
     final wordData = _data[i];
-    final textStyle = TextStyle(fontSize: (_fontSize - 2));
+    final textStyle = TextStyle(fontSize: (_fontSize - 2), color: _config.myColors["grey"],);
     TextStyle originalStyle = ((wordData["Book"] < 40) && (_module == "OHGB"))
         ? _config.verseTextStyle["verseFontHebrew"]
         : _config.verseTextStyle["verseFontGreek"];
@@ -568,7 +562,7 @@ class MorphologySearchResultsState extends State<MorphologySearchResults> {
             mainAxisSize: MainAxisSize.min,
             children: <Widget>[
               ListTile(
-                leading: Icon(Icons.album),
+                leading: Icon(Icons.album, color: _config.myColors["black"],),
                 title: word,
                 subtitle: Text(verseReference, style: textStyle),
                 onTap: () {
@@ -576,7 +570,7 @@ class MorphologySearchResultsState extends State<MorphologySearchResults> {
                 },
                 trailing: IconButton(
                   tooltip: interface[this.abbreviations][2],
-                  icon: const Icon(Icons.more_vert),
+                  icon: Icon(Icons.more_vert, color: _config.myColors["black"],),
                   onPressed: () {
                     Navigator.push(
                       context,
@@ -605,21 +599,21 @@ class WordView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    TextSpan originalWord = ((_module == "OHGB") && (_data["Book"] < 40)) ? TextSpan(text: _data["Word"], style: _config.verseTextStyle["HebrewFont"]) : TextSpan(text: _data["Word"]);
-    Widget title = RichText(text: TextSpan(children: <TextSpan>[TextSpan(text: "[${BibleParser(_config.abbreviations).bcvToVerseReference([_data["Book"], _data["Chapter"], _data["Verse"]])}] "), originalWord]));
-    return Scaffold(
-      appBar: AppBar(
-        title: title,
-      ),
-      body: Container(
-        color: Colors.blueGrey[_config.backgroundColor],
-        child: _buildKeys(context),
+    TextSpan originalWord = ((_module == "OHGB") && (_data["Book"] < 40)) ? TextSpan(text: _data["Word"], style: TextStyle(fontFamily: "Ezra SIL", fontSize: 22.0)) : TextSpan(text: _data["Word"], style: TextStyle(fontSize: 22.0));
+    Widget title = RichText(text: TextSpan(children: <TextSpan>[TextSpan(text: "[${BibleParser(_config.abbreviations).bcvToVerseReference([_data["Book"], _data["Chapter"], _data["Verse"]])}] ", style: TextStyle(fontSize: 18.0)), originalWord]));
+    return Theme(
+      data: _config.mainTheme,
+      child: Scaffold(
+        appBar: AppBar(
+          title: title,
+        ),
+        body: _buildKeys(context),
       ),
     );
   }
 
   Widget _buildKeys(BuildContext context) {
-    Text originalWord = ((_module == "OHGB") && (_data["Book"] < 40)) ? Text(_data["Word"], style: _config.verseTextStyle["HebrewFont"]) : Text(_data["Word"]);
+    Text originalWord = ((_module == "OHGB") && (_data["Book"] < 40)) ? Text(_data["Word"], style: _config.verseTextStyle["verseFontHebrew"]) : Text(_data["Word"], style: _config.verseTextStyle["verseFontGreek"]);
 
     List bcvList = [_data["Book"], _data["Chapter"], _data["Verse"]];
 
@@ -635,7 +629,7 @@ class WordView extends StatelessWidget {
 
     return ListView(children: <Widget>[
       ExpansionTile(
-        title: Text(BibleParser(_config.abbreviations).bcvToVerseReference(bcvList)),
+        title: Text(BibleParser(_config.abbreviations).bcvToVerseReference(bcvList), style: TextStyle(color: _config.myColors["black"],),),
         initiallyExpanded: false,
         backgroundColor: Theme.of(context).accentColor.withOpacity(0.025),
         children: verseList,
@@ -675,7 +669,7 @@ class WordView extends StatelessWidget {
         ),
         textDirection: verseDirection,
       ),
-      subtitle: Text(module),
+      subtitle: Text("[$module]", style: TextStyle(color: _config.myColors["blue"],),),
 
       /*
       onTap: () {

@@ -21,13 +21,13 @@ class ToolMenu extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(_title[_config.abbreviations]),
-      ),
-      body: Container(
-        color: Colors.blueGrey[_config.backgroundColor],
-        child: _buildItems(context),
+    return Theme(
+      data: _config.mainTheme,
+      child: Scaffold(
+        appBar: AppBar(
+          title: Text(_title[_config.abbreviations]),
+        ),
+        body: _buildItems(context),
       ),
     );
   }
@@ -82,13 +82,13 @@ class ToolView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(_title),
-      ),
-      body: Container(
-        color: Colors.blueGrey[_config.backgroundColor],
-        child: _buildItems(context),
+    return Theme(
+      data: _config.mainTheme,
+      child: Scaffold(
+        appBar: AppBar(
+          title: Text(_title),
+        ),
+        body: _buildItems(context),
       ),
     );
   }
@@ -159,13 +159,13 @@ class RelationshipState extends State<Relationship> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(_title),
-      ),
-      body: Container(
-        color: Colors.blueGrey[_config.backgroundColor],
-        child: _buildItems(context),
+    return Theme(
+      data: _config.mainTheme,
+      child: Scaffold(
+        appBar: AppBar(
+          title: Text(_title),
+        ),
+        body: _buildItems(context),
       ),
     );
   }
@@ -181,14 +181,14 @@ class RelationshipState extends State<Relationship> {
 
   Widget _buildItemRow(BuildContext context, int i) {
     Map itemData = _data[i];
-    Icon icon = (itemData["Sex"] == "F") ? Icon(Icons.person_outline) : Icon(Icons.person);
+    Icon icon = (itemData["Sex"] == "F") ? Icon(Icons.person_outline, color: _config.myColors["black"],) : Icon(Icons.person, color: _config.myColors["black"],);
     return ListTile(
       leading: icon,
       title: Text(itemData["Name"], style: _config.verseTextStyle["verseFont"]),
-      subtitle: Text(itemData["Relationship"], style: TextStyle(fontSize: _config.fontSize - 4)),
+      subtitle: Text(itemData["Relationship"], style: TextStyle(fontSize: _config.fontSize - 4, color: _config.myColors["grey"],)),
       trailing: IconButton(
         tooltip: interface[_config.abbreviations][0],
-        icon: const Icon(Icons.search),
+        icon: Icon(Icons.search, color: _config.myColors["black"],),
         onPressed: () {
           _loadPeopleVerses(context, itemData["PersonID"]);
         },
@@ -232,17 +232,19 @@ class Timeline extends StatefulWidget {
   final String _file;
   final String _title;
   final List _timelines;
+  final Config _config;
 
-  Timeline(this._file, this._title, this._timelines);
+  Timeline(this._file, this._title, this._timelines, this._config);
 
   @override
-  TimelineState createState() => TimelineState(this._file, this._title, this._timelines);
+  TimelineState createState() => TimelineState(this._file, this._title, this._timelines, this._config);
 }
 
 class TimelineState extends State<Timeline> {
 
   String _file;
   String _title;
+  final Config _config;
   final List _timelines;
   final Map interface = {
     "ENG": ["Previous", "Next"],
@@ -250,47 +252,50 @@ class TimelineState extends State<Timeline> {
     "SC": ["上一个", "下一个"],
   };
 
-  TimelineState(this._file, this._title, this._timelines);
+  TimelineState(this._file, this._title, this._timelines, this._config);
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(_title),
-        actions: <Widget>[
-          IconButton(
-            tooltip: "Previous",
-            icon: const Icon(Icons.keyboard_arrow_left),
-            onPressed: () {
-              int newIndex = int.parse(_file) - 1;
-              if (newIndex >= 0) {
-                setState(() {
-                  _file = newIndex.toString();
-                  _title = _timelines[newIndex][1];
-                });
-              }
-            },
-          ),
-          IconButton(
-            tooltip: "Next",
-            icon: const Icon(Icons.keyboard_arrow_right),
-            onPressed: () {
-              int newIndex = int.parse(_file) + 1;
-              if (newIndex < _timelines.length) {
-                setState(() {
-                  _file = newIndex.toString();
-                  _title = _timelines[newIndex][1];
-                });
-              }
-            },
-          ),
-        ],
-      ),
-      body: Container(
-          child: PhotoView(
-            imageProvider: AssetImage("assets/timelines/$_file.png"),
-        minScale: PhotoViewComputedScale.contained * 0.8,
-          )
+    return Theme(
+      data: _config.mainTheme,
+      child: Scaffold(
+        appBar: AppBar(
+          title: Text(_title),
+          actions: <Widget>[
+            IconButton(
+              tooltip: "Previous",
+              icon: const Icon(Icons.keyboard_arrow_left),
+              onPressed: () {
+                int newIndex = int.parse(_file) - 1;
+                if (newIndex >= 0) {
+                  setState(() {
+                    _file = newIndex.toString();
+                    _title = _timelines[newIndex][1];
+                  });
+                }
+              },
+            ),
+            IconButton(
+              tooltip: "Next",
+              icon: const Icon(Icons.keyboard_arrow_right),
+              onPressed: () {
+                int newIndex = int.parse(_file) + 1;
+                if (newIndex < _timelines.length) {
+                  setState(() {
+                    _file = newIndex.toString();
+                    _title = _timelines[newIndex][1];
+                  });
+                }
+              },
+            ),
+          ],
+        ),
+        body: Container(
+            child: PhotoView(
+              imageProvider: AssetImage("assets/timelines/$_file.png"),
+              minScale: PhotoViewComputedScale.contained * 0.8,
+            )
+        ),
       ),
     );
   }

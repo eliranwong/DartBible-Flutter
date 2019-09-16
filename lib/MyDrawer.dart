@@ -30,6 +30,7 @@ class _MyDrawerState extends State<MyDrawer> {
   String abbreviations;
   int _selectedBook;
   bool _displayAllBooks = false;
+  TextStyle _generalTextStyle, _entryTextStyle;
 
   Map interfaceApp = {
     "ENG": ["Unique Bible App", "Navigation menu", "Search", "Quick swap", "Settings", "Parallel mode", "Favourites", "History", "Books", "Chapters", "Timelines"],
@@ -46,6 +47,8 @@ class _MyDrawerState extends State<MyDrawer> {
   _MyDrawerState(this.config, this._bible, this._currentActiveVerse, this.onTap) {
     this.abbreviations = this.config.abbreviations;
     this._selectedBook = this._currentActiveVerse[0];
+    _generalTextStyle = TextStyle(color: config.myColors["black"]);
+    _entryTextStyle = TextStyle(color: config.myColors["blueAccent"]);
   }
 
   /*
@@ -68,26 +71,29 @@ class _MyDrawerState extends State<MyDrawer> {
       // Add a ListView to the drawer. This ensures the user can scroll
       // through the options in the drawer if there isn't enough vertical
       // space to fit everything.
-      child: Container(
-        color: Colors.blueGrey[config.backgroundColor],
-        child: ListView(
-          // Important: Remove any padding from the ListView.
-          padding: EdgeInsets.zero,
-          children: <Widget>[
-            UserAccountsDrawerHeader(
-              //decoration: BoxDecoration(color: Colors.blue,),
-              currentAccountPicture: const CircleAvatar(
-                backgroundImage: AssetImage("assets/images/account.png"),
+      child: Theme(
+        data: config.mainTheme,
+        child: Container(
+          color: config.myColors["background"],
+          child: ListView(
+            // Important: Remove any padding from the ListView.
+            padding: EdgeInsets.zero,
+            children: <Widget>[
+              UserAccountsDrawerHeader(
+                decoration: BoxDecoration(color: this.config.myColors["appBarColor"],),
+                currentAccountPicture: const CircleAvatar(
+                  backgroundImage: AssetImage("assets/images/account.png"),
+                ),
+                accountName: const Text("Eliran Wong"),
+                accountEmail: const Text("support@BibleTools.app"),
               ),
-              accountName: const Text("Eliran Wong"),
-              accountEmail: const Text("support@BibleTools.app"),
-            ),
-            _buildTimelineList(context),
-            _buildFavouriteList(context),
-            _buildHistoryList(context),
-            _buildBookList(context),
-            _buildChapterList(context),
-          ],
+              _buildTimelineList(context),
+              _buildFavouriteList(context),
+              _buildHistoryList(context),
+              _buildBookList(context),
+              _buildChapterList(context),
+            ],
+          ),
         ),
       ),
     );
@@ -123,7 +129,7 @@ class _MyDrawerState extends State<MyDrawer> {
     ];
     List<Widget> timelineRowList = timelines.map((i) => _buildTimelineRow(context, i[0], i[1], timelines)).toList();
     return ExpansionTile(
-      title: Text(this.interfaceApp[this.abbreviations][10]),
+      title: Text(this.interfaceApp[this.abbreviations][10], style: _generalTextStyle),
       //initiallyExpanded: true,
       backgroundColor: Theme.of(context).accentColor.withOpacity(0.025),
       children: timelineRowList,
@@ -132,11 +138,11 @@ class _MyDrawerState extends State<MyDrawer> {
 
   Widget _buildTimelineRow(BuildContext context, String file, String title, List timelines) {
     return ListTile(
-      title: Text(title),
+      title: Text(title, style: _entryTextStyle,),
       onTap: () {
         Navigator.push(
           context,
-          MaterialPageRoute(builder: (context) => Timeline(file, title, timelines)),
+          MaterialPageRoute(builder: (context) => Timeline(file, title, timelines, config)),
         );
       },
     );
@@ -152,7 +158,7 @@ class _MyDrawerState extends State<MyDrawer> {
           favouriteList.map((i) => _buildFavouriteRow(context, i)).toList();
     }
     return ExpansionTile(
-      title: Text(this.interfaceApp[this.abbreviations][6]),
+      title: Text(this.interfaceApp[this.abbreviations][6], style: _generalTextStyle),
       backgroundColor: Theme.of(context).accentColor.withOpacity(0.025),
       children: favouriteRowList,
     );
@@ -164,7 +170,7 @@ class _MyDrawerState extends State<MyDrawer> {
     return ListTile(
       title: Text(
         hxReference,
-        //style: _verseFont,
+        style: _entryTextStyle,
       ),
       onTap: () {
         Navigator.pop(context);
@@ -187,7 +193,7 @@ class _MyDrawerState extends State<MyDrawer> {
           historyList.map((i) => _buildHistoryRow(context, i)).toList();
     }
     return ExpansionTile(
-      title: Text(this.interfaceApp[this.abbreviations][7]),
+      title: Text(this.interfaceApp[this.abbreviations][7], style: _generalTextStyle),
       backgroundColor: Theme.of(context).accentColor.withOpacity(0.025),
       children: historyRowList,
     );
@@ -199,7 +205,7 @@ class _MyDrawerState extends State<MyDrawer> {
     return ListTile(
       title: Text(
         hxReference,
-        //style: _verseFont,
+        style: _entryTextStyle,
       ),
       onTap: () {
         Navigator.pop(context);
@@ -227,7 +233,7 @@ class _MyDrawerState extends State<MyDrawer> {
       ];
     }
     return ExpansionTile(
-      title: Text(this.interfaceApp[this.abbreviations][8]),
+      title: Text(this.interfaceApp[this.abbreviations][8], style: _generalTextStyle),
       initiallyExpanded: true,
       backgroundColor: Theme.of(context).accentColor.withOpacity(0.025),
       children: bookRowList,
@@ -322,7 +328,7 @@ class _MyDrawerState extends State<MyDrawer> {
       ];
     }
     return ExpansionTile(
-      title: Text(this.interfaceApp[this.abbreviations][9]),
+      title: Text(this.interfaceApp[this.abbreviations][9], style: _generalTextStyle),
       initiallyExpanded: true,
       backgroundColor: Theme.of(context).accentColor.withOpacity(0.025),
       children: chapterRowList,
