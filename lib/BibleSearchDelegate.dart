@@ -11,11 +11,12 @@ class BibleSearchDelegate extends SearchDelegate<List> {
   final _bcvList;
   final _bible;
   final _interfaceDialog;
+  final _pageSize = 20;
   String abbreviations;
   Map interfaceBibleSearch = {
-    "ENG": ["is not properly formatted for search. Please correct and try again.", "Clear"],
-    "TC": ["組成的格式不正確，請更正然後再嘗試", "清空"],
-    "SC": ["组成的格式不正确，请更正然后再尝试", "清空"],
+    "ENG": ["is not properly formatted for search. Please correct and try again.", "Clear", "More ..."],
+    "TC": ["組成的格式不正確，請更正然後再嘗試", "清空", "更多 …"],
+    "SC": ["组成的格式不正确，请更正然后再尝试", "清空", "更多 …"],
   };
 
   var _verseNoFont, _verseFont, _verseFontHebrew, _verseFontGreek;
@@ -23,8 +24,8 @@ class BibleSearchDelegate extends SearchDelegate<List> {
   var hebrewBibles, greekBibles, interlinearBibles;
   var verseTextStyle;
   List _data = [];
-  int _backgroundColor;
   List _rawData;
+  int _backgroundColor;
 
   BibleSearchDelegate(BuildContext context, this._bible, this._interfaceDialog, Config config, this._data, this._bcvList, [this._rawData]) {
     _verseNoFont = config.verseTextStyle["verseNoFont"];
@@ -42,20 +43,23 @@ class BibleSearchDelegate extends SearchDelegate<List> {
     this.verseTextStyle = config.verseTextStyle;
 
     this._backgroundColor = config.backgroundColor;
-    if (_rawData != null) _loadData();
+    (_rawData == null) ? _rawData = [] : _loadData();
   }
 
+  // The option of lazy loading is achieved with "_loadData" & "_loadMoreData"
   Future _loadData() async {
-    _data = (_rawData.length <= 20) ? _bible.openMultipleVerses(_rawData) : _bible.openMultipleVerses(_rawData.sublist(0, 20));
+    _data = (_rawData.length <= _pageSize) ? _bible.openMultipleVerses(_rawData) : _bible.openMultipleVerses(_rawData.sublist(0, _pageSize));
   }
 
   Future _loadMoreData(BuildContext context, int i) async {
-    int start = (i + 1) * 20;
-    int end = (i + 2) * 20;
-    if (end > _rawData.length) end = _rawData.length;
-    List newBcvList = (_rawData.length > end) ? _rawData.sublist(start, end) : _rawData.sublist(start, _rawData.length);
+    int start = i;
+    int end = i + (1 * _pageSize);
+    List newBcvList = (end > _rawData.length) ? _rawData.sublist(start) : _rawData.sublist(start, end);
     _data = [..._data, ..._bible.openMultipleVerses(newBcvList)];
-    showSuggestions(context);
+    // visual update; SearchDelegate doesn't have method setState; the following 3 lines is a workaround for visual update.
+    String tempString = query;
+    query = "...";
+    query = tempString;
   }
 
   // This is the function which does the search.
@@ -145,10 +149,7 @@ class BibleSearchDelegate extends SearchDelegate<List> {
   }
 
   Widget _buildVerses(BuildContext context) {
-    print(_rawData.length);
-    print(_data.length);
-    int count = (_rawData.length > _data.length) ? (_data.length + 1) : _data.length;
-    print(count);
+    int count = ((_rawData.isNotEmpty) && (_rawData.length > _data.length)) ? (_data.length + 1) : _data.length;
     return Container(
       color: Colors.blueGrey[_backgroundColor],
       child: ListView.builder(
@@ -162,7 +163,7 @@ class BibleSearchDelegate extends SearchDelegate<List> {
 
   Widget _buildMoreRow(BuildContext context, int i) {
     return ListTile(
-      title: Text("More"),
+      title: Text("[${interfaceBibleSearch[this.abbreviations][2]}]", style: _activeVerseFont,),
 
       onTap: () {
         _loadMoreData(context, i);
