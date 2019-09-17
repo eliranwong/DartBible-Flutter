@@ -518,10 +518,17 @@ class UniqueBibleState extends State<UniqueBible> {
       }
     }).toSet().toList();
     List<List> bcvLists = bcvStrings.map((i) => i.split(".").map((i) => int.parse(i)).toList()).toList();
-    List verseData = this.bibles.bible1.openMultipleVerses(bcvLists);
+    //print(bcvLists.length);
+    //List verseData = this.bibles.bible1.openSingleVerse(bcvLists);
+    /*List verseData = bcvLists.map((i) {
+      return (i.length > 3) ? [i, "${this.bibles.bible1.openSingleVerse(i)} ...", this.bibles.bible1.module] : [i, this.bibles.bible1.openSingleVerse(i), this.bibles.bible1.module];
+    }).toList();
+
+     */
     final List selected = await showSearch(
         context: context,
-        delegate: BibleSearchDelegate(context, this.bibles.bible1, this.interfaceDialog, this.config, verseData, _currentActiveVerse));
+        //delegate: BibleSearchDelegate(context, this.bibles.bible1, this.interfaceDialog, this.config, verseData, _currentActiveVerse));
+        delegate: BibleSearchDelegate(context, this.bibles.bible1, this.interfaceDialog, this.config, [], _currentActiveVerse, bcvLists));
     if (selected != null) {
       this.searchData = selected[0];
       _newVerseSelected(this.searchData[selected[1]]);

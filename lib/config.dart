@@ -39,7 +39,7 @@ class Config {
   void updateThemeData() {
     if (this.myColors != null) {
       mainTheme = ThemeData(
-        primaryColor: this.myColors["appBarColor"],
+        //primaryColor: this.myColors["appBarColor"],
         appBarTheme: AppBarTheme(color: this.myColors["appBarColor"]),
         scaffoldBackgroundColor: Colors.blueGrey[this.backgroundColor],
         unselectedWidgetColor: this.myColors["blue"],

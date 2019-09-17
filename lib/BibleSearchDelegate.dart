@@ -24,8 +24,9 @@ class BibleSearchDelegate extends SearchDelegate<List> {
   var verseTextStyle;
   List _data = [];
   int _backgroundColor;
+  List _rawData;
 
-  BibleSearchDelegate(BuildContext context, this._bible, this._interfaceDialog, Config config, this._data, this._bcvList) {
+  BibleSearchDelegate(BuildContext context, this._bible, this._interfaceDialog, Config config, this._data, this._bcvList, [this._rawData]) {
     _verseNoFont = config.verseTextStyle["verseNoFont"];
     _verseFont = config.verseTextStyle["verseFont"];
     _verseFontHebrew = config.verseTextStyle["verseFontHebrew"];
@@ -41,6 +42,20 @@ class BibleSearchDelegate extends SearchDelegate<List> {
     this.verseTextStyle = config.verseTextStyle;
 
     this._backgroundColor = config.backgroundColor;
+    if (_rawData != null) _loadData();
+  }
+
+  Future _loadData() async {
+    _data = (_rawData.length <= 20) ? _bible.openMultipleVerses(_rawData) : _bible.openMultipleVerses(_rawData.sublist(0, 20));
+  }
+
+  Future _loadMoreData(BuildContext context, int i) async {
+    int start = (i + 1) * 20;
+    int end = (i + 2) * 20;
+    if (end > _rawData.length) end = _rawData.length;
+    List newBcvList = (_rawData.length > end) ? _rawData.sublist(start, end) : _rawData.sublist(start, _rawData.length);
+    _data = [..._data, ..._bible.openMultipleVerses(newBcvList)];
+    showSuggestions(context);
   }
 
   // This is the function which does the search.
@@ -130,18 +145,33 @@ class BibleSearchDelegate extends SearchDelegate<List> {
   }
 
   Widget _buildVerses(BuildContext context) {
+    print(_rawData.length);
+    print(_data.length);
+    int count = (_rawData.length > _data.length) ? (_data.length + 1) : _data.length;
+    print(count);
     return Container(
       color: Colors.blueGrey[_backgroundColor],
       child: ListView.builder(
           padding: const EdgeInsets.all(16.0),
-          itemCount: _data.length,
+          itemCount: count,
           itemBuilder: (context, i) {
-            return _buildVerseRow(i, context);
+            return (i == _data.length) ? _buildMoreRow(context, i) : _buildVerseRow(context, i);
           }),
     );
   }
 
-  Widget _buildVerseRow(int i, BuildContext context) {
+  Widget _buildMoreRow(BuildContext context, int i) {
+    return ListTile(
+      title: Text("More"),
+
+      onTap: () {
+        _loadMoreData(context, i);
+      },
+
+    );
+  }
+
+  Widget _buildVerseRow(BuildContext context, int i) {
     var verseData = _data[i];
 
     return ListTile(
