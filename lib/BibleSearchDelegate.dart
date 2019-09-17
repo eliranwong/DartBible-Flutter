@@ -53,7 +53,7 @@ class BibleSearchDelegate extends SearchDelegate<List> {
 
   Future _loadMoreData(BuildContext context, int i) async {
     int start = i;
-    int end = i + (1 * _pageSize);
+    int end = i + _pageSize;
     List newBcvList = (end > _rawData.length) ? _rawData.sublist(start) : _rawData.sublist(start, end);
     _data = [..._data, ..._bible.openMultipleVerses(newBcvList)];
     // visual update; SearchDelegate doesn't have method setState; the following 3 lines is a workaround for visual update.
