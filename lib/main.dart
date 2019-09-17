@@ -162,6 +162,8 @@ class UniqueBibleState extends State<UniqueBible> {
   }
 
   showTip(BuildContext context, List bcvList) {
+    _scaffoldKey.currentState.removeCurrentSnackBar();
+
     String verseReference = BibleParser(this.abbreviations).bcvToVerseReference(bcvList);
     String message = "'$verseReference' ${this.interfaceMessage[this.abbreviations][0]}";
     final snackBar = SnackBar(content: Text(message));
@@ -350,10 +352,14 @@ class UniqueBibleState extends State<UniqueBible> {
   }
 
   Future _loadXRef(BuildContext context, List bcvList) async {
+    _scaffoldKey.currentState.removeCurrentSnackBar();
+
     final snackBar = SnackBar(content: Text(this.interfaceMessage[this.abbreviations][1]));
     Scaffold.of(context).showSnackBar(snackBar);
 
     var xRefData = await this.bibles.crossReference(bcvList);
+    _scaffoldKey.currentState.removeCurrentSnackBar();
+
     final List selected = await showSearch(
         context: context,
         delegate: BibleSearchDelegate(context, this.bibles.bible1, this.interfaceDialog, this.config, xRefData, _currentActiveVerse));
@@ -364,10 +370,14 @@ class UniqueBibleState extends State<UniqueBible> {
   }
 
   Future _loadCompare(BuildContext context, List bcvList) async {
+    _scaffoldKey.currentState.removeCurrentSnackBar();
+
     final snackBar = SnackBar(content: Text(this.interfaceMessage[this.abbreviations][2]));
     Scaffold.of(context).showSnackBar(snackBar);
 
     var compareData = await this.bibles.compareBibles(this.config.compareBibleList, bcvList);
+    _scaffoldKey.currentState.removeCurrentSnackBar();
+
     final List selected = await showSearch(
         context: context,
         delegate: BibleSearchDelegate(context, this.bibles.bible1, this.interfaceDialog, this.config, compareData, _currentActiveVerse));
