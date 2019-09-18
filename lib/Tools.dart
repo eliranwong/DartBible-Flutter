@@ -34,7 +34,7 @@ class ToolMenu extends StatelessWidget {
 
   Widget _buildItems(BuildContext context) {
     return ListView.builder(
-        padding: const EdgeInsets.all(16.0),
+        padding: const EdgeInsets.all(10.0),
         itemCount: _data.length,
         itemBuilder: (context, i) {
           return _buildItemRow(context, i);

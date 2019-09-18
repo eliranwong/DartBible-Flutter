@@ -1223,7 +1223,7 @@ class LocationSearchDelegate extends SearchDelegate<List> {
     return Container(
       color: Colors.blueGrey[_config.backgroundColor],
       child: ListView.builder(
-          padding: const EdgeInsets.all(16.0),
+          padding: const EdgeInsets.all(10.0),
           itemCount: _data.length,
           itemBuilder: (context, i) {
             return _buildItemRow(i, context);
