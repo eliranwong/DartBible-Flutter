@@ -4,6 +4,7 @@ import 'BibleParser.dart';
 import 'config.dart';
 import 'Helpers.dart';
 import 'Bibles.dart';
+import 'HtmlWrapper.dart';
 
 class InterlinearView extends StatefulWidget {
   final List<Map> _data;
@@ -102,12 +103,7 @@ class InterlinearViewState extends State<InterlinearView> {
                 tooltip: interface[this.abbreviations][1],
                 icon: Icon(Icons.more_vert, color: _config.myColors["black"],),
                 onPressed: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                        builder: (context) =>
-                            WordView(wordData, _module, _config, _bibles)),
-                  );
+                  _loadWordView(context, wordData);
                 },
               ),
             )
@@ -115,6 +111,16 @@ class InterlinearViewState extends State<InterlinearView> {
         ),
       ),
     );
+  }
+
+  Future _loadWordView(BuildContext context, Map wordData) async {
+    final selected = await Navigator.push(
+      context,
+      MaterialPageRoute(
+          builder: (context) =>
+              WordView(wordData, _module, _config, _bibles)),
+    );
+    if (selected != null) Navigator.pop(context, selected);
   }
 
   Future _loadMorphologyView(BuildContext context) async {
@@ -131,13 +137,15 @@ class InterlinearViewState extends State<InterlinearView> {
     }
   }
 
-  Future _loadLexiconView(BuildContext context, String lexicalEntry) async {
+  Future _loadLexiconView(BuildContext context, String lexicalEntries) async {
+    List lexicons = await SqliteHelper(_config).getLexicons(lexicalEntries);
     final selected = await Navigator.push(
       context,
-      MaterialPageRoute(builder: (context) => LexiconView(lexicalEntry, _config)),
+      MaterialPageRoute(builder: (context) => LexiconView(_config, lexicons, _bibles)),
     );
     if (selected != null) Navigator.pop(context, selected);
   }
+
 }
 
 class MorphologyView extends StatefulWidget {
@@ -286,12 +294,7 @@ class MorphologyViewState extends State<MorphologyView> {
                 tooltip: interface[this.abbreviations][3],
                 icon: Icon(Icons.more_vert, color: _config.myColors["black"],),
                 onPressed: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                        builder: (context) =>
-                            WordView(wordData, _module, _config, _bibles)),
-                  );
+                  _loadWordView(context, wordData);
                 },
               ),
             ),
@@ -317,6 +320,16 @@ class MorphologyViewState extends State<MorphologyView> {
     );
   }
 
+  Future _loadWordView(BuildContext context, Map wordData) async {
+    final selected = await Navigator.push(
+      context,
+      MaterialPageRoute(
+          builder: (context) =>
+              WordView(wordData, _module, _config, _bibles)),
+    );
+    if (selected != null) Navigator.pop(context, selected);
+  }
+
   Future _loadMorphologySearchView(
       BuildContext context, lexemeText, lexicalEntry, morphology) async {
     final selected = await Navigator.push(
@@ -328,38 +341,13 @@ class MorphologyViewState extends State<MorphologyView> {
     if (selected != null) Navigator.pop(context, selected);
   }
 
-  Future _loadLexiconView(BuildContext context, String lexicalEntry) async {
+  Future _loadLexiconView(BuildContext context, String lexicalEntries) async {
+    List lexicons = await SqliteHelper(_config).getLexicons(lexicalEntries);
     final selected = await Navigator.push(
       context,
-      MaterialPageRoute(builder: (context) => LexiconView(lexicalEntry, _config)),
+      MaterialPageRoute(builder: (context) => LexiconView(_config, lexicons, _bibles)),
     );
     if (selected != null) Navigator.pop(context, selected);
-  }
-}
-
-class LexiconView extends StatelessWidget {
-  final String lexicalEntries;
-  final Config _config;
-
-  LexiconView(this.lexicalEntries, this._config);
-
-  @override
-  Widget build(BuildContext context) {
-    final title = 'Lexicon';
-    return Theme(
-      data: _config.mainTheme,
-      child: Scaffold(
-        appBar: AppBar(
-          title: Text(title),
-        ),
-        body: Center(
-          //The following line is created for testing only.
-          //child: _parser.buildRichText(context, _parser.convertHtmlText(testing)),
-          child: Text(
-              "Entry: $lexicalEntries\n\nThis page is reserved for lexical studies.\n\nLexicons will be available in coming versions.", style: TextStyle(color: _config.myColors["black"]),),
-        ),
-      ),
-    );
   }
 }
 
@@ -572,12 +560,7 @@ class MorphologySearchResultsState extends State<MorphologySearchResults> {
                   tooltip: interface[this.abbreviations][2],
                   icon: Icon(Icons.more_vert, color: _config.myColors["black"],),
                   onPressed: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                          builder: (context) =>
-                              WordView(wordData, _module, _config, _bibles)),
-                    );
+                    _loadWordView(context, wordData);
                   },
                 ),
               ),
@@ -587,6 +570,17 @@ class MorphologySearchResultsState extends State<MorphologySearchResults> {
       ),
     );
   }
+
+  Future _loadWordView(BuildContext context, Map wordData) async {
+    final selected = await Navigator.push(
+      context,
+      MaterialPageRoute(
+          builder: (context) =>
+              WordView(wordData, _module, _config, _bibles)),
+    );
+    if (selected != null) Navigator.pop(context, selected);
+  }
+
 }
 
 class WordView extends StatelessWidget {
@@ -620,7 +614,7 @@ class WordView extends StatelessWidget {
     List<Bible> bibleList = [_bibles.bible1, _bibles.bible2, _bibles.iBible];
     List<Widget> verseList = bibleList
         .map((bible) => _buildVerseRow(context, bible.openSingleVerse(bcvList),
-            bible.module, _data["Book"]))
+            bible.module, bcvList))
         .toList();
 
     List<String> keys = _data.keys.toList();
@@ -643,8 +637,8 @@ class WordView extends StatelessWidget {
     ]);
   }
 
-  Widget _buildVerseRow(
-      BuildContext context, String text, String module, int book) {
+  Widget _buildVerseRow(BuildContext context, String text, String module, List bcvList) {
+    int book = bcvList[0];
     bool isHebrewBible =
         ((_config.hebrewBibles.contains(module)) && (book < 40));
     TextDirection verseDirection =
@@ -670,16 +664,9 @@ class WordView extends StatelessWidget {
         textDirection: verseDirection,
       ),
       subtitle: Text("[$module]", style: TextStyle(color: _config.myColors["blue"],),),
-
-      /*
       onTap: () {
-        //
+        Navigator.pop(context, [bcvList, "", module]);
       },
-
-      onLongPress: () {
-        //
-      },
-      */
     );
   }
 
@@ -698,16 +685,86 @@ class WordView extends StatelessWidget {
     return ListTile(
       title: Text(key, style: titleStyle),
       subtitle: Text(data, style: dataStyle),
+    );
+  }
 
-      /*
-      onTap: () {
-        //
-      },
+}
 
-      onLongPress: () {
-        //
-      },
-      */
+class LexiconView extends StatefulWidget {
+  final List _lexicalEntries;
+  final Config _config;
+  final Bibles _bibles;
+
+  LexiconView(this._config, this._lexicalEntries, this._bibles);
+
+  @override
+  LexiconViewState createState() => LexiconViewState(this._config, this._lexicalEntries, this._bibles);
+}
+
+class LexiconViewState extends State<LexiconView> {
+
+  final List _lexicalEntries;
+  final Config _config;
+  final Bibles _bibles;
+
+  LexiconViewState(this._config, this._lexicalEntries, this._bibles);
+
+  List<Widget> formatItem(BuildContext context, Map item) {
+    HtmlWrapper _wrapper = HtmlWrapper(_bibles, _config);
+
+    //String _entry = item["Entry"];
+    String _lexeme = item["Lexeme"];
+    String _transliteration = item["Transliteration"];
+    String _morphology = item["Morphology"];
+    String _gloss = item["Gloss"];
+    String _lexicon = item["Lexicon"];
+    String _content = item["Content"];
+
+    Widget headingRichText = Text(_lexicon, style: TextStyle(color: _config.myColors["grey"]),);
+
+    String content = "<h>$_lexeme</h><p>Transliteration: $_transliteration<br>Morphology: $_morphology<br>Gloss: $_gloss</p><p>$_content</p>";
+    Widget contentRichText = _wrapper.buildRichText(context, content);
+
+    return [headingRichText, contentRichText];
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Theme(
+      data: _config.mainTheme,
+      child: Scaffold(
+        appBar: AppBar(
+          title: Text("Lexicon"),
+        ),
+        body: _buildCardList(context),
+      ),
+    );
+  }
+
+  Widget _buildCardList(BuildContext context) {
+    return ListView.builder(
+        padding: const EdgeInsets.all(16.0),
+        itemCount: _lexicalEntries.length,
+        itemBuilder: (context, i) {
+          return _buildCard(context, i);
+        });
+  }
+
+  Widget _buildCard(BuildContext context, int i) {
+    final wordItem = _lexicalEntries[i];
+    final wordData = formatItem(context, wordItem);
+    return Center(
+      child: Card(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: <Widget>[
+            ListTile(
+              title: wordData[1],
+              subtitle: wordData[0],
+            )
+          ],
+        ),
+      ),
     );
   }
 

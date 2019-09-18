@@ -109,6 +109,50 @@ class SqliteHelper {
     return db;
   }
 
+  initLexiconDb() async {
+    // Construct the path to the app's writable database file:
+    var dbDir = await getDatabasesPath();
+    var dbPath = join(dbDir, "lexicon.sqlite");
+
+    double latestLexiconVersion = 0.3;
+
+    // check if database had been setup in first launch
+    if (this.config.lexiconVersion < latestLexiconVersion) {
+      // Delete any existing database:
+      await deleteDatabase(dbPath);
+
+      // Create the writable database file from the bundled demo database file:
+      ByteData data = await rootBundle.load("assets/lexicon.sqlite");
+      List<int> bytes = data.buffer.asUint8List(data.offsetInBytes, data.lengthInBytes);
+      await File(dbPath).writeAsBytes(bytes);
+
+      // save config to avoid copying the database file again
+      this.config.lexiconVersion = latestLexiconVersion;
+      this.config.save("lexiconVersion", latestLexiconVersion);
+    }
+
+    var db = await openDatabase(dbPath);
+    return db;
+  }
+
+  Future getLexicons(String lexicalEntries) async {
+    List entries = lexicalEntries.split(",").sublist(0, (lexicalEntries.split(",").length - 1));
+    List data = [];
+    for (var entry in entries) {
+      List entryData = await getLexicon(entry);
+      data = [...data, ...entryData];
+    }
+    return data;
+  }
+
+  Future getLexicon(String entry) async {
+    final Database db = await initLexiconDb();
+    var statement = "SELECT * FROM LEXICON WHERE Entry = ?";
+    List<Map> lexicon = await db.rawQuery(statement, [entry]);
+    db.close();
+    return lexicon;
+  }
+
 }
 
 class InterlinearHelper {

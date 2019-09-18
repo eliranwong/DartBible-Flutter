@@ -184,9 +184,9 @@ class UniqueBibleState extends State<UniqueBible> {
         ..insert(0, TextSpan(text: " "))
       ;
 
-      showModalBottomSheet<void>(context: context, builder: (BuildContext context) {
+      final selected = await showModalBottomSheet(context: context, builder: (BuildContext context) {
         return Container(
-          color: Colors.blueGrey[this.config.backgroundColor],
+          color: config.myColors["background"],
           child: Padding(
             padding: const EdgeInsets.all(10.0),
             child: ListTile(
@@ -199,12 +199,15 @@ class UniqueBibleState extends State<UniqueBible> {
               ),
               //subtitle: Text(verseReference, style: _highlightStyle),
               onTap: () {
-                _loadInterlinearView(context, bcvList);
+                Navigator.pop(context, bcvList);
+                // note: do not use the following line to load interlinearView directly, which cause instability.
+                // _loadInterlinearView(context, bcvList);
               },
             ),
           ),
         );
       });
+      if (selected != null) _loadInterlinearView(context, selected);
     }
   }
 
@@ -214,6 +217,8 @@ class UniqueBibleState extends State<UniqueBible> {
     List selectedBcvList = List<int>.from(selected[0]);
     String selectedBible = selected[2];
     if (selectedBible.isEmpty) selectedBible = this.bibles.bible1.module;
+
+    if ((selectedBible != this.bibles.bible1.module) && (selectedBible == this.bibles.bible2.module)) _swapBibles();
 
     if (selectedBcvList != null && selectedBcvList.isNotEmpty) {
       bool sameVerse = (selectedBcvList.join(".") == _currentActiveVerse.join("."));
@@ -573,7 +578,7 @@ class UniqueBibleState extends State<UniqueBible> {
     Color blueAccent, indigo, black, blue, deepOrange, grey;
     if (this.config.backgroundColor >= 500) {
       blueAccent = Colors.blueAccent[100];
-      indigo = Colors.indigo[100];
+      indigo = Colors.indigo[200];
       black = Colors.grey[300];
       blue = Colors.blue[300];
       deepOrange = Colors.deepOrange[300];
@@ -582,7 +587,7 @@ class UniqueBibleState extends State<UniqueBible> {
       _bottomAppBarColor = Colors.grey[500];
     } else {
       blueAccent = Colors.blueAccent[700];
-      indigo = Colors.indigo[700];
+      indigo = Colors.indigo[800];
       black = Colors.black;
       blue = Colors.blue[700];
       deepOrange = Colors.deepOrange[700];
@@ -611,9 +616,9 @@ class UniqueBibleState extends State<UniqueBible> {
     _verseFontHebrew = TextStyle(fontFamily: "Ezra SIL", fontSize: (this.config.fontSize + 4), color: black);
     _verseFontGreek = TextStyle(fontSize: (this.config.fontSize + 2), color: black);
     _activeVerseNoFont = TextStyle(fontSize: (this.config.fontSize - 3), color: blue, fontWeight: FontWeight.bold);
-    _activeVerseFont = TextStyle(fontSize: this.config.fontSize, color: indigo, fontWeight: FontWeight.bold);
-    _activeVerseFontHebrew = TextStyle(fontFamily: "Ezra SIL", fontSize: (this.config.fontSize + 4), color: indigo, fontWeight: FontWeight.bold);
-    _activeVerseFontGreek = TextStyle(fontSize: (this.config.fontSize + 2), color: indigo, fontWeight: FontWeight.bold);
+    _activeVerseFont = TextStyle(fontSize: this.config.fontSize, color: indigo);
+    _activeVerseFontHebrew = TextStyle(fontFamily: "Ezra SIL", fontSize: (this.config.fontSize + 4), color: indigo);
+    _activeVerseFontGreek = TextStyle(fontSize: (this.config.fontSize + 2), color: indigo);
     _interlinearStyle = TextStyle(fontSize: (this.config.fontSize - 3), color: deepOrange);
     _interlinearStyleDim = TextStyle(fontSize: (this.config.fontSize - 3), color: grey, fontStyle: FontStyle.italic);
 
@@ -876,7 +881,7 @@ class UniqueBibleState extends State<UniqueBible> {
       );
     }
     return IndexedListView.builder(
-        padding: const EdgeInsets.all(16.0),
+        padding: const EdgeInsets.all(5.0),
         controller: this.scrollController,
         // workaround of finite list with IndexedListView:
         // do not use itemCount in this case
