@@ -72,7 +72,7 @@ class InterlinearViewState extends State<InterlinearView> {
 
   Widget _buildCardList(BuildContext context) {
     return ListView.builder(
-        padding: const EdgeInsets.all(16.0),
+        padding: const EdgeInsets.all(15.0),
         itemCount: _data.length,
         itemBuilder: (context, i) {
           return _buildCard(context, i);
@@ -255,7 +255,7 @@ class MorphologyViewState extends State<MorphologyView> {
 
   Widget _buildCardList(BuildContext context) {
     return ListView.builder(
-        padding: const EdgeInsets.all(16.0),
+        padding: const EdgeInsets.all(15.0),
         itemCount: _data.length,
         itemBuilder: (context, i) {
           return _buildCard(context, i);
@@ -525,7 +525,7 @@ class MorphologySearchResultsState extends State<MorphologySearchResults> {
 
   Widget _buildCardList(BuildContext context) {
     return ListView.builder(
-        padding: const EdgeInsets.all(16.0),
+        padding: const EdgeInsets.all(15.0),
         itemCount: _data.length,
         itemBuilder: (context, i) {
           return _buildCard(context, i);
@@ -690,6 +690,7 @@ class WordView extends StatelessWidget {
 
 }
 
+/*
 class LexiconView extends StatefulWidget {
   final List _lexicalEntries;
   final Config _config;
@@ -707,7 +708,27 @@ class LexiconViewState extends State<LexiconView> {
   final Config _config;
   final Bibles _bibles;
 
+  Map interface = {
+    "ENG": ["Lexicon"],
+    "TC": ["原文辭典"],
+    "SC": ["原文词典"],
+  };
+
   LexiconViewState(this._config, this._lexicalEntries, this._bibles);
+*/
+class LexiconView extends StatelessWidget {
+
+  final List _lexicalEntries;
+  final Config _config;
+  final Bibles _bibles;
+
+  Map interface = {
+    "ENG": ["Lexicon"],
+    "TC": ["原文辭典"],
+    "SC": ["原文词典"],
+  };
+
+  LexiconView(this._config, this._lexicalEntries, this._bibles);
 
   List<Widget> formatItem(BuildContext context, Map item) {
     HtmlWrapper _wrapper = HtmlWrapper(_bibles, _config);
@@ -734,7 +755,7 @@ class LexiconViewState extends State<LexiconView> {
       data: _config.mainTheme,
       child: Scaffold(
         appBar: AppBar(
-          title: Text("Lexicon"),
+          title: Text(interface[_config.abbreviations][0]),
         ),
         body: _buildCardList(context),
       ),
@@ -743,7 +764,7 @@ class LexiconViewState extends State<LexiconView> {
 
   Widget _buildCardList(BuildContext context) {
     return ListView.builder(
-        padding: const EdgeInsets.all(16.0),
+        padding: const EdgeInsets.all(15.0),
         itemCount: _lexicalEntries.length,
         itemBuilder: (context, i) {
           return _buildCard(context, i);

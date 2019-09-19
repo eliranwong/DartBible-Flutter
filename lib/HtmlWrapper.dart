@@ -39,16 +39,21 @@ class HtmlWrapper {
     
     _regex.searchReplace = [
       //['\n|<p>|<author>|</author>|<date>|</date>|<re>|</re>|<note>|</note>|<Lat>|</Lat>|<foreign.*?>|</foreign>|<corr>|</corr>', ''],
-      ['\n|<p>', ''],
+      ['\n|<ind>|</ind>|<font.*?>|</font>|<div.*?>', ''],
       [r'<h([0-9]*?)>(.*?)</h\1>', r'％＄\2％</p>'],
-      ['<br>|<br/>|<br />', '\n'],
-      ['</p>', '\n\n'],
+      ['<br>|<br/>|<br />|</ul>|</li>', '\n'],
+      ['<p>|</p>|</div>|<ul>', '\n\n'],
+      ['<li>', '* '],
       ['<i>(.*?)</i>', r'％｛\1％'],
       ['<b>(.*?)</b>', r'％＊\1％'],
       ['<u>(.*?)</u>', r'％｝\1％'],
       ['<heb>(.*?)</heb>', r'％＆\1％'],
       ['<grk>(.*?)</grk>', r'％＃\1％'],
       [r'<ref onclick="bcv\(([0-9,]+?)\)">.*?</ref>', r'％＠\1％'],
+      ['&gt;', '>'],
+      ['&lt;', '<'],
+      [' [ ]+?([^ ])', ' \\1'],
+      ['\n\n[\n]+?([^\n])', '\n\n\\1'],
     ];
     return _regex.doSearchReplace(text);
   }

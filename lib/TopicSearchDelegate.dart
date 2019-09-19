@@ -10,9 +10,9 @@ class TopicSearchDelegate extends SearchDelegate<List> {
   String abbreviations;
 
   Map interface = {
-    "ENG": ["Clear"],
-    "TC": ["清空"],
-    "SC": ["清空"],
+    "ENG": ["Clear", "Search"],
+    "TC": ["清空", "搜索"],
+    "SC": ["清空", "搜索"],
   };
 
   TopicSearchDelegate(BuildContext context, this._data, this._config) {
@@ -97,9 +97,16 @@ class TopicSearchDelegate extends SearchDelegate<List> {
       leading: Icon(Icons.title, color: _config.myColors["black"],),
       title: Text(itemData["Topic"], style: _config.verseTextStyle["verseFont"]),
       subtitle: Text(itemData["Tool"], style: TextStyle(fontSize: (_config.fontSize - 5), color: _config.myColors["grey"],)),
+      trailing: IconButton(
+        tooltip: this.interface[this.abbreviations][1],
+        icon: Icon(Icons.search, color: _config.myColors["black"],),
+        onPressed: () {
+          close(context, [itemData["Entry"], "search"]);
+        },
+      ),
 
       onTap: () {
-        close(context, [itemData["Entry"]]);
+        close(context, [itemData["Entry"], "open"]);
       },
 
     );

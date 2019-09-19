@@ -83,12 +83,20 @@ class SqliteHelper {
     return db;
   }
 
+  Future getMorphology(List bcvList, String module) async {
+    final Database db = await this.initMorphologyDb();
+    var statement = "SELECT * FROM $module WHERE Book = ? AND Chapter = ? AND Verse = ?";
+    List<Map> morphology = await db.rawQuery(statement, bcvList);
+    db.close();
+    return morphology;
+  }
+
   initToolsDb() async {
     // Construct the path to the app's writable database file:
     var dbDir = await getDatabasesPath();
     var dbPath = join(dbDir, "tools.sqlite");
 
-    double latestToolsVersion = 0.7;
+    double latestToolsVersion = 0.8;
 
     // check if database had been setup in first launch
     if (this.config.toolsVersion < latestToolsVersion) {
@@ -109,12 +117,49 @@ class SqliteHelper {
     return db;
   }
 
+  Future getTopic(String entry) async {
+    final Database db = await this.initToolsDb();
+    var statement = "SELECT * FROM EXLBTENTRY WHERE Entry = ?";
+    List<Map> lexicon = await db.rawQuery(statement, [entry]);
+    db.close();
+    return lexicon;
+  }
+
+  Future getTopics(List bcvList, String module) async {
+    List bcvList2 = [...bcvList, bcvList[2]];
+    final Database db = await this.initToolsDb();
+    var statement = "SELECT Tool, Entry, Topic FROM $module WHERE Book = ? AND Chapter = ? AND Verse <= ? AND toVerse >= ?";
+    List<Map> tools = await db.rawQuery(statement, bcvList2);
+    db.close();
+
+    List<String> entries = <String>[];
+    List<Map> toolsFiltered = <Map>[];
+    for (var tool in tools) {
+      String entry = tool["Entry"];
+      if (!(entries.contains(entry))) {
+        entries.add(entry);
+        toolsFiltered.add(tool);
+      }
+    }
+
+    return toolsFiltered;
+  }
+
+  Future getTools(List bcvList, String module) async {
+    final Database db = await this.initToolsDb();
+    var statement = "SELECT * FROM $module WHERE Book = ? AND Chapter = ? AND Verse = ? ORDER BY Number";
+    List<Map> tools = await db.rawQuery(statement, bcvList);
+    db.close();
+
+    return tools;
+  }
+
   initLexiconDb() async {
     // Construct the path to the app's writable database file:
     var dbDir = await getDatabasesPath();
     var dbPath = join(dbDir, "lexicon.sqlite");
 
-    double latestLexiconVersion = 0.5;
+    double latestLexiconVersion = 0.6;
 
     // check if database had been setup in first launch
     if (this.config.lexiconVersion < latestLexiconVersion) {
@@ -146,7 +191,7 @@ class SqliteHelper {
   }
 
   Future getLexicon(String entry) async {
-    final Database db = await initLexiconDb();
+    final Database db = await this.initLexiconDb();
     var statement = "SELECT * FROM LEXICON WHERE Entry = ?";
     List<Map> lexicon = await db.rawQuery(statement, [entry]);
     db.close();

@@ -395,7 +395,7 @@ class UniqueBibleState extends State<UniqueBible> {
   Future _loadInterlinearView(BuildContext context, List bcvList, [String module]) async {
     if (isAllBiblesReady()) {
       String table = module ?? "OHGB";
-      final List<Map> morphology = await getMorphology(bcvList, table);
+      final List<Map> morphology = await SqliteHelper(this.config).getMorphology(bcvList, table);
       final selected = await Navigator.push(
         context,
         MaterialPageRoute(builder: (context) => InterlinearView(morphology, true, table, this.config, this.bibles)),
@@ -407,7 +407,7 @@ class UniqueBibleState extends State<UniqueBible> {
   Future _loadMorphologyView(BuildContext context, List bcvList, [String module]) async {
     if (isAllBiblesReady()) {
       String table = module ?? "OHGB";
-      final List<Map> morphology = await getMorphology(bcvList, table);
+      final List<Map> morphology = await SqliteHelper(this.config).getMorphology(bcvList, table);
       final selected = await Navigator.push(
         context,
         MaterialPageRoute(builder: (context) => MorphologyView(morphology, true, table, this.config, this.bibles)),
@@ -432,7 +432,7 @@ class UniqueBibleState extends State<UniqueBible> {
   Future _loadLocation(BuildContext context, List bcvList, [String module]) async {
     if (this.bibles?.bible1?.data != null) {
       String table = module ?? "EXLBL";
-      final List<Map> tools = await getTools(bcvList, table);
+      final List<Map> tools = await SqliteHelper(this.config).getTools(bcvList, table);
       final List selected = await showSearch(
         context: context,
         delegate: LocationSearchDelegate(context, tools, this.config),
@@ -461,7 +461,7 @@ class UniqueBibleState extends State<UniqueBible> {
   Future _loadPeople(BuildContext context, List bcvList, [String module]) async {
     if (this.bibles?.bible1?.data != null) {
       String table = module ?? "PEOPLE";
-      final List<Map> tools = await getTools(bcvList, table);
+      final List<Map> tools = await SqliteHelper(this.config).getTools(bcvList, table);
       final List selected = await showSearch(
         context: context,
         delegate: PeopleSearchDelegate(context, tools, this.config),
@@ -509,13 +509,25 @@ class UniqueBibleState extends State<UniqueBible> {
   Future _loadTopics(BuildContext context, List bcvList, [String module]) async {
     if (this.bibles?.bible1?.data != null) {
       String table = module ?? "EXLBT";
-      final List<Map> tools = await getTopics(bcvList, table);
+      final List<Map> tools = await SqliteHelper(this.config).getTopics(bcvList, table);
       final List selected = await showSearch(
         context: context,
         delegate: TopicSearchDelegate(context, tools, this.config),
       );
-      if ((selected != null) && (selected.isNotEmpty)) _loadTopicVerses(context, selected[0]);
+      if ((selected != null) && (selected.isNotEmpty)) {
+        String entry = selected[0];
+        (selected[1] == "open") ? _loadTopicView(context, entry) : _loadTopicVerses(context, entry);
+      }
     }
+  }
+
+  Future _loadTopicView(BuildContext context, String entry) async {
+    List topic = await SqliteHelper(this.config).getTopic(entry);
+    final selected = await Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => TopicView(this.config, topic, this.bibles)),
+    );
+    if (selected != null) _newVerseSelected(selected);
   }
 
   Future _loadTopicVerses(BuildContext context, String entry) async {
@@ -1147,43 +1159,6 @@ class UniqueBibleState extends State<UniqueBible> {
         break;
       default:
     }
-  }
-
-  Future getMorphology(List bcvList, String module) async {
-    final Database db = await SqliteHelper(this.config).initMorphologyDb();
-    var statement = "SELECT * FROM $module WHERE Book = ? AND Chapter = ? AND Verse = ?";
-    List<Map> morphology = await db.rawQuery(statement, bcvList);
-    db.close();
-    return morphology;
-  }
-
-  Future getTopics(List bcvList, String module) async {
-    List bcvList2 = [...bcvList, bcvList[2]];
-    final Database db = await SqliteHelper(this.config).initToolsDb();
-    var statement = "SELECT Tool, Entry, Topic FROM $module WHERE Book = ? AND Chapter = ? AND Verse <= ? AND toVerse >= ?";
-    List<Map> tools = await db.rawQuery(statement, bcvList2);
-    db.close();
-
-    List<String> entries = <String>[];
-    List<Map> toolsFiltered = <Map>[];
-    for (var tool in tools) {
-      String entry = tool["Entry"];
-      if (!(entries.contains(entry))) {
-        entries.add(entry);
-        toolsFiltered.add(tool);
-      }
-    }
-
-    return toolsFiltered;
-  }
-
-  Future getTools(List bcvList, String module) async {
-    final Database db = await SqliteHelper(this.config).initToolsDb();
-    var statement = "SELECT * FROM $module WHERE Book = ? AND Chapter = ? AND Verse = ? ORDER BY Number";
-    List<Map> tools = await db.rawQuery(statement, bcvList);
-    db.close();
-
-    return tools;
   }
 
 }

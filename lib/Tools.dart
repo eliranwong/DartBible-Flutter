@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:sqflite/sqflite.dart';
+import 'package:photo_view/photo_view.dart';
 import 'config.dart';
 import 'Bibles.dart';
 import 'Helpers.dart';
 import 'BibleSearchDelegate.dart';
 import 'BibleParser.dart';
-import 'package:photo_view/photo_view.dart';
+import 'HtmlWrapper.dart';
+
 
 class ToolMenu extends StatelessWidget {
   final Map _title;
@@ -295,6 +297,101 @@ class TimelineState extends State<Timeline> {
               imageProvider: AssetImage("assets/timelines/$_file.png"),
               minScale: PhotoViewComputedScale.contained * 0.8,
             )
+        ),
+      ),
+    );
+  }
+
+}
+
+/*
+class TopicView extends StatefulWidget {
+  final List _topicEntries;
+  final Config _config;
+  final Bibles _bibles;
+
+  TopicView(this._config, this._topicEntries, this._bibles);
+
+  @override
+  TopicViewState createState() => TopicViewState(this._config, this._topicEntries, this._bibles);
+}
+
+class TopicViewState extends State<TopicView> {
+
+  final List _topicEntries;
+  final Config _config;
+  final Bibles _bibles;
+
+  Map interface = {
+    "ENG": ["Bible Topic"],
+    "TC": ["聖經主題"],
+    "SC": ["聖經主題"],
+  };
+
+  TopicViewState(this._config, this._topicEntries, this._bibles);
+*/
+
+class TopicView extends StatelessWidget {
+
+  final List _topicEntries;
+  final Config _config;
+  final Bibles _bibles;
+
+  Map interface = {
+    "ENG": ["Bible Topic"],
+    "TC": ["聖經主題"],
+    "SC": ["聖經主題"],
+  };
+
+  TopicView(this._config, this._topicEntries, this._bibles);
+
+  List<Widget> formatItem(BuildContext context, Map item) {
+    HtmlWrapper _wrapper = HtmlWrapper(_bibles, _config);
+
+    String _entry = item["Entry"];
+    String _content = item["Content"];
+
+    Widget headingRichText = Text(_entry, style: TextStyle(color: _config.myColors["grey"]),);
+    Widget contentRichText = _wrapper.buildRichText(context, _content);
+
+    return [headingRichText, contentRichText];
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Theme(
+      data: _config.mainTheme,
+      child: Scaffold(
+        appBar: AppBar(
+          title: Text(interface[_config.abbreviations][0]),
+        ),
+        body: _buildCardList(context),
+      ),
+    );
+  }
+
+  Widget _buildCardList(BuildContext context) {
+    return ListView.builder(
+        padding: const EdgeInsets.all(15.0),
+        itemCount: _topicEntries.length,
+        itemBuilder: (context, i) {
+          return _buildCard(context, i);
+        });
+  }
+
+  Widget _buildCard(BuildContext context, int i) {
+    final wordItem = _topicEntries[i];
+    final wordData = formatItem(context, wordItem);
+    return Center(
+      child: Card(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: <Widget>[
+            ListTile(
+              title: wordData[1],
+              subtitle: wordData[0],
+            )
+          ],
         ),
       ),
     );
