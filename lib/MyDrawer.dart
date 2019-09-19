@@ -224,7 +224,7 @@ class _MyDrawerState extends State<MyDrawer> {
     } else {
       bookRowList = [
         Container(
-          margin: const EdgeInsets.all(10.0),
+          margin: const EdgeInsets.symmetric(horizontal: 5.0),
           child: Wrap(
             spacing: 3.0,
             children: _buildBookChips(),
@@ -303,7 +303,7 @@ class _MyDrawerState extends State<MyDrawer> {
       }
       chapterRowList = [
         Container(
-          margin: const EdgeInsets.all(10.0),
+          margin: const EdgeInsets.symmetric(horizontal: 5.0),
           child: Wrap(
             spacing: 3.0,
             children: List<Widget>.generate(

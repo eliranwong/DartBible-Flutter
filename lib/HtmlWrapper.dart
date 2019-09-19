@@ -110,7 +110,7 @@ class HtmlWrapper {
       return Container(
         color: _config.myColors["background"],
         child: Padding(
-          padding: const EdgeInsets.all(0.0),
+          padding: const EdgeInsets.symmetric(vertical: 5.0),
           child: ListTile(
             title: verseText,
             subtitle: Text("[$reference, $module]", style: TextStyle(color: _config.myColors["blue"]),),

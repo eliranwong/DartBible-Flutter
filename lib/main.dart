@@ -188,7 +188,7 @@ class UniqueBibleState extends State<UniqueBible> {
         return Container(
           color: config.myColors["background"],
           child: Padding(
-            padding: const EdgeInsets.all(0.0),
+            padding: const EdgeInsets.symmetric(vertical: 5.0),
             child: ListTile(
               title: RichText(
                 text: TextSpan(
@@ -881,7 +881,7 @@ class UniqueBibleState extends State<UniqueBible> {
       );
     }
     return IndexedListView.builder(
-        padding: const EdgeInsets.all(0.0),
+        padding: EdgeInsets.zero,
         controller: this.scrollController,
         // workaround of finite list with IndexedListView:
         // do not use itemCount in this case

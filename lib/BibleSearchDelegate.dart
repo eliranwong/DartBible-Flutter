@@ -153,7 +153,7 @@ class BibleSearchDelegate extends SearchDelegate<List> {
     return Container(
       color: Colors.blueGrey[_backgroundColor],
       child: ListView.builder(
-          padding: const EdgeInsets.all(0.0),
+          padding: EdgeInsets.zero,
           itemCount: count,
           itemBuilder: (context, i) {
             return (i == _data.length) ? _buildMoreRow(context, i) : _buildVerseRow(context, i);
