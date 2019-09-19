@@ -114,7 +114,7 @@ class SqliteHelper {
     var dbDir = await getDatabasesPath();
     var dbPath = join(dbDir, "lexicon.sqlite");
 
-    double latestLexiconVersion = 0.4;
+    double latestLexiconVersion = 0.5;
 
     // check if database had been setup in first launch
     if (this.config.lexiconVersion < latestLexiconVersion) {
