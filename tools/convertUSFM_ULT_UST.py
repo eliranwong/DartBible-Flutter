@@ -231,6 +231,9 @@ newData = re.sub(' (”|\)|\]|\.|\?|\!|,|:|;|’)', r'\1', newData, flags=re.M)
 newData = re.sub(' [ ]+?([^ ])', r' \1', newData, flags=re.M)
 newData = re.sub(' \t|\t ', '\t', newData, flags=re.M)
 
+newData = re.sub('"', '\\"', newData, flags=re.M)
+newData = re.sub('^([0-9]+?)\t([0-9]+?)\t([0-9]+?)\t(.*?)$', r'{"bNo": \1, "cNo": \2, "vNo": \3, "vText": "\4"},', newData, flags=re.M)
+
 # close & save file
 f = open(outputFile, 'w')
 f.write(newData)
