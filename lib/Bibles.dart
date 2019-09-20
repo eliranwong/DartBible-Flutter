@@ -112,7 +112,7 @@ class Bibles {
     var jsonObject = await JsonHelper().getJsonObject(filePath);
     var bcvString = bcvList.join(".");
     var fetchResults = jsonObject.where((i) => (i["bcv"] == bcvString)).toList();
-    var referenceString = fetchResults[0]["xref"];
+    var referenceString = fetchResults.first["xref"];
     return BibleParser(this.abbreviations).extractAllReferences(referenceString);
   }
 
