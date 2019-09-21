@@ -3,6 +3,7 @@
 //import 'dart:as
 import 'package:flutter/services.dart' show Clipboard, ClipboardData;
 import 'package:flutter/material.dart';
+import 'dart:io';
 import 'package:share/share.dart';
 import 'package:indexed_list_view/indexed_list_view.dart';
 import 'package:swipedetector/swipedetector.dart';
@@ -35,6 +36,8 @@ class MyApp extends StatelessWidget {
     );
   }
 }
+
+enum TtsState { playing, stopped }
 
 class UniqueBible extends StatefulWidget {
   @override
@@ -98,8 +101,115 @@ class UniqueBibleState extends State<UniqueBible> {
     "SC": ["功能选项：", "分享", "拷贝", "增补拷贝内容", "收藏", "相关经文", "比较版本", "原文逐字翻译", "原文形态学"],
   };
 
+  // Variables to work with TTS
+  FlutterTts flutterTts;
+  dynamic languages;
+  dynamic voices;
+  //String language;
+  //String voice;
+  //int silencems;
+  TtsState ttsState = TtsState.stopped;
+  get isPlaying => ttsState == TtsState.playing;
+  get isStopped => ttsState == TtsState.stopped;
+  Icon _ttsIcon = Icon(Icons.speaker);
+
   UniqueBibleState() {
     this.config = Config();
+  }
+
+  @override
+  initState() {
+    super.initState();
+    initTts();
+  }
+
+  @override
+  void dispose() {
+    super.dispose();
+    flutterTts.stop();
+  }
+
+  initTts() {
+    flutterTts = FlutterTts();
+
+    if (Platform.isAndroid) {
+      flutterTts.ttsInitHandler(() {
+        _getLanguages();
+        _getVoices();
+      });
+    } else if (Platform.isIOS) {
+      _getLanguages();
+      _getVoices();
+    }
+
+    flutterTts.setStartHandler(() {
+      setState(() {
+        ttsState = TtsState.playing;
+      });
+    });
+
+    flutterTts.setCompletionHandler(() {
+      setState(() {
+        print("Complete");
+        ttsState = TtsState.stopped;
+      });
+    });
+
+    flutterTts.setErrorHandler((msg) {
+      setState(() {
+        ttsState = TtsState.stopped;
+      });
+    });
+  }
+
+  Future _getLanguages() async {
+    languages = await flutterTts.getLanguages;
+    if (languages != null) setState(() => languages);
+  }
+
+  Future _getVoices() async {
+    voices = await flutterTts.getVoices;
+    if (voices != null) setState(() => voices);
+  }
+
+  _readVerses() {
+    if (isStopped) {
+      String verses = _data.sublist(_scrollIndex).map((i) => i[1]).toList().join(" ");
+      _scrollToCurrentActiveVerse();
+      _speak(verses);
+      /*for (var i = _scrollIndex; i < _data.length; i++) {
+        //if (isStopped) break;
+        this.scrollController.jumpToIndex(i);
+        await _speak(_data[i][1]);
+        while (isPlaying) {
+          print("wait");
+        }
+      }
+        */
+    } else {
+      _stop();
+    }
+  }
+
+  Future _speak(message) async {
+    if (message != null) {
+      if (message.isNotEmpty) {
+        var result = await flutterTts.speak(message);
+        if (result == 1) setState(() {
+          ttsState = TtsState.playing;
+          _ttsIcon = Icon(Icons.stop);
+        });
+      }
+    }
+  }
+
+  Future _stop() async {
+    var result = await flutterTts.stop();
+    if (result == 1) setState(() {
+      ttsState = TtsState.stopped;
+      _ttsIcon = Icon(Icons.speaker);
+    });
+    //if (result == 1) setState(() => ttsState = TtsState.stopped);
   }
 
   bool isAllBiblesReady() {
@@ -880,6 +990,13 @@ class UniqueBibleState extends State<UniqueBible> {
               ),
               IconButton(
                 tooltip: this.interfaceBottom[this.abbreviations][3],
+                icon: _ttsIcon,
+                onPressed: () {
+                  _readVerses();
+                },
+              ),
+              IconButton(
+                tooltip: this.interfaceBottom[this.abbreviations][3],
                 icon: const Icon(Icons.share),
                 onPressed: () {
                   String chapterReference = BibleParser(this.abbreviations).bcvToChapterReference(_data.first.first);
@@ -887,26 +1004,10 @@ class UniqueBibleState extends State<UniqueBible> {
                   Share.share("$chapterReference\n$verses");
                 },
               ),
-              /*IconButton(
-                tooltip: this.interfaceBottom[this.abbreviations][3],
-                icon: const Icon(Icons.speaker_phone),
-                onPressed: () {
-                  String chapterReference = BibleParser(this.abbreviations).bcvToChapterReference(_data.first.first);
-                  String verses = _data.map((i) => i[1]).toList().join("\n");
-                  _speak("$chapterReference\n$verses");
-                },
-              ),*/
             ]
         ),
       ),
     );
-  }
-
-  Future _speak(message) async {
-    FlutterTts flutterTts = FlutterTts();
-    await flutterTts.setLanguage("en-US");
-    var result = await flutterTts.speak(message);
-    //if (result == 1) setState(() => ttsState = TtsState.playing);
   }
 
   Widget _buildVerses(BuildContext context) {
