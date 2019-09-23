@@ -28,7 +28,7 @@ class _MyDrawerState extends State<MyDrawer> {
   Function onTap;
 
   String abbreviations;
-  int _selectedBook, _selectedChapter;
+  int _selectedBook, _headingBook, _selectedChapter;
   bool _displayAllBooks = false;
   TextStyle _generalTextStyle, _entryTextStyle;
 
@@ -47,6 +47,7 @@ class _MyDrawerState extends State<MyDrawer> {
   _MyDrawerState(this.config, this._bible, this._headings, this._currentActiveVerse, this.onTap) {
     this.abbreviations = this.config.abbreviations;
     this._selectedBook = this._currentActiveVerse.first;
+    this._headingBook = _selectedBook;
     this._selectedChapter = this._currentActiveVerse[1];
     _generalTextStyle = TextStyle(color: config.myColors["black"]);
     _entryTextStyle = TextStyle(color: config.myColors["blueAccent"]);
@@ -156,7 +157,7 @@ class _MyDrawerState extends State<MyDrawer> {
     if ((_currentActiveVerse.join(".") == "0.0.0") || (_headings?.data == null)) {
       headingRowList = [_emptyRow(context)];
     } else {
-      List headings = _headings.openSingleChapter([_selectedBook, _selectedChapter, 0]);
+      List headings = _headings.openSingleChapter([_headingBook, _selectedChapter, 0]);
       headingRowList = headings.map((i) => _buildHeadingRow(context, i)).toList();
     }
     return ExpansionTile(
@@ -295,6 +296,7 @@ class _MyDrawerState extends State<MyDrawer> {
               setState(() {
                 _displayAllBooks = false;
                 _selectedBook = book;
+                _headingBook = book;
               });
             },
           );
