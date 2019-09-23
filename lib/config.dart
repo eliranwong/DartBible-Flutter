@@ -32,6 +32,8 @@ class Config {
   int instantAction = 0;
   int favouriteAction = 1;
   int backgroundColor = 0;
+  String ttsChinese = "zh-CN";
+  String ttsEnglish = "en-GB";
 
   Map myColors;
   Map verseTextStyle;
@@ -73,6 +75,16 @@ class Config {
       prefs.setString("bible2", this.bible2);
     } else {
       this.bible2 = prefs.getString("bible2");
+    }
+    if (prefs.getString("ttsChinese") == null) {
+      prefs.setString("ttsChinese", this.ttsChinese);
+    } else {
+      this.ttsChinese = prefs.getString("ttsChinese");
+    }
+    if (prefs.getString("ttsEnglish") == null) {
+      prefs.setString("ttsEnglish", this.ttsEnglish);
+    } else {
+      this.ttsEnglish = prefs.getString("ttsEnglish");
     }
     if (prefs.getStringList("historyActiveVerse") == null) {
       prefs.setStringList("historyActiveVerse", ["43.3.16"]);
@@ -138,6 +150,8 @@ class Config {
     if (prefs.getString("abbreviations") != null) this.abbreviations = prefs.getString("abbreviations");
     if (prefs.getString("bible1") != null) this.bible1 = prefs.getString("bible1");
     if (prefs.getString("bible2") != null) this.bible2 = prefs.getString("bible2");
+    if (prefs.getString("ttsEnglish") != null) this.ttsEnglish = prefs.getString("ttsEnglish");
+    if (prefs.getString("ttsChinese") != null) this.ttsChinese = prefs.getString("ttsChinese");
     if (prefs.getStringList("historyActiveVerse") != null) {
       var tempHistoryActiveVerse = prefs.getStringList("historyActiveVerse").map((i) => i.split(".")).toList();
       this.historyActiveVerse = [];
@@ -175,6 +189,12 @@ class Config {
         await prefs.setString(feature, newSetting as String);
         break;
       case "bible2":
+        await prefs.setString(feature, newSetting as String);
+        break;
+      case "ttsChinese":
+        await prefs.setString(feature, newSetting as String);
+        break;
+      case "ttsEnglish":
         await prefs.setString(feature, newSetting as String);
         break;
       case "morphologyVersion":

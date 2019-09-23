@@ -61,8 +61,9 @@ class UniqueBibleState extends State<UniqueBible> {
 
   Bibles bibles;
   var scrollController;
-  var _scrollIndex = 0;
-  var config;
+  int _scrollIndex = 0;
+  int _activeIndex = 0;
+  Config config;
   var _verseNoFont, _verseFont, _verseFontHebrew, _verseFontGreek;
   var _activeVerseNoFont, _activeVerseFont, _activeVerseFontHebrew, _activeVerseFontGreek;
   var _interlinearStyle, _interlinearStyleDim;
@@ -84,9 +85,9 @@ class UniqueBibleState extends State<UniqueBible> {
   };
 
   Map interfaceBottom = {
-    "ENG": ["Popover Interlinear", "Bible Topics", "Bible Promises", "Parallel Passages", "Bible People", "Bible Locations"],
-    "TC": ["原文逐字翻譯", "聖經主題", "聖經應許", "對觀經文", "聖經人物", "聖經地點"],
-    "SC": ["原文逐字翻译", "圣经主题", "圣经应许", "对观经文", "圣经人物", "圣经地点"],
+    "ENG": ["Popover Interlinear", "Bible Topics", "Bible Promises", "Parallel Passages", "Bible People", "Bible Locations", "Share", "Speak"],
+    "TC": ["原文逐字翻譯", "聖經主題", "聖經應許", "對觀經文", "聖經人物", "聖經地點", "分享", "誦讀"],
+    "SC": ["原文逐字翻译", "圣经主题", "圣经应许", "对观经文", "圣经人物", "圣经地点", "分享", "诵读"],
   };
 
   Map interfaceMessage = {
@@ -113,14 +114,16 @@ class UniqueBibleState extends State<UniqueBible> {
   get isStopped => ttsState == TtsState.stopped;
   Icon _ttsIcon = Icon(Icons.speaker);
 
-  UniqueBibleState() {
+  /*UniqueBibleState() {
     this.config = Config();
-  }
+  }*/
 
   @override
   initState() {
     super.initState();
     initTts();
+    this.config = Config();
+    _setup();
   }
 
   @override
@@ -150,9 +153,12 @@ class UniqueBibleState extends State<UniqueBible> {
 
     flutterTts.setCompletionHandler(() {
       setState(() {
-        print("Complete");
+        //print("Complete");
         ttsState = TtsState.stopped;
+        _ttsIcon = Icon(Icons.speaker);
       });
+      _scrollIndex += 1;
+      _readVerse();
     });
 
     flutterTts.setErrorHandler((msg) {
@@ -164,34 +170,76 @@ class UniqueBibleState extends State<UniqueBible> {
 
   Future _getLanguages() async {
     languages = await flutterTts.getLanguages;
+    print(languages);
     if (languages != null) setState(() => languages);
   }
 
   Future _getVoices() async {
     voices = await flutterTts.getVoices;
+    print(voices);
     if (voices != null) setState(() => voices);
   }
 
-  _readVerses() {
-    if (isStopped) {
-      String verses = _data.sublist(_scrollIndex).map((i) => i[1]).toList().join(" ");
-      _scrollToCurrentActiveVerse();
-      _speak(verses);
-      /*for (var i = _scrollIndex; i < _data.length; i++) {
-        //if (isStopped) break;
-        this.scrollController.jumpToIndex(i);
-        await _speak(_data[i][1]);
-        while (isPlaying) {
-          print("wait");
-        }
+  Future _readVerse() async {
+    if ((isStopped) && (_scrollIndex < _data.length)) {
+      List item = _data[_scrollIndex];
+      String module = item.last;
+      String verse = item[1];
+      if (["OHGBi"].contains(module)) {
+        verse = "$verse ｜";
+        verse = verse.replaceAll(RegExp("｜＠.*? ｜"), "");
       }
-        */
+      if (["CCB", "CUV", "CUVs"].contains(module)) {
+        await flutterTts.setLanguage("zh-CN");
+        //zh-CN, yue-HK
+      } else if (["ABG", "LXX1", "LXX2", "LXXk"].contains(module)) {
+        verse = _removeGreekAccents(verse);
+        await flutterTts.setLanguage("el-GR");
+      } else if ((item.first.first >= 40) && (["OHGB", "OHGBi"].contains(module))) {
+        verse = _removeGreekAccents(verse);
+        await flutterTts.setLanguage("el-GR");
+      } else if ((item.first.first < 40) && (["OHGB", "OHGBi"].contains(module))) {
+        await flutterTts.setLanguage("he-IL");
+      } else {
+        await flutterTts.setLanguage("en-GB");
+        //en-GB, en-US
+      }
+      this.scrollController.jumpToIndex(_scrollIndex);
+      _speak(verse);
     } else {
       _stop();
     }
   }
 
-  Future _speak(message) async {
+  String _removeGreekAccents(String text) {
+    List searchReplace = [
+      ['[ἀἄᾄἂἆἁἅᾅἃάᾴὰᾶᾷᾳᾆᾀ]', 'α'],
+      ['[ἈἌἎἉἍἋ]', 'Α'],
+      ['[ἐἔἑἕἓέὲ]', 'ε'],
+      ['[ἘἜἙἝἛ]', 'Ε'],
+      ['[ἠἤᾔἢἦᾖᾐἡἥἣἧᾗᾑήῄὴῆῇῃ]', 'η'],
+      ['[ἨἬἪἮἩἭἫ]', 'Η'],
+      ['[ἰἴἶἱἵἳἷίὶῖϊΐῒ]', 'ι'],
+      ['[ἸἼἹἽ]', 'Ι'],
+      ['[ὀὄὂὁὅὃόὸ]', 'ο'],
+      ['[ὈὌὉὍὋ]', 'Ο'],
+      ['[ῥ]', 'ρ'],
+      ['[Ῥ]', 'Ρ'],
+      ['[ὐὔὒὖὑὕὓὗύὺῦϋΰῢ]', 'υ'],
+      ['[ὙὝὟ]', 'Υ'],
+      ['[ὠὤὢὦᾠὡὥὧᾧώῴὼῶῷῳᾤὣ]', 'ω'],
+      ['[ὨὬὪὮὩὭὯ]', 'Ω'],
+      ["[\-\—\,\;\:\\\?\.\·\·\'\‘\’\᾿\‹\›\“\”\«\»\(\)\[\]\{\}\⧼\⧽\〈\〉\*\‿\᾽\⇔\¦]", ""],
+    ];
+    for (var i in searchReplace) {
+      String search = i.first;
+      String replace = i.last;
+      text = text.replaceAll(RegExp(search), replace);
+    }
+    return text;
+  }
+
+  Future _speak(String message) async {
     if (message != null) {
       if (message.isNotEmpty) {
         var result = await flutterTts.speak(message);
@@ -208,8 +256,8 @@ class UniqueBibleState extends State<UniqueBible> {
     if (result == 1) setState(() {
       ttsState = TtsState.stopped;
       _ttsIcon = Icon(Icons.speaker);
+      _scrollIndex = _activeIndex;
     });
-    //if (result == 1) setState(() => ttsState = TtsState.stopped);
   }
 
   bool isAllBiblesReady() {
@@ -241,6 +289,7 @@ class UniqueBibleState extends State<UniqueBible> {
         _currentActiveVerse = List<int>.from(this.config.historyActiveVerse.first);
         _data = this.bibles.bible1.openSingleChapter(_currentActiveVerse);
         _scrollIndex = getScrollIndex();
+        _activeIndex = _scrollIndex;
       });
     }
   }
@@ -345,6 +394,7 @@ class UniqueBibleState extends State<UniqueBible> {
           (_parallelBibles) ? _parallelBibles = false : _parallelBibles = true;
           _parallelBibles = _toggleParallelBibles();
           _scrollIndex = getScrollIndex();
+          _activeIndex = _scrollIndex;
         });
       }
     }
@@ -789,8 +839,6 @@ class UniqueBibleState extends State<UniqueBible> {
 
   @override
   build(BuildContext context) {
-
-    _setup();
     _updateTextStyle();
     _updateAppBarTitle();
 
@@ -836,6 +884,7 @@ class UniqueBibleState extends State<UniqueBible> {
           setState(() {
             _parallelBibles = _toggleParallelBibles();
             _scrollIndex = getScrollIndex();
+            _activeIndex = _scrollIndex;
           });
         },
         tooltip: this.interfaceApp[this.abbreviations][5],
@@ -989,14 +1038,14 @@ class UniqueBibleState extends State<UniqueBible> {
                 },
               ),
               IconButton(
-                tooltip: this.interfaceBottom[this.abbreviations][3],
+                tooltip: this.interfaceBottom[this.abbreviations][7],
                 icon: _ttsIcon,
                 onPressed: () {
-                  _readVerses();
+                  _readVerse();
                 },
               ),
               IconButton(
-                tooltip: this.interfaceBottom[this.abbreviations][3],
+                tooltip: this.interfaceBottom[this.abbreviations][6],
                 icon: const Icon(Icons.share),
                 onPressed: () {
                   String chapterReference = BibleParser(this.abbreviations).bcvToChapterReference(_data.first.first);
@@ -1061,6 +1110,7 @@ class UniqueBibleState extends State<UniqueBible> {
       List<TextSpan> wordSpans;
 
       // check if it is an active verse or not
+      //if (i == _scrollIndex) {
       if (bcvList[2] == _currentActiveVerse[2]) {
         if (this.config.interlinearBibles.contains(module)) {
           List<TextSpan> interlinearSpans = InterlinearHelper(this.config.verseTextStyle).getInterlinearSpan(verseContent, book, true);
@@ -1101,6 +1151,7 @@ class UniqueBibleState extends State<UniqueBible> {
           ),
           onTap: () {
             (module == this.bibles.bible1.module) ? _scrollIndex = i : _scrollIndex = (i - 1);
+            _activeIndex = _scrollIndex;
             setActiveVerse(context, _data[i].first);
           },
           onLongPress: () {
