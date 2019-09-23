@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'dart:io';
 import 'BibleParser.dart';
 import 'Bibles.dart';
 import 'config.dart';
@@ -9,12 +10,10 @@ class BibleSettings extends StatefulWidget {
   final Map _favouriteActionMap;
   final Config _config;
 
-  BibleSettings(
-      this._bible, this._bcvList, this._favouriteActionMap, this._config);
+  BibleSettings(this._bible, this._bcvList, this._favouriteActionMap, this._config);
 
   @override
-  BibleSettingsState createState() =>
-      BibleSettingsState(_bible, _bcvList, _favouriteActionMap, _config);
+  BibleSettingsState createState() => BibleSettingsState(this._bible, this._bcvList, this._favouriteActionMap, this._config);
 }
 
 class BibleSettingsState extends State<BibleSettings> {
@@ -35,6 +34,10 @@ class BibleSettingsState extends State<BibleSettings> {
       "Instant Action",
       "Save",
       "Background Brightness",
+      "English Speech",
+      "Chinese Speech",
+      "Speech Rate",
+      "Normal",
     ],
     "TC": [
       "設定",
@@ -49,6 +52,10 @@ class BibleSettingsState extends State<BibleSettings> {
       "即時功能",
       "存檔",
       "背景顏色深淺",
+      "英語發聲",
+      "中文發聲",
+      "發聲速度",
+      "正常",
     ],
     "SC": [
       "设定",
@@ -63,6 +70,10 @@ class BibleSettingsState extends State<BibleSettings> {
       "即时功能",
       "存档",
       "背景颜色深浅",
+      "英语发声",
+      "中文发声",
+      "发声速度",
+      "正常",
     ],
   };
 
@@ -78,7 +89,9 @@ class BibleSettingsState extends State<BibleSettings> {
       _verseValue,
       _fontSizeValue,
       _interfaceValue,
-      _colorDegreeValue;
+      _colorDegreeValue,
+      _ttsChineseValue,
+      _ttsEnglishValue;
 
   List fontSizeList = [
     "7",
@@ -119,6 +132,8 @@ class BibleSettingsState extends State<BibleSettings> {
 
   List colorDegree = ["0", "100", "200", "300", "400", "500", "600", "700", "800", "900"];
 
+  double _speechRateValue;
+
   Map interfaceMap = {"English": "ENG", "繁體中文": "TC", "简体中文": "SC"};
 
   Map _instantActionMap = {
@@ -131,48 +146,50 @@ class BibleSettingsState extends State<BibleSettings> {
   int _instantAction, _favouriteAction;
   Config _config;
 
-  BibleSettingsState(Bible bible, List bcvList, Map favouriteActionMap, this._config) {
-    // The following line is used instead of "this._compareBibleList = compareBibleList";
+  BibleSettingsState(Bible bible, List bcvList, this._favouriteActionMap, this._config) {
+    // The following line is used instead of "_compareBibleList = compareBibleList";
     // Reason: To avoid direct update of original config settings
     // This allows users to cancel the changes made by pressing the "back" button
-    this._compareBibleList = List<String>.from(_config.compareBibleList);
+    _compareBibleList = List<String>.from(_config.compareBibleList);
 
-    this._fontSizeValue = _config.fontSize
+    _fontSizeValue = _config.fontSize
         .toString()
         .substring(0, (_config.fontSize.toString().length - 2));
     this.abbreviations = _config.abbreviations;
-    this._interface = interfaceBibleSettings[this.abbreviations];
+    _interface = interfaceBibleSettings[this.abbreviations];
     var interfaceMapReverse = {"ENG": "English", "TC": "繁體中文", "SC": "简体中文"};
-    this._interfaceValue = interfaceMapReverse[this.abbreviations];
-    this._colorDegreeValue = _config.backgroundColor.toString();
+    _interfaceValue = interfaceMapReverse[this.abbreviations];
+    _colorDegreeValue = _config.backgroundColor.toString();
 
-    this._parser = BibleParser(this.abbreviations);
-    this._abbreviations = this._parser.standardAbbreviation;
+    _parser = BibleParser(this.abbreviations);
+    _abbreviations = _parser.standardAbbreviation;
 
-    this._bible = bible;
-    this._moduleValue = this._bible.module;
+    _bible = bible;
+    _moduleValue = _bible.module;
 
-    this._bookValue = this._abbreviations[bcvList[0].toString()];
-    this._chapterValue = bcvList[1].toString();
-    this._verseValue = bcvList[2].toString();
+    _bookValue = _abbreviations[bcvList[0].toString()];
+    _chapterValue = bcvList[1].toString();
+    _verseValue = bcvList[2].toString();
 
-    this._favouriteActionMap = favouriteActionMap;
-    this._favouriteActionList =
-        this._favouriteActionMap[this.abbreviations].sublist(4);
-    this._favouriteActionList.insert(0, "---");
-    this._favouriteAction = _config.favouriteAction + 1;
+    _favouriteActionList = _favouriteActionMap[this.abbreviations].sublist(4);
+    _favouriteActionList.insert(0, "---");
+    _favouriteAction = _config.favouriteAction + 1;
 
-    this._instantActionList = this._instantActionMap[this.abbreviations];
-    this._instantActionList.insert(0, "---");
-    this._instantAction = _config.instantAction + 1;
+    _instantActionList = _instantActionMap[this.abbreviations];
+    _instantActionList.insert(0, "---");
+    _instantAction = _config.instantAction + 1;
+
+    _speechRateValue = _config.speechRate;
+    _ttsChineseValue = _config.ttsChinese;
+    _ttsEnglishValue = _config.ttsEnglish;
 
     updateSettingsValues();
   }
 
   Future onModuleChanged(String module) async {
-    this._bible = Bible(module, this.abbreviations);
-    this._moduleValue = this._bible.module;
-    await this._bible.loadData();
+    _bible = Bible(module, this.abbreviations);
+    _moduleValue = _bible.module;
+    await _bible.loadData();
 
     setState(() {
       updateSettingsValues();
@@ -180,56 +197,56 @@ class BibleSettingsState extends State<BibleSettings> {
   }
 
   void updateSettingsValues() {
-    this._bookList = this._bible.bookList;
-    this._bookList =
-        this._bookList.map((i) => this._abbreviations[(i).toString()]).toList();
-    if (!(this._bookList.contains(this._bookValue))) {
-      this._bookValue = this._bookList[0];
-      this._chapterValue = "1";
-      this._verseValue = "1";
+    _bookList = _bible.bookList;
+    _bookList =
+        _bookList.map((i) => _abbreviations[(i).toString()]).toList();
+    if (!(_bookList.contains(_bookValue))) {
+      _bookValue = _bookList[0];
+      _chapterValue = "1";
+      _verseValue = "1";
     }
 
     var bookNoString = getBookNo();
 
-    this._chapterList = this._bible.getChapterList(int.parse(bookNoString));
-    this._chapterList = this._chapterList.map((i) => (i).toString()).toList();
-    if (!(this._chapterList.contains(this._chapterValue)))
-      this._chapterValue = this._chapterList[0];
+    _chapterList = _bible.getChapterList(int.parse(bookNoString));
+    _chapterList = _chapterList.map((i) => (i).toString()).toList();
+    if (!(_chapterList.contains(_chapterValue)))
+      _chapterValue = _chapterList[0];
 
-    this._verseList = this
+    _verseList = this
         ._bible
-        .getVerseList(int.parse(bookNoString), int.parse(this._chapterValue));
-    this._verseList = this._verseList.map((i) => (i).toString()).toList();
-    if (!(this._verseList.contains(this._verseValue)))
-      this._verseValue = this._verseList[0];
+        .getVerseList(int.parse(bookNoString), int.parse(_chapterValue));
+    _verseList = _verseList.map((i) => (i).toString()).toList();
+    if (!(_verseList.contains(_verseValue)))
+      _verseValue = _verseList[0];
   }
 
   void updateInterface(String newValue) {
-    var bookIndex = this._bookList.indexOf(this._bookValue);
+    var bookIndex = _bookList.indexOf(_bookValue);
 
-    this._interfaceValue = newValue;
+    _interfaceValue = newValue;
     this.abbreviations = this.interfaceMap[newValue];
 
-    this._interface = interfaceBibleSettings[this.abbreviations];
-    this._abbreviations = BibleParser(this.abbreviations).standardAbbreviation;
-    this._bookList = this._bible.bookList;
-    this._bookList =
-        this._bookList.map((i) => this._abbreviations[(i).toString()]).toList();
-    this._bookValue = this._bookList[bookIndex];
+    _interface = interfaceBibleSettings[this.abbreviations];
+    _abbreviations = BibleParser(this.abbreviations).standardAbbreviation;
+    _bookList = _bible.bookList;
+    _bookList =
+        _bookList.map((i) => _abbreviations[(i).toString()]).toList();
+    _bookValue = _bookList[bookIndex];
 
-    this._favouriteActionList =
-        this._favouriteActionMap[this.abbreviations].sublist(3);
-    this._favouriteActionList.insert(0, "---");
+    _favouriteActionList =
+        _favouriteActionMap[this.abbreviations].sublist(3);
+    _favouriteActionList.insert(0, "---");
 
-    this._instantActionList = this._instantActionMap[this.abbreviations];
-    this._instantActionList.insert(0, "---");
+    _instantActionList = _instantActionMap[this.abbreviations];
+    _instantActionList.insert(0, "---");
   }
 
   String getBookNo() {
-    if (this._parser.bibleBookNo.keys.contains(this._bookValue)) {
-      return this._parser.bibleBookNo[this._bookValue];
-    } else if (this._parser.bibleBookNo.keys.contains("${this._bookValue}.")) {
-      return this._parser.bibleBookNo["${this._bookValue}."];
+    if (_parser.bibleBookNo.keys.contains(_bookValue)) {
+      return _parser.bibleBookNo[_bookValue];
+    } else if (_parser.bibleBookNo.keys.contains("${_bookValue}.")) {
+      return _parser.bibleBookNo["${_bookValue}."];
     }
     return null;
   }
@@ -246,7 +263,7 @@ class BibleSettingsState extends State<BibleSettings> {
       child: Scaffold(
         appBar: AppBar(
           backgroundColor: (int.parse(_colorDegreeValue) >= 500) ? Colors.blueGrey[int.parse(_colorDegreeValue) - 200] : Colors.blue[600],
-          title: Text(this._interface[0]),
+          title: Text(_interface[0]),
           actions: <Widget>[
             IconButton(
               tooltip: _interface[10],
@@ -255,16 +272,19 @@ class BibleSettingsState extends State<BibleSettings> {
                 Navigator.pop(
                     context,
                     BibleSettingsParser(
-                      this._moduleValue,
+                      _moduleValue,
                       getBookNo(),
-                      this._chapterValue,
-                      this._verseValue,
-                      this.interfaceMap[this._interfaceValue],
-                      this._fontSizeValue,
-                      this._compareBibleList,
-                      this._favouriteAction,
-                      this._instantAction,
-                      this._colorDegreeValue,
+                      _chapterValue,
+                      _verseValue,
+                      this.interfaceMap[_interfaceValue],
+                      _fontSizeValue,
+                      _compareBibleList,
+                      _favouriteAction,
+                      _instantAction,
+                      _colorDegreeValue,
+                      _ttsEnglishValue,
+                      _ttsChineseValue,
+                      _speechRateValue,
                     ));
               },
             ),
@@ -302,15 +322,15 @@ class BibleSettingsState extends State<BibleSettings> {
         child: ListView(
           children: <Widget>[
             ListTile(
-              title: Text(this._interface[1], style: style),
+              title: Text(_interface[1], style: style),
               trailing: DropdownButton<String>(
                 style: style,
                 underline: dropdownUnderline,
                 iconDisabledColor: dropdownDisabled,
                 iconEnabledColor: dropdownEnabled,
-                value: this._interfaceValue,
+                value: _interfaceValue,
                 onChanged: (String newValue) {
-                  if (this._interfaceValue != newValue) {
+                  if (_interfaceValue != newValue) {
                     setState(() {
                       this.updateInterface(newValue);
                     });
@@ -326,7 +346,7 @@ class BibleSettingsState extends State<BibleSettings> {
               ),
             ),
             ListTile(
-              title: Text(this._interface[11], style: style),
+              title: Text(_interface[11], style: style),
               trailing: DropdownButton<String>(
                 style: style,
                 underline: dropdownUnderline,
@@ -334,9 +354,9 @@ class BibleSettingsState extends State<BibleSettings> {
                 iconEnabledColor: dropdownEnabled,
                 value: _colorDegreeValue,
                 onChanged: (String newValue) {
-                  if (this._colorDegreeValue != newValue) {
+                  if (_colorDegreeValue != newValue) {
                     setState(() {
-                      this._colorDegreeValue = newValue;
+                      _colorDegreeValue = newValue;
                     });
                   }
                 },
@@ -350,17 +370,17 @@ class BibleSettingsState extends State<BibleSettings> {
               ),
             ),
             ListTile(
-              title: Text(this._interface[6], style: style),
+              title: Text(_interface[6], style: style),
               trailing: DropdownButton<String>(
                 style: style,
                 underline: dropdownUnderline,
                 iconDisabledColor: dropdownDisabled,
                 iconEnabledColor: dropdownEnabled,
-                value: this._fontSizeValue,
+                value: _fontSizeValue,
                 onChanged: (String newValue) {
-                  if (this._verseValue != newValue) {
+                  if (_verseValue != newValue) {
                     setState(() {
-                      this._fontSizeValue = newValue;
+                      _fontSizeValue = newValue;
                     });
                   }
                 },
@@ -374,15 +394,15 @@ class BibleSettingsState extends State<BibleSettings> {
               ),
             ),
             ListTile(
-              title: Text(this._interface[2], style: style),
+              title: Text(_interface[2], style: style),
               trailing: DropdownButton<String>(
                 style: style,
                 underline: dropdownUnderline,
                 iconDisabledColor: dropdownDisabled,
                 iconEnabledColor: dropdownEnabled,
-                value: this._moduleValue,
+                value: _moduleValue,
                 onChanged: (String newValue) {
-                  if (this._moduleValue != newValue) {
+                  if (_moduleValue != newValue) {
                     onModuleChanged(newValue);
                   }
                 },
@@ -396,31 +416,31 @@ class BibleSettingsState extends State<BibleSettings> {
               ),
             ),
             ListTile(
-              title: Text(this._interface[3], style: style),
+              title: Text(_interface[3], style: style),
               trailing: DropdownButton<String>(
                 style: style,
                 underline: dropdownUnderline,
                 iconDisabledColor: dropdownDisabled,
                 iconEnabledColor: dropdownEnabled,
-                value: this._bookValue,
+                value: _bookValue,
                 onChanged: (String newValue) {
-                  if (this._bookValue != newValue) {
+                  if (_bookValue != newValue) {
                     setState(() {
-                      this._bookValue = newValue;
-                      this._chapterList =
-                          this._bible.getChapterList(int.parse(getBookNo()));
-                      this._chapterList =
-                          this._chapterList.map((i) => (i).toString()).toList();
-                      this._chapterValue = "1";
-                      this._verseList = this._bible.getVerseList(
-                          int.parse(getBookNo()), int.parse(this._chapterValue));
-                      this._verseList =
-                          this._verseList.map((i) => (i).toString()).toList();
-                      this._verseValue = "1";
+                      _bookValue = newValue;
+                      _chapterList =
+                          _bible.getChapterList(int.parse(getBookNo()));
+                      _chapterList =
+                          _chapterList.map((i) => (i).toString()).toList();
+                      _chapterValue = "1";
+                      _verseList = _bible.getVerseList(
+                          int.parse(getBookNo()), int.parse(_chapterValue));
+                      _verseList =
+                          _verseList.map((i) => (i).toString()).toList();
+                      _verseValue = "1";
                     });
                   }
                 },
-                items: <String>[...this._bookList]
+                items: <String>[..._bookList]
                     .map<DropdownMenuItem<String>>((String value) {
                   return DropdownMenuItem<String>(
                     value: value,
@@ -430,26 +450,26 @@ class BibleSettingsState extends State<BibleSettings> {
               ),
             ),
             ListTile(
-              title: Text(this._interface[4], style: style),
+              title: Text(_interface[4], style: style),
               trailing: DropdownButton<String>(
                 style: style,
                 underline: dropdownUnderline,
                 iconDisabledColor: dropdownDisabled,
                 iconEnabledColor: dropdownEnabled,
-                value: this._chapterValue,
+                value: _chapterValue,
                 onChanged: (String newValue) {
-                  if (this._chapterValue != newValue) {
+                  if (_chapterValue != newValue) {
                     setState(() {
-                      this._chapterValue = newValue;
-                      this._verseList = this._bible.getVerseList(
-                          int.parse(getBookNo()), int.parse(this._chapterValue));
-                      this._verseList =
-                          this._verseList.map((i) => (i).toString()).toList();
-                      this._verseValue = "1";
+                      _chapterValue = newValue;
+                      _verseList = _bible.getVerseList(
+                          int.parse(getBookNo()), int.parse(_chapterValue));
+                      _verseList =
+                          _verseList.map((i) => (i).toString()).toList();
+                      _verseValue = "1";
                     });
                   }
                 },
-                items: <String>[...this._chapterList]
+                items: <String>[..._chapterList]
                     .map<DropdownMenuItem<String>>((String value) {
                   return DropdownMenuItem<String>(
                     value: value,
@@ -459,21 +479,21 @@ class BibleSettingsState extends State<BibleSettings> {
               ),
             ),
             ListTile(
-              title: Text(this._interface[5], style: style),
+              title: Text(_interface[5], style: style),
               trailing: DropdownButton<String>(
                 style: style,
                 underline: dropdownUnderline,
                 iconDisabledColor: dropdownDisabled,
                 iconEnabledColor: dropdownEnabled,
-                value: this._verseValue,
+                value: _verseValue,
                 onChanged: (String newValue) {
-                  if (this._verseValue != newValue) {
+                  if (_verseValue != newValue) {
                     setState(() {
-                      this._verseValue = newValue;
+                      _verseValue = newValue;
                     });
                   }
                 },
-                items: <String>[...this._verseList]
+                items: <String>[..._verseList]
                     .map<DropdownMenuItem<String>>((String value) {
                   return DropdownMenuItem<String>(
                     value: value,
@@ -483,22 +503,22 @@ class BibleSettingsState extends State<BibleSettings> {
               ),
             ),
             ListTile(
-              title: Text(this._interface[9], style: style),
+              title: Text(_interface[9], style: style),
               trailing: DropdownButton<String>(
                 style: style,
                 underline: dropdownUnderline,
                 iconDisabledColor: dropdownDisabled,
                 iconEnabledColor: dropdownEnabled,
-                value: this._instantActionList[this._instantAction],
+                value: _instantActionList[_instantAction],
                 onChanged: (String newValue) {
-                  if (this._instantActionList[this._instantAction] != newValue) {
+                  if (_instantActionList[_instantAction] != newValue) {
                     setState(() {
-                      this._instantAction =
-                          this._instantActionList.indexOf(newValue);
+                      _instantAction =
+                          _instantActionList.indexOf(newValue);
                     });
                   }
                 },
-                items: <String>[...this._instantActionList]
+                items: <String>[..._instantActionList]
                     .map<DropdownMenuItem<String>>((String value) {
                   return DropdownMenuItem<String>(
                     value: value,
@@ -508,23 +528,23 @@ class BibleSettingsState extends State<BibleSettings> {
               ),
             ),
             ListTile(
-              title: Text(this._interface[8], style: style,),
+              title: Text(_interface[8], style: style,),
               trailing: DropdownButton<String>(
                 style: style,
                 underline: dropdownUnderline,
                 iconDisabledColor: dropdownDisabled,
                 iconEnabledColor: dropdownEnabled,
-                value: this._favouriteActionList[this._favouriteAction],
+                value: _favouriteActionList[_favouriteAction],
                 onChanged: (String newValue) {
-                  if (this._favouriteActionList[this._favouriteAction] !=
+                  if (_favouriteActionList[_favouriteAction] !=
                       newValue) {
                     setState(() {
-                      this._favouriteAction =
-                          this._favouriteActionList.indexOf(newValue);
+                      _favouriteAction =
+                          _favouriteActionList.indexOf(newValue);
                     });
                   }
                 },
-                items: <String>[...this._favouriteActionList]
+                items: <String>[..._favouriteActionList]
                     .map<DropdownMenuItem<String>>((String value) {
                   return DropdownMenuItem<String>(
                     value: value,
@@ -534,9 +554,80 @@ class BibleSettingsState extends State<BibleSettings> {
               ),
             ),
             ExpansionTile(
-              title: Text(this._interface[7], style: style),
+              title: Text(_interface[7], style: style),
               backgroundColor: Theme.of(context).accentColor.withOpacity(0.025),
               children: versionRowList,
+            ),
+            ListTile(
+              title: Text(_interface[14], style: style,),
+              trailing: IconButton(
+                tooltip: _interface[15],
+                icon: Icon(Icons.settings_backup_restore, color: (int.parse(_colorDegreeValue) >= 500) ? Colors.blueAccent[100] : Colors.blueAccent[700]),
+                onPressed: () {
+                  setState(() {
+                    _speechRateValue = 1.0;
+                  });
+                },
+              ),
+            ),
+            Slider(
+              activeColor: (int.parse(_colorDegreeValue) >= 500) ? Colors.blueAccent[100] : Colors.blueAccent[700],
+              min: 0.1,
+              max: 3.0,
+              onChanged: (newValue) {
+                setState(() {
+                  _speechRateValue = num.parse(newValue.toStringAsFixed(1));
+                });
+              },
+              value: _speechRateValue,
+            ),
+            ListTile(
+              title: Text(_interface[12], style: style),
+              trailing: DropdownButton<String>(
+                style: style,
+                underline: dropdownUnderline,
+                iconDisabledColor: dropdownDisabled,
+                iconEnabledColor: dropdownEnabled,
+                value: _ttsEnglishValue,
+                onChanged: (String newValue) {
+                  if (_ttsEnglishValue != newValue) {
+                    setState(() {
+                      _ttsEnglishValue = newValue;
+                    });
+                  }
+                },
+                items: <String>["en-GB", "en-US"]
+                    .map<DropdownMenuItem<String>>((String value) {
+                  return DropdownMenuItem<String>(
+                    value: value,
+                    child: Text(value),
+                  );
+                }).toList(),
+              ),
+            ),
+            ListTile(
+              title: Text(_interface[13], style: style),
+              trailing: DropdownButton<String>(
+                style: style,
+                underline: dropdownUnderline,
+                iconDisabledColor: dropdownDisabled,
+                iconEnabledColor: dropdownEnabled,
+                value: _ttsChineseValue,
+                onChanged: (String newValue) {
+                  if (_ttsChineseValue != newValue) {
+                    setState(() {
+                      _ttsChineseValue = newValue;
+                    });
+                  }
+                },
+                items: <String>["zh-CN", (Platform.isAndroid) ? "yue-HK": "zh-HK"]
+                    .map<DropdownMenuItem<String>>((String value) {
+                  return DropdownMenuItem<String>(
+                    value: value,
+                    child: Text(value),
+                  );
+                }).toList(),
+              ),
             ),
           ],
         ),
@@ -551,14 +642,14 @@ class BibleSettingsState extends State<BibleSettings> {
         title: Text(version, style: TextStyle(color: (int.parse(_colorDegreeValue) >= 700) ? Colors.blue[300] : Colors.blue[700]),),
         //activeColor: (int.parse(_colorDegreeValue) >= 500) ? Colors.blueGrey[int.parse(_colorDegreeValue) - 200] : Colors.blue[600],
         //checkColor: (int.parse(_colorDegreeValue) >= 500) ? Colors.grey[300] : Colors.black,
-        value: (this._compareBibleList.contains(version)),
+        value: (_compareBibleList.contains(version)),
         onChanged: (bool value) {
           setState(() {
             if (value) {
-              this._compareBibleList.add(version);
+              _compareBibleList.add(version);
             } else {
-              var versionIndex = this._compareBibleList.indexOf(version);
-              this._compareBibleList.removeAt(versionIndex);
+              var versionIndex = _compareBibleList.indexOf(version);
+              _compareBibleList.removeAt(versionIndex);
             }
           });
         },
@@ -569,7 +660,8 @@ class BibleSettingsState extends State<BibleSettings> {
 }
 
 class BibleSettingsParser {
-  final String module, _book, _chapter, _verse, abbreviations, _fontSize, _backgroundColor;
+  final String module, _book, _chapter, _verse, abbreviations, _fontSize, _backgroundColor, ttsEnglish, ttsChinese;
+  final double speechRate;
   final List<String> _compareBibleList;
   final int _instantAction, _quickAction;
   int book, chapter, verse, instantAction, favouriteAction, backgroundColor;
@@ -586,14 +678,17 @@ class BibleSettingsParser {
       this._compareBibleList,
       this._quickAction,
       this._instantAction,
-      this._backgroundColor,) {
-    this.book = int.parse(this._book);
-    this.chapter = int.parse(this._chapter);
-    this.verse = int.parse(this._verse);
-    this.fontSize = double.parse(this._fontSize);
-    this.compareBibleList = this._compareBibleList..sort();
-    this.favouriteAction = this._quickAction - 1;
-    this.instantAction = this._instantAction - 1;
-    this.backgroundColor = int.parse(this._backgroundColor);
+      this._backgroundColor,
+      this.ttsEnglish,
+      this.ttsChinese,
+      this.speechRate) {
+    this.book = int.parse(_book);
+    this.chapter = int.parse(_chapter);
+    this.verse = int.parse(_verse);
+    this.fontSize = double.parse(_fontSize);
+    this.compareBibleList = _compareBibleList..sort();
+    this.favouriteAction = _quickAction - 1;
+    this.instantAction = _instantAction - 1;
+    this.backgroundColor = int.parse(_backgroundColor);
   }
 }

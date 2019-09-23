@@ -4,7 +4,7 @@ import 'config.dart';
 
 class Bibles {
 
-  var bible1, bible2, bible3, iBible;
+  var bible1, bible2, bible3, iBible, headings;
 
   String abbreviations;
   Map interfaceBibles = {

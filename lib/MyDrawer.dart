@@ -8,34 +8,34 @@ import 'Tools.dart';
 class MyDrawer extends StatefulWidget {
 
   final Config config;
-  final Bible _bible;
+  final Bible _bible, _headings;
   final List _currentActiveVerse;
   final Function onTap;
 
-  MyDrawer(this.config, this._bible, this._currentActiveVerse, this.onTap);
+  MyDrawer(this.config, this._bible, this._headings, this._currentActiveVerse, this.onTap);
 
   @override
-  _MyDrawerState createState() => _MyDrawerState(this.config, this._bible, this._currentActiveVerse, this.onTap);
+  _MyDrawerState createState() => _MyDrawerState(this.config, this._bible, this._headings, this._currentActiveVerse, this.onTap);
 
 }
 
 class _MyDrawerState extends State<MyDrawer> {
 
   final Config config;
-  final Bible _bible;
+  final Bible _bible, _headings;
   final List _currentActiveVerse;
 
   Function onTap;
 
   String abbreviations;
-  int _selectedBook;
+  int _selectedBook, _selectedChapter;
   bool _displayAllBooks = false;
   TextStyle _generalTextStyle, _entryTextStyle;
 
   Map interfaceApp = {
-    "ENG": ["Unique Bible App", "Navigation menu", "Search", "Quick swap", "Settings", "Parallel mode", "Favourites", "History", "Books", "Chapters", "Timelines"],
-    "TC": ["跨平台聖經工具", "菜單", "搜索", "快速轉換", "設定", "平衡模式", "收藏", "歷史", "書卷", "章", "時序圖"],
-    "SC": ["跨平台圣经工具", "菜单", "搜索", "快速转换", "设定", "平衡模式", "收藏", "历史", "书卷", "章", "时序图"],
+    "ENG": ["Unique Bible App", "Navigation menu", "Search", "Quick swap", "Settings", "Parallel mode", "Favourites", "History", "Books", "Chapters", "Timelines", "Headings"],
+    "TC": ["跨平台聖經工具", "菜單", "搜索", "快速轉換", "設定", "平衡模式", "收藏", "歷史", "書卷", "章", "時序圖", "標題"],
+    "SC": ["跨平台圣经工具", "菜单", "搜索", "快速转换", "设定", "平衡模式", "收藏", "历史", "书卷", "章", "时序图", "标题"],
   };
 
   Map interfaceAlert = {
@@ -44,9 +44,10 @@ class _MyDrawerState extends State<MyDrawer> {
     "SC": ["取消", "收藏", "删除", "收藏？", "删除？"],
   };
 
-  _MyDrawerState(this.config, this._bible, this._currentActiveVerse, this.onTap) {
+  _MyDrawerState(this.config, this._bible, this._headings, this._currentActiveVerse, this.onTap) {
     this.abbreviations = this.config.abbreviations;
-    this._selectedBook = this._currentActiveVerse[0];
+    this._selectedBook = this._currentActiveVerse.first;
+    this._selectedChapter = this._currentActiveVerse[1];
     _generalTextStyle = TextStyle(color: config.myColors["black"]);
     _entryTextStyle = TextStyle(color: config.myColors["blueAccent"]);
   }
@@ -92,6 +93,7 @@ class _MyDrawerState extends State<MyDrawer> {
               _buildHistoryList(context),
               _buildBookList(context),
               _buildChapterList(context),
+              _buildHeadingList(context),
             ],
           ),
         ),
@@ -138,12 +140,43 @@ class _MyDrawerState extends State<MyDrawer> {
 
   Widget _buildTimelineRow(BuildContext context, String file, String title, List timelines) {
     return ListTile(
+      leading: Icon(Icons.timeline, color: this.config.myColors["grey"],),
       title: Text(title, style: _entryTextStyle,),
       onTap: () {
         Navigator.push(
           context,
           MaterialPageRoute(builder: (context) => Timeline(file, title, timelines, config)),
         );
+      },
+    );
+  }
+
+  Widget _buildHeadingList(BuildContext context) {
+    List<Widget> headingRowList;
+    if ((_currentActiveVerse.join(".") == "0.0.0") || (_headings?.data == null)) {
+      headingRowList = [_emptyRow(context)];
+    } else {
+      List headings = _headings.openSingleChapter([_selectedBook, _selectedChapter, 0]);
+      headingRowList = headings.map((i) => _buildHeadingRow(context, i)).toList();
+    }
+    return ExpansionTile(
+      title: Text(this.interfaceApp[this.abbreviations][11], style: _generalTextStyle),
+      backgroundColor: Theme.of(context).accentColor.withOpacity(0.025),
+      initiallyExpanded: true,
+      children: headingRowList,
+    );
+  }
+
+  Widget _buildHeadingRow(BuildContext context, List verseItem) {
+    return ListTile(
+      leading: Icon(Icons.outlined_flag, color: this.config.myColors["grey"],),
+      title: Text(
+        verseItem[1],
+        style: _entryTextStyle,
+      ),
+      onTap: () {
+        Navigator.pop(context);
+        onTap(["open", [verseItem.first, "", _bible.module]]);
       },
     );
   }
@@ -168,6 +201,7 @@ class _MyDrawerState extends State<MyDrawer> {
     var parser = BibleParser(this.abbreviations);
     String hxReference = parser.bcvToVerseReference(hxBcvList);
     return ListTile(
+      leading: Icon(Icons.favorite_border, color: this.config.myColors["grey"],),
       title: Text(
         hxReference,
         style: _entryTextStyle,
@@ -203,6 +237,7 @@ class _MyDrawerState extends State<MyDrawer> {
     var parser = BibleParser(this.abbreviations);
     String hxReference = parser.bcvToVerseReference(hxBcvList);
     return ListTile(
+      leading: Icon(Icons.history, color: this.config.myColors["grey"],),
       title: Text(
         hxReference,
         style: _entryTextStyle,
@@ -301,6 +336,7 @@ class _MyDrawerState extends State<MyDrawer> {
         selectedChapter = _currentActiveVerse[1];
         selectedBook = currentBook;
       }
+      _selectedChapter = selectedChapter;
       chapterRowList = [
         Container(
           margin: const EdgeInsets.symmetric(horizontal: 5.0),

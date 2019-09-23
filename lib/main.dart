@@ -170,13 +170,13 @@ class UniqueBibleState extends State<UniqueBible> {
 
   Future _getLanguages() async {
     languages = await flutterTts.getLanguages;
-    print(languages);
+    //print(languages);
     if (languages != null) setState(() => languages);
   }
 
   Future _getVoices() async {
     voices = await flutterTts.getVoices;
-    print(voices);
+    //print(voices);
     if (voices != null) setState(() => voices);
   }
 
@@ -190,8 +190,8 @@ class UniqueBibleState extends State<UniqueBible> {
         verse = verse.replaceAll(RegExp("｜＠.*? ｜"), "");
       }
       if (["CCB", "CUV", "CUVs"].contains(module)) {
-        await flutterTts.setLanguage("zh-CN");
-        //zh-CN, yue-HK
+        await flutterTts.setLanguage(this.config.ttsChinese);
+        //zh-CN, yue-HK (Android), zh-HK (iOS)
       } else if (["ABG", "LXX1", "LXX2", "LXXk"].contains(module)) {
         verse = _removeGreekAccents(verse);
         await flutterTts.setLanguage("el-GR");
@@ -201,7 +201,7 @@ class UniqueBibleState extends State<UniqueBible> {
       } else if ((item.first.first < 40) && (["OHGB", "OHGBi"].contains(module))) {
         await flutterTts.setLanguage("he-IL");
       } else {
-        await flutterTts.setLanguage("en-GB");
+        await flutterTts.setLanguage(this.config.ttsEnglish);
         //en-GB, en-US
       }
       this.scrollController.jumpToIndex(_scrollIndex);
@@ -275,10 +275,14 @@ class UniqueBibleState extends State<UniqueBible> {
       this.bibles.bible1 = Bible(this.config.bible1, this.abbreviations);
       await this.bibles.bible1.loadData();
 
+      // pre-load bible headings
+      _loadHeadings();
+
       // pre-load bible2 data
       this.bibles.bible2 = Bible(this.config.bible2, this.abbreviations);
       this.bibles.bible2.loadData();
 
+      // pre-load interlinear bible
       this.bibles.iBible = Bible("OHGBi", this.abbreviations);
       this.bibles.iBible.loadData();
 
@@ -291,6 +295,19 @@ class UniqueBibleState extends State<UniqueBible> {
         _scrollIndex = getScrollIndex();
         _activeIndex = _scrollIndex;
       });
+    }
+  }
+
+  Future _loadHeadings() async {
+    Map headingModules = {
+      "ENG": "HeadingKJV",
+      "TC": "HeadingCUV",
+      "SC": "HeadingCUVs",
+    };
+    String headingModule = headingModules[this.abbreviations];
+    if ((this.bibles?.headings?.data == null) || (headingModule != this.bibles?.headings?.module)) {
+      this.bibles.headings = Bible(headingModule, this.abbreviations);
+      await this.bibles.headings.loadData();
     }
   }
 
@@ -310,6 +327,7 @@ class UniqueBibleState extends State<UniqueBible> {
   void setActiveVerse(BuildContext context, List bcvList) {
     List newBcvList = List<int>.from(bcvList);
     if ((bcvList.isNotEmpty) && (newBcvList.join(".") != _currentActiveVerse.join("."))) {
+      _stopRunningActions();
       setState(() {
         _currentActiveVerse = newBcvList;
         updateHistoryActiveVerse();
@@ -324,7 +342,7 @@ class UniqueBibleState extends State<UniqueBible> {
   showTip(BuildContext context, List bcvList) {
     String verseReference = BibleParser(this.abbreviations).bcvToVerseReference(bcvList);
     String message = "'$verseReference' ${this.interfaceMessage[this.abbreviations].first}";
-    _scaffoldKey.currentState.removeCurrentSnackBar();
+    _stopRunningActions();
     final snackBar = SnackBar(content: Text(message));
     _scaffoldKey.currentState.showSnackBar(snackBar);
   }
@@ -370,6 +388,11 @@ class UniqueBibleState extends State<UniqueBible> {
     }
   }
 
+  void _stopRunningActions() {
+    _scaffoldKey.currentState.removeCurrentSnackBar();
+    if (isPlaying) _stop();
+  }
+
   Future _newVerseSelected(List selected) async {
     _scrollToCurrentActiveVerse();
 
@@ -388,6 +411,7 @@ class UniqueBibleState extends State<UniqueBible> {
           this.config.bible1 = selectedBible;
           this.config.save("bible1", selectedBible);
         }
+        await _loadHeadings();
         setState(() {
           _currentActiveVerse = selectedBcvList;
           updateHistoryActiveVerse();
@@ -473,6 +497,7 @@ class UniqueBibleState extends State<UniqueBible> {
   }
 
   Future _openBibleSettings(BuildContext context) async {
+    _stopRunningActions();
     final BibleSettingsParser newBibleSettings = await Navigator.push(
       context,
       MaterialPageRoute(
@@ -504,6 +529,16 @@ class UniqueBibleState extends State<UniqueBible> {
       // Background color
       this.config.backgroundColor = newBibleSettings.backgroundColor;
       this.config.save("backgroundColor", newBibleSettings.backgroundColor);
+      // TTS English
+      this.config.ttsEnglish = newBibleSettings.ttsEnglish;
+      this.config.save("ttsEnglish", newBibleSettings.ttsEnglish);
+      // TTS Chinese
+      this.config.ttsChinese = newBibleSettings.ttsChinese;
+      this.config.save("ttsChinese", newBibleSettings.ttsChinese);
+      // TTS speech rate
+      this.config.speechRate = newBibleSettings.speechRate;
+      this.config.save("speechRate", newBibleSettings.speechRate);
+      await flutterTts.setSpeechRate(newBibleSettings.speechRate);
       // Newly selected verse
       var newVerse = [[newBibleSettings.book, newBibleSettings.chapter, newBibleSettings.verse,], "", newBibleSettings.module];
       _newVerseSelected(newVerse);
@@ -517,7 +552,7 @@ class UniqueBibleState extends State<UniqueBible> {
   }
 
   Future _loadXRef(BuildContext context, List bcvList) async {
-    _scaffoldKey.currentState.removeCurrentSnackBar();
+    _stopRunningActions();
     final snackBar = SnackBar(content: Text(this.interfaceMessage[this.abbreviations][1]));
     _scaffoldKey.currentState.showSnackBar(snackBar);
     
@@ -534,7 +569,7 @@ class UniqueBibleState extends State<UniqueBible> {
   }
 
   Future _loadCompare(BuildContext context, List bcvList) async {
-    _scaffoldKey.currentState.removeCurrentSnackBar();
+    _stopRunningActions();
     final snackBar = SnackBar(content: Text(this.interfaceMessage[this.abbreviations][2]));
     _scaffoldKey.currentState.showSnackBar(snackBar);
 
@@ -552,6 +587,7 @@ class UniqueBibleState extends State<UniqueBible> {
 
   Future _loadInterlinearView(BuildContext context, List bcvList, [String module]) async {
     if (isAllBiblesReady()) {
+      _stopRunningActions();
       String table = module ?? "OHGB";
       final List<Map> morphology = await SqliteHelper(this.config).getMorphology(bcvList, table);
       final selected = await Navigator.push(
@@ -564,6 +600,7 @@ class UniqueBibleState extends State<UniqueBible> {
 
   Future _loadMorphologyView(BuildContext context, List bcvList, [String module]) async {
     if (isAllBiblesReady()) {
+      _stopRunningActions();
       String table = module ?? "OHGB";
       final List<Map> morphology = await SqliteHelper(this.config).getMorphology(bcvList, table);
       final selected = await Navigator.push(
@@ -589,6 +626,7 @@ class UniqueBibleState extends State<UniqueBible> {
 
   Future _loadLocation(BuildContext context, List bcvList, [String module]) async {
     if (this.bibles?.bible1?.data != null) {
+      _stopRunningActions();
       String table = module ?? "EXLBL";
       final List<Map> tools = await SqliteHelper(this.config).getTools(bcvList, table);
       final List selected = await showSearch(
@@ -602,6 +640,7 @@ class UniqueBibleState extends State<UniqueBible> {
   }
 
   Future _loadLocationVerses(BuildContext context, String locationID) async {
+    _stopRunningActions();
     final Database db = await SqliteHelper(this.config).initToolsDb();
     var statement = "SELECT Book, Chapter, Verse FROM EXLBL WHERE LocationID = ? ORDER BY Number";
     List<Map> tools = await db.rawQuery(statement, [locationID]);
@@ -618,6 +657,7 @@ class UniqueBibleState extends State<UniqueBible> {
 
   Future _loadPeople(BuildContext context, List bcvList, [String module]) async {
     if (this.bibles?.bible1?.data != null) {
+      _stopRunningActions();
       String table = module ?? "PEOPLE";
       final List<Map> tools = await SqliteHelper(this.config).getTools(bcvList, table);
       final List selected = await showSearch(
@@ -635,6 +675,7 @@ class UniqueBibleState extends State<UniqueBible> {
   }
 
   Future _loadPeopleVerses(BuildContext context, int personID) async {
+    _stopRunningActions();
     final Database db = await SqliteHelper(this.config).initToolsDb();
     var statement = "SELECT Book, Chapter, Verse FROM PEOPLE WHERE PersonID = ?";
     List<Map> tools = await db.rawQuery(statement, [personID]);
@@ -650,6 +691,7 @@ class UniqueBibleState extends State<UniqueBible> {
   }
 
   Future _loadRelationship(BuildContext context, int personID, String name) async {
+    _stopRunningActions();
     final Database db = await SqliteHelper(this.config).initToolsDb();
     var statement = "SELECT PersonID, Name, Sex, Relationship FROM PEOPLERELATIONSHIP WHERE RelatedPersonID = ? AND Relationship != '[Reference]' ORDER BY RelationshipOrder";
     List<Map> tools = await db.rawQuery(statement, [personID]);
@@ -666,6 +708,7 @@ class UniqueBibleState extends State<UniqueBible> {
 
   Future _loadTopics(BuildContext context, List bcvList, [String module]) async {
     if (this.bibles?.bible1?.data != null) {
+      _stopRunningActions();
       String table = module ?? "EXLBT";
       final List<Map> tools = await SqliteHelper(this.config).getTopics(bcvList, table);
       final List selected = await showSearch(
@@ -680,6 +723,7 @@ class UniqueBibleState extends State<UniqueBible> {
   }
 
   Future _loadTopicView(BuildContext context, String entry) async {
+    _stopRunningActions();
     List topic = await SqliteHelper(this.config).getTopic(entry);
     final selected = await Navigator.push(
       context,
@@ -689,6 +733,7 @@ class UniqueBibleState extends State<UniqueBible> {
   }
 
   Future _loadTopicVerses(BuildContext context, String entry) async {
+    _stopRunningActions();
     final Database db = await SqliteHelper(this.config).initToolsDb();
     var statement = "SELECT Book, Chapter, Verse, toVerse FROM EXLBT WHERE Entry = ?";
     List<Map> tools = await db.rawQuery(statement, [entry]);
@@ -712,6 +757,7 @@ class UniqueBibleState extends State<UniqueBible> {
   }
 
   bool _toggleParallelBibles() {
+    _stopRunningActions();
     if ((_parallelBibles) && (this.bibles?.bible1?.data != null)) {
       _data = this.bibles.bible1.openSingleChapter(_currentActiveVerse);
       return false;
@@ -725,6 +771,7 @@ class UniqueBibleState extends State<UniqueBible> {
   }
 
   void _swapBibles() {
+    _stopRunningActions();
     this.bibles.bible3 = this.bibles.bible1;
     this.bibles.bible1 = this.bibles.bible2;
     this.bibles.bible2 = this.bibles.bible3;
@@ -737,6 +784,7 @@ class UniqueBibleState extends State<UniqueBible> {
   }
 
   void _reLoadBibles() {
+    _loadHeadings();
     (_parallelBibles)
         ? _data = this.bibles.parallelBibles(_currentActiveVerse)
         : _data = this.bibles.bible1.openSingleChapter(_currentActiveVerse);
@@ -822,12 +870,12 @@ class UniqueBibleState extends State<UniqueBible> {
   }
 
   Widget _buildDrawer() {
-    if (this.bibles?.bible1?.data == null) {
+    if ((this.bibles?.bible1?.data == null) || (this.bibles?.headings?.data == null)) {
       return Drawer(
-          child: Text("... loading ..."),
+          child: Text("\n\n... loading ...\n\n... try again later ...", style: TextStyle(fontSize: this.config.fontSize),),
       );
     }
-    return MyDrawer(this.config, this.bibles.bible1, _currentActiveVerse, (List data) {
+    return MyDrawer(this.config, this.bibles.bible1, this.bibles.headings, _currentActiveVerse, (List data) {
       Map actions = {
         "open": _newVerseSelected,
         "addFavourite": addToFavourite,
@@ -915,6 +963,7 @@ class UniqueBibleState extends State<UniqueBible> {
           tooltip: this.interfaceApp[this.abbreviations][2],
           icon: const Icon(Icons.search),
           onPressed: () async {
+            _stopRunningActions();
             final List selected = await showSearch(
               context: context,
               delegate: BibleSearchDelegate(context, this.bibles.bible1, this.interfaceDialog, this.config, this.searchData, _currentActiveVerse),
@@ -1180,6 +1229,7 @@ class UniqueBibleState extends State<UniqueBible> {
   }
 
   void _tapActiveVerse(context, bcvList) {
+    _stopRunningActions();
     if (this.config.favouriteAction != -1) {
       List favouriteActions = [addToFavourite, _loadXRef, _loadCompare, _loadInterlinearView, _loadMorphologyView];
       favouriteActions[this.config.favouriteAction](context, bcvList);
@@ -1188,6 +1238,7 @@ class UniqueBibleState extends State<UniqueBible> {
 
   // reference: https://api.flutter.dev/flutter/material/SimpleDialog-class.html
   Future<void> _longPressedVerse(BuildContext context, List verseData) async {
+    _stopRunningActions();
     var copiedText = await Clipboard.getData('text/plain');
     switch (await showDialog<DialogAction>(
         context: context,
@@ -1227,6 +1278,7 @@ class UniqueBibleState extends State<UniqueBible> {
   }
 
   Future<void> _longPressedActiveVerse(BuildContext context, List verseData) async {
+    _stopRunningActions();
     var copiedText = await Clipboard.getData('text/plain');
     List<Widget> dialogOptions = [
           SimpleDialogOption(

@@ -11,14 +11,14 @@ class Config {
   List<String> greekBibles = ["ABG", "LXX1", "LXX2", "LXXk", "OHGB", "OHGBi"];
   List<String> interlinearBibles = ["OHGBi"];
 
-  //List<String> allBibleList = ["ABG", "ASV", "BBE", "BSB", "CUV", "CUVs", "ERV", "ISV", "KJV", "LEB", "LXX1", "LXX2", "LXXE", "LXXk", "NET", "OHGB", "OHGBi", "T4T", "ULT", "UST", "WEB"];
+  List<String> allBibleList = ["ABG", "ASV", "BBE", "BSB", "CUV", "CUVs", "ERV", "ISV", "KJV", "LEB", "LXX1", "LXX2", "LXXE", "LXXk", "NET", "OHGB", "OHGBi", "T4T", "ULT", "UST", "WEB"];
   // the following line is written for personal use only [not for public]
-  List<String> allBibleList = ["ABG", "ASV", "BBE", "BSB", "CCB", "CEB", "CEV", "CSB", "CUV", "CUVs", "ERV", "ESV", "EXP", "ISV", "KJV", "LEB", "LXX1", "LXX2", "LXXE", "LXXk", "NASB", "NET", "NIV", "NLT", "NRSV", "OHGB", "OHGBi", "T4T", "ULT", "UST", "WEB"];
+  //List<String> allBibleList = ["ABG", "ASV", "BBE", "BSB", "CCB", "CEB", "CEV", "CSB", "CUV", "CUVs", "ERV", "ESV", "EXP", "ISV", "KJV", "LEB", "LXX1", "LXX2", "LXXE", "LXXk", "NASB", "NET", "NIV", "NLT", "NRSV", "OHGB", "OHGBi", "T4T", "ULT", "UST", "WEB"];
 
   // variables linked with shared preferences
-  //List<String> compareBibleList = ["ASV", "BSB", "ERV", "ISV", "KJV", "LEB", "LXXk", "NET", "OHGB", "WEB"];
+  List<String> compareBibleList = ["ASV", "BSB", "ERV", "ISV", "KJV", "LEB", "LXXk", "NET", "OHGB", "WEB"];
   // the following line is written for personal use only [not for public]
-  List<String> compareBibleList = ["CEV", "CSB", "CUV", "ESV", "EXP", "ISV", "KJV", "LEB", "LXXE", "LXXk", "NASB", "NET", "NIV", "OHGB"];
+  //List<String> compareBibleList = ["CEV", "CSB", "CUV", "ESV", "EXP", "ISV", "KJV", "LEB", "LXXE", "LXXk", "NASB", "NET", "NIV", "OHGB"];
 
   double fontSize = 20.0;
   String abbreviations = "ENG";
@@ -32,6 +32,7 @@ class Config {
   int instantAction = 0;
   int favouriteAction = 1;
   int backgroundColor = 0;
+  double speechRate = 1.0;
   String ttsChinese = "zh-CN";
   String ttsEnglish = "en-GB";
 
@@ -119,6 +120,11 @@ class Config {
     } else {
       this.toolsVersion = prefs.getDouble("toolsVersion");
     }
+    if (prefs.getDouble("speechRate") == null) {
+      prefs.setDouble("speechRate", this.speechRate);
+    } else {
+      this.speechRate = prefs.getDouble("speechRate");
+    }
     if (prefs.getStringList("compareBibleList") == null) {
       prefs.setStringList("compareBibleList", this.compareBibleList);
     } else {
@@ -169,6 +175,7 @@ class Config {
     if (prefs.getDouble("morphologyVersion") != null) this.morphologyVersion = prefs.getDouble("morphologyVersion");
     if (prefs.getDouble("lexiconVersion") != null) this.lexiconVersion = prefs.getDouble("lexiconVersion");
     if (prefs.getDouble("toolsVersion") != null) this.toolsVersion = prefs.getDouble("toolsVersion");
+    if (prefs.getDouble("speechRate") != null) this.speechRate = prefs.getDouble("speechRate");
     if (prefs.getStringList("compareBibleList") != null) this.compareBibleList = prefs.getStringList("compareBibleList");
     if (prefs.getInt("favouriteAction") != null) this.favouriteAction = prefs.getInt("favouriteAction");
     if (prefs.getInt("instantAction") != null) this.instantAction = prefs.getInt("instantAction");
@@ -204,6 +211,9 @@ class Config {
         await prefs.setDouble(feature, newSetting as double);
         break;
       case "toolsVersion":
+        await prefs.setDouble(feature, newSetting as double);
+        break;
+      case "speechRate":
         await prefs.setDouble(feature, newSetting as double);
         break;
       case "compareBibleList":
