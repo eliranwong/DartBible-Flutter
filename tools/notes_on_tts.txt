@@ -1,0 +1,11 @@
+iOS
+
+flutter: [nl-BE, en-AU, de-DE, sk-SK, cs-CZ, zh-CN, zh-HK, hi-IN, sv-SE, fr-FR, ja-JP, en-ZA, el-GR, pl-PL, pt-PT, id-ID, it-IT, th-TH, fi-FI, tr-TR, zh-TW, en-IE, ko-KR, ru-RU, es-MX, ar-SA, en-US, he-IL, no-NO, en-GB, es-ES, hu-HU, fr-CA, pt-BR, da-DK, ro-RO, nl-NL]
+
+flutter: [Maged, Zuzana, Sara, Anna, Helena, Martin, Melina, Catherine, Gordon, Karen, Arthur, Daniel, Martha, Moira, Aaron, Fred, Nicky, Samantha, Tessa, Monica, Paulina, Satu, Amelie, Daniel, Marie, Thomas, Carmit, Lekha, Mariska, Damayanti, Alice, Hattori, Kyoko, O-ren, Yuna, Ellen, Xander, Nora, Zosia, Luciana, Joana, Ioana, Milena, Laura, Alva, Kanya, Yelda, Li-mu, Ting-Ting, Yu-shu, Sin-Ji, Mei-Jia]
+
+
+Android
+
+I/flutter (19878): [ko-KR, ru-RU, zh-TW, hu-HU, th-TH, nb-NO, da-DK, tr-TR, et-EE, bs, sw, pt-PT, vi-VN, en-US, sv-SE, su-ID, bn-BD, el-GR, hi-IN, fi-FI, km-KH, bn-IN, fr-FR, uk-UA, en-AU, nl-NL, fr-CA, sr, pt-BR, si-LK, de-DE, ku, cs-CZ, pl-PL, sk-SK, fil-PH, it-IT, ne-NP, hr, zh-CN, es-ES, cy, ja-JP, sq, yue-HK, en-IN, es-US, jv-ID, la, id-ID, ro-RO, ca, ta, en-GB]
+I/flutter (19878): [es-us-x-sfb-local, en-gb-x-gba-local, fr-fr-x-vlf#male_1-local, ja-jp-x-htm-network, en-in-x-enc-local, cy, ru-ru-x-rud-local, nl-nl-x-yfr-network, hr, en-gb-x-gbb-network, en-AU-language, bs, vi-vn-x-vif-network, th-th-x-mol#female_2-local, uk-UA-language, th-th-x-mol#male_1-local, ja-jp-x-jac-local, en-gb-x-fis#female_1-local, sv-se-x-lfs-local, en-in-x-end-network, vi-vn-x-vie-network, nl-nl-x-yfr-local, tr-tr-x-cfs-local, pl-pl-x-afb-local, es-es-x-ana#female_2-local, pl-pl-x-oda#female_1-local, hi-in-x-hid-local, fr-ca-x-cab-local, id-id-x-dfz#female_3-local, hi-in-x-hic-network, en-gb-x-gba-network, es-us-x-sfb#female_2-local, hi-in-x-cfn#male_3-local, pl-pl-x-oda-network, es-es-x-ana-network, bn-BD-language, de-de-x-nfh#male_3-local, ru-ru-x-dfc#female_3-local, it-it-x-kda-local, ko-kr-x-ism#female_3-local, en-in-x-enc-network, en-us-x-sfg#male_1-local, ko-kr-x-kod-network, en-au-x-aua-network, pt-pt-x-sfs-local, si-lk-x-sin-network, en-in-x-cxx-local, vi-vn-x-vid-network, ru-ru-x-dfc#male_1-local, e
