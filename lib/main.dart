@@ -1,9 +1,9 @@
 // Copyright 2019 Eliran Wong. All rights reserved.
 
 //import 'dart:as
+import 'dart:io';
 import 'package:flutter/services.dart' show Clipboard, ClipboardData;
 import 'package:flutter/material.dart';
-import 'dart:io';
 import 'package:share/share.dart';
 import 'package:indexed_list_view/indexed_list_view.dart';
 import 'package:swipedetector/swipedetector.dart';
