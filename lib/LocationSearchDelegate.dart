@@ -9,9 +9,9 @@ class LocationSearchDelegate extends SearchDelegate<List> {
   String abbreviations;
 
   Map interface = {
-    "ENG": ["Clear", "Search"],
-    "TC": ["清空", "搜索"],
-    "SC": ["清空", "搜索"],
+    "ENG": ["Clear", "Search", "Bible Locations"],
+    "TC": ["清空", "搜索", "聖經地點"],
+    "SC": ["清空", "搜索", "圣经地点"],
   };
   
   List locations = [
@@ -1177,7 +1177,10 @@ class LocationSearchDelegate extends SearchDelegate<List> {
     {"LocationID": "BL1275", "Name": "Zoreah/Zorah"},
     {"LocationID": "BL1276", "Name": "Zup"},
   ];
-  
+
+  @override
+  String get searchFieldLabel => interface[this.abbreviations].last;
+
   LocationSearchDelegate(BuildContext context, this._data, this._config) {
     this.abbreviations = _config.abbreviations;
   }

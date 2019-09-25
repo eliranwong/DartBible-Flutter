@@ -10,10 +10,13 @@ class PeopleSearchDelegate extends SearchDelegate<List> {
   String abbreviations;
 
   Map interface = {
-    "ENG": ["Clear", "Search"],
-    "TC": ["清空", "搜索"],
-    "SC": ["清空", "搜索"],
+    "ENG": ["Clear", "Search", "Bible People"],
+    "TC": ["清空", "搜索", "聖經人物"],
+    "SC": ["清空", "搜索", "圣经人物"],
   };
+
+  @override
+  String get searchFieldLabel => interface[this.abbreviations].last;
 
   PeopleSearchDelegate(BuildContext context, this._data, this._config) {
     this.abbreviations = _config.abbreviations;

@@ -14,9 +14,9 @@ class BibleSearchDelegate extends SearchDelegate<List> {
   final _pageSize = 20;
   String abbreviations;
   Map interfaceBibleSearch = {
-    "ENG": ["is not properly formatted for search. Please correct and try again.", "Clear", "More ..."],
-    "TC": ["組成的格式不正確，請更正然後再嘗試", "清空", "更多 …"],
-    "SC": ["组成的格式不正确，请更正然后再尝试", "清空", "更多 …"],
+    "ENG": ["is not properly formatted for search. Please correct and try again.", "Clear", "More ...", "Search"],
+    "TC": ["組成的格式不正確，請更正然後再嘗試", "清空", "更多 …", "搜索"],
+    "SC": ["组成的格式不正确，请更正然后再尝试", "清空", "更多 …", "搜索"],
   };
 
   var _verseNoFont, _verseFont, _verseFontHebrew, _verseFontGreek;
@@ -26,6 +26,9 @@ class BibleSearchDelegate extends SearchDelegate<List> {
   List _data = [];
   List _rawData;
   int _backgroundColor;
+
+  @override
+  String get searchFieldLabel => interfaceBibleSearch[this.abbreviations].last;
 
   BibleSearchDelegate(BuildContext context, this._bible, this._interfaceDialog, Config config, this._data, this._bcvList, [this._rawData]) {
     _verseNoFont = config.verseTextStyle["verseNoFont"];
