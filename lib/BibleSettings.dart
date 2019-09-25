@@ -245,8 +245,8 @@ class BibleSettingsState extends State<BibleSettings> {
   String getBookNo() {
     if (_parser.bibleBookNo.keys.contains(_bookValue)) {
       return _parser.bibleBookNo[_bookValue];
-    } else if (_parser.bibleBookNo.keys.contains("${_bookValue}.")) {
-      return _parser.bibleBookNo["${_bookValue}."];
+    } else if (_parser.bibleBookNo.keys.contains("$_bookValue.")) {
+      return _parser.bibleBookNo["$_bookValue."];
     }
     return null;
   }
@@ -565,7 +565,7 @@ class BibleSettingsState extends State<BibleSettings> {
                 icon: Icon(Icons.settings_backup_restore, color: (int.parse(_colorDegreeValue) >= 500) ? Colors.blueAccent[100] : Colors.blueAccent[700]),
                 onPressed: () {
                   setState(() {
-                    _speechRateValue = 1.0;
+                    _speechRateValue = (Platform.isAndroid) ? 1.0 : 0.5;
                   });
                 },
               ),
@@ -573,7 +573,7 @@ class BibleSettingsState extends State<BibleSettings> {
             Slider(
               activeColor: (int.parse(_colorDegreeValue) >= 500) ? Colors.blueAccent[100] : Colors.blueAccent[700],
               min: 0.1,
-              max: 3.0,
+              max: (Platform.isAndroid) ? 3.0 : 1.0,
               onChanged: (newValue) {
                 setState(() {
                   _speechRateValue = num.parse(newValue.toStringAsFixed(1));

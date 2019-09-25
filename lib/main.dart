@@ -267,6 +267,7 @@ class UniqueBibleState extends State<UniqueBible> {
   Future _setup() async {
     if (!_startup) {
       await this.config.setDefault();
+      await flutterTts.setSpeechRate(this.config.speechRate);
 
       this.abbreviations = this.config.abbreviations;
       this.bibles = Bibles(this.abbreviations);
@@ -276,7 +277,7 @@ class UniqueBibleState extends State<UniqueBible> {
       await this.bibles.bible1.loadData();
 
       // pre-load bible headings
-      _loadHeadings();
+      await _loadHeadings();
 
       // pre-load bible2 data
       this.bibles.bible2 = Bible(this.config.bible2, this.abbreviations);
@@ -394,7 +395,10 @@ class UniqueBibleState extends State<UniqueBible> {
   }
 
   Future _newVerseSelected(List selected) async {
-    _scrollToCurrentActiveVerse();
+    await _loadHeadings();
+    setState(() {
+      _scrollToCurrentActiveVerse();
+    });
 
     List selectedBcvList = List<int>.from(selected.first);
     String selectedBible = selected.last;
@@ -411,7 +415,6 @@ class UniqueBibleState extends State<UniqueBible> {
           this.config.bible1 = selectedBible;
           this.config.save("bible1", selectedBible);
         }
-        await _loadHeadings();
         setState(() {
           _currentActiveVerse = selectedBcvList;
           updateHistoryActiveVerse();
@@ -783,8 +786,8 @@ class UniqueBibleState extends State<UniqueBible> {
     _reLoadBibles();
   }
 
-  void _reLoadBibles() {
-    _loadHeadings();
+  Future _reLoadBibles() async {
+    await _loadHeadings();
     (_parallelBibles)
         ? _data = this.bibles.parallelBibles(_currentActiveVerse)
         : _data = this.bibles.bible1.openSingleChapter(_currentActiveVerse);

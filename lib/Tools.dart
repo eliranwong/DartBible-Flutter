@@ -337,7 +337,7 @@ class TopicView extends StatelessWidget {
   final Config _config;
   final Bibles _bibles;
 
-  Map interface = {
+  final Map interface = {
     "ENG": ["Bible Topic"],
     "TC": ["聖經主題"],
     "SC": ["聖經主題"],

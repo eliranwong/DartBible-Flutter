@@ -722,7 +722,7 @@ class LexiconView extends StatelessWidget {
   final Config _config;
   final Bibles _bibles;
 
-  Map interface = {
+  final Map interface = {
     "ENG": ["Lexicon"],
     "TC": ["原文辭典"],
     "SC": ["原文词典"],
