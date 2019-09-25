@@ -404,6 +404,7 @@ class MorphologySearchViewState extends State<MorphologySearchView> {
             ..insert(0, prefix);
       statement = statementItems.join(" ");
     }
+    print(statement);
     List<Map> morphology = await db.rawQuery(statement);
     _morphologySearchResults(context, morphology);
     db.close();
@@ -589,6 +590,12 @@ class WordView extends StatelessWidget {
   final Config _config;
   final Bibles _bibles;
 
+  final Map interface = {
+    "ENG": ["Lexicon", "Search"],
+    "TC": ["原文辭典", "搜索"],
+    "SC": ["原文词典", "搜索"],
+  };
+
   WordView(this._data, this._module, this._config, this._bibles);
 
   @override
@@ -682,10 +689,50 @@ class WordView extends StatelessWidget {
     String data = _data[key].toString();
     if (data.contains(","))
       data = data.split(",").sublist(0, data.split(",").length - 1).join(", ");
+    IconButton trailing = null;
+    if (key == "Morphology") {
+      trailing = IconButton(
+        tooltip: interface[_config.abbreviations].last,
+        icon: Icon(Icons.search, color: _config.myColors["black"],),
+        onPressed: () {
+          _loadMorphologySearchView(context, _data["Lexeme"],
+              _data["LexicalEntry"], data);
+        },
+      );
+    } else if (key == "LexicalEntry") {
+      trailing = IconButton(
+        tooltip: interface[_config.abbreviations].first,
+        icon: Icon(Icons.translate, color: _config.myColors["black"],),
+        onPressed: () {
+          _loadLexiconView(context, _data["LexicalEntry"]);
+        },
+      );
+    }
     return ListTile(
       title: Text(key, style: titleStyle),
       subtitle: Text(data, style: dataStyle),
+      trailing: trailing,
     );
+  }
+
+  Future _loadLexiconView(BuildContext context, String lexicalEntries) async {
+    List lexicons = await SqliteHelper(_config).getLexicons(lexicalEntries);
+    final selected = await Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => LexiconView(_config, lexicons, _bibles)),
+    );
+    if (selected != null) Navigator.pop(context, selected);
+  }
+
+  Future _loadMorphologySearchView(
+      BuildContext context, lexemeText, lexicalEntry, morphology) async {
+    final selected = await Navigator.push(
+      context,
+      MaterialPageRoute(
+          builder: (context) => MorphologySearchView(lexemeText, lexicalEntry,
+              morphology, this._module, this._config, this._bibles)),
+    );
+    if (selected != null) Navigator.pop(context, selected);
   }
 
 }
