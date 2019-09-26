@@ -1,5 +1,6 @@
 import 'package:flutter/services.dart' show rootBundle, ByteData;
 import 'package:flutter/material.dart';
+import 'package:large_file_copy/large_file_copy.dart';
 import 'dart:convert';
 import 'config.dart';
 
@@ -57,22 +58,43 @@ class SqliteHelper {
 
   SqliteHelper(this.config);
 
-  initMorphologyDb() async {
+  Future<String> copyFile(String filename) async {
+    var dbDir = await getDatabasesPath();
+    var newPathName = join(dbDir, filename);
+
+    ByteData data = await rootBundle.load("assets/morphology.sqlite");
+    List<int> bytes = data.buffer.asUint8List(data.offsetInBytes, data.lengthInBytes);
+    await File(newPathName).writeAsBytes(bytes);
+
+    return newPathName;
+  }
+
+  Future<String> copyLargeFile(String filename) async {
+    String newPathName;
+
+    try {
+      newPathName = await LargeFileCopy(filename).copyLargeFile;
+    } catch (e) {
+      print('Failed to copy the Large File.');
+    }
+
+    return newPathName;
+  }
+
+  Future initMorphologyDb() async {
     // Construct the path to the app's writable database file:
     var dbDir = await getDatabasesPath();
     var dbPath = join(dbDir, "morphology.sqlite");
 
-    double latestMorphologyVersion = 0.2;
+    double latestMorphologyVersion = 0.3;
 
     // check if database had been setup in first launch
     if (this.config.morphologyVersion < latestMorphologyVersion) {
       // Delete any existing database:
       await deleteDatabase(dbPath);
 
-      // Create the writable database file from the bundled demo database file:
-      ByteData data = await rootBundle.load("assets/morphology.sqlite");
-      List<int> bytes = data.buffer.asUint8List(data.offsetInBytes, data.lengthInBytes);
-      await File(dbPath).writeAsBytes(bytes);
+      // copy database file from assets folder
+      dbPath = await copyLargeFile("morphology.sqlite");
 
       // save config to avoid copying the database file again
       this.config.morphologyVersion = latestMorphologyVersion;
@@ -103,7 +125,7 @@ class SqliteHelper {
       // Delete any existing database:
       await deleteDatabase(dbPath);
 
-      // Create the writable database file from the bundled demo database file:
+      // Create the writable database file from the bundled database file:
       ByteData data = await rootBundle.load("assets/tools.sqlite");
       List<int> bytes = data.buffer.asUint8List(data.offsetInBytes, data.lengthInBytes);
       await File(dbPath).writeAsBytes(bytes);
@@ -166,7 +188,7 @@ class SqliteHelper {
       // Delete any existing database:
       await deleteDatabase(dbPath);
 
-      // Create the writable database file from the bundled demo database file:
+      // Create the writable database file from the bundled database file:
       ByteData data = await rootBundle.load("assets/lexicon.sqlite");
       List<int> bytes = data.buffer.asUint8List(data.offsetInBytes, data.lengthInBytes);
       await File(dbPath).writeAsBytes(bytes);

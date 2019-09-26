@@ -404,7 +404,6 @@ class MorphologySearchViewState extends State<MorphologySearchView> {
             ..insert(0, prefix);
       statement = statementItems.join(" ");
     }
-    print(statement);
     List<Map> morphology = await db.rawQuery(statement);
     _morphologySearchResults(context, morphology);
     db.close();
