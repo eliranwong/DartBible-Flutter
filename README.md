@@ -41,11 +41,16 @@ https://play.google.com/store/apps/details?id=app.bibletools.unique_bible_app_pl
 <a href='https://www.uniquebible.app/mobile/bible-timelines'>Bible Timelines</a><br>
 <a href='https://www.uniquebible.app/mobile/bible-promises'>Bible Promises</a><br>
 <a href='https://www.uniquebible.app/mobile/harmonies-parallels'>Harmonies & Parallels</a><br>
-<a href='https://www.uniquebible.app/mobile/interlinear'>Interlinear</a><br>
-<a href='https://www.uniquebible.app/mobile/morphology'>Morphology</a><br>
 <a href='https://www.uniquebible.app/mobile/original-languages'>Original Languages</a><br>
+<a href='https://www.uniquebible.app/mobile/interlinear'>Interlinear</a><br>
+<a href='https://www.uniquebible.app/mobile/interlinear-popover'>Interlinear Popover</a><br>
+<a href='https://www.uniquebible.app/mobile/morphology'>Morphology</a><br>
+<a href='https://www.uniquebible.app/mobile/morphology-search'>Morphology Search</a><br>
+<a href='https://www.uniquebible.app/mobile/word'>Word</a><br>
+<a href='https://www.uniquebible.app/mobile/lexicons'>Lexicons</a><br>
 <a href='https://www.uniquebible.app/mobile/non-english-interface'>Non-English Interface</a><br>
-<a href='https://www.uniquebible.app/mobile/customisation'>Customisation</a>
+<a href='https://www.uniquebible.app/mobile/customisation'>Customisation</a><br>
+<a href='https://www.uniquebible.app/mobile/credits'>Credits</a>
 
 # screenshots
 
