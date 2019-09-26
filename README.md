@@ -14,8 +14,6 @@ https://play.google.com/store/apps/details?id=app.bibletools.unique_bible_app_pl
 
 # User Manual
 
-[... pending update ...]
-
 <a href='https://www.uniquebible.app/mobile/basic-navigation'>Basic Navigation</a><br>
 <a href='https://www.uniquebible.app/mobile/chapter-headings'>Chapter Headings</a><br>
 <a href='https://www.uniquebible.app/mobile/search'>Search</a><br>
