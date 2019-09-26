@@ -17,8 +17,11 @@ https://play.google.com/store/apps/details?id=app.bibletools.unique_bible_app_pl
 [... pending update ...]
 
 <a href='https://www.uniquebible.app/mobile/basic-navigation'>Basic Navigation</a><br>
+<a href='https://www.uniquebible.app/mobile/chapter-headings'>Chapter Headings</a>
 <a href='https://www.uniquebible.app/mobile/search'>Search</a><br>
 <a href='https://www.uniquebible.app/mobile/settings'>Settings</a><br>
+<a href='https://www.uniquebible.app/mobile/colours'>Colours</a>
+<a href='https://www.uniquebible.app/mobile/audio'>Audio</a>
 <a href='https://www.uniquebible.app/mobile/tap'>Tap</a><br>
 <a href='https://www.uniquebible.app/mobile/long-tap'>Long-tap</a><br>
 <a href='https://www.uniquebible.app/mobile/swipe'>Swipe</a><br>
@@ -28,6 +31,7 @@ https://play.google.com/store/apps/details?id=app.bibletools.unique_bible_app_pl
 <a href='https://www.uniquebible.app/mobile/copy'>Copy</a><br>
 <a href='https://www.uniquebible.app/mobile/history'>History</a><br>
 <a href='https://www.uniquebible.app/mobile/favourites'>Favourites</a><br>
+<a href='https://www.uniquebible.app/mobile/instant-action'>Instant Action</a>
 <a href='https://www.uniquebible.app/mobile/favourite-action'>Favourite Action</a><br>
 <a href='https://www.uniquebible.app/mobile/cross-references'>Cross-references</a><br>
 <a href='https://www.uniquebible.app/mobile/compare-versions'>Compare Versions</a><br>
