@@ -96,6 +96,3 @@ flutter:
     - assets/xRef/
     - assets/images/
     - assets/timelines/
-    - assets/morphology.sqlite
-    - assets/tools.sqlite
-    - assets/lexicon.sqlite
