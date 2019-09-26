@@ -1,4 +1,4 @@
-import 'package:flutter/services.dart' show rootBundle, ByteData;
+import 'package:flutter/services.dart' show rootBundle;
 import 'package:flutter/material.dart';
 import 'package:large_file_copy/large_file_copy.dart';
 import 'package:path_provider/path_provider.dart';

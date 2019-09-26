@@ -147,7 +147,7 @@ class UniqueBibleState extends State<UniqueBible> {
 
   Future _launchPlusPage() async {
     _stopRunningActions();
-    String url = 'https://play.google.com/store/apps/details?id=app.bibletools.unique_bible_app_plus';
+    String url = (Platform.isAndroid) ? 'https://play.google.com/store/apps/details?id=app.bibletools.unique_bible_app_plus' : 'https://play.google.com/store/apps/details?id=app.bibletools.unique_bible_app_plus';
     if (await canLaunch(url)) {
       await launch(url);
     } else {
@@ -367,43 +367,47 @@ class UniqueBibleState extends State<UniqueBible> {
   }
 
   Future showInterlinear(BuildContext context, List bcvList) async {
-    if (this.bibles?.iBible?.data != null) {
-      String verseReference = BibleParser(this.abbreviations).bcvToVerseReference(bcvList);
+    if (_plus) {
+      if (this.bibles?.iBible?.data != null) {
+        String verseReference = BibleParser(this.abbreviations).bcvToVerseReference(bcvList);
 
-      var verseDirection = TextDirection.ltr;
-      if (bcvList.first < 40) verseDirection = TextDirection.rtl;
+        var verseDirection = TextDirection.ltr;
+        if (bcvList.first < 40) verseDirection = TextDirection.rtl;
 
-      String verseText = this.bibles.iBible.openSingleVerse(bcvList);
-      List<TextSpan> textContent = InterlinearHelper(this.config.verseTextStyle).getInterlinearSpan(verseText, bcvList.first)
-        ..insert(0, TextSpan(text: " "))
-        ..insert(0, TextSpan(text: "$verseReference", style: _highlightStyle))
-        ..insert(0, TextSpan(text: " "))
-      ;
+        String verseText = this.bibles.iBible.openSingleVerse(bcvList);
+        List<TextSpan> textContent = InterlinearHelper(this.config.verseTextStyle).getInterlinearSpan(verseText, bcvList.first)
+          ..insert(0, TextSpan(text: " "))
+          ..insert(0, TextSpan(text: "$verseReference", style: _highlightStyle))
+          ..insert(0, TextSpan(text: " "))
+        ;
 
-      final selected = await showModalBottomSheet(context: context, builder: (BuildContext context) {
-        return Container(
-          color: config.myColors["background"],
-          child: Padding(
-            padding: const EdgeInsets.symmetric(vertical: 5.0),
-            child: ListTile(
-              title: RichText(
-                text: TextSpan(
-                  //style: DefaultTextStyle.of(context).style,
-                  children: textContent,
+        final selected = await showModalBottomSheet(context: context, builder: (BuildContext context) {
+          return Container(
+            color: config.myColors["background"],
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: 5.0),
+              child: ListTile(
+                title: RichText(
+                  text: TextSpan(
+                    //style: DefaultTextStyle.of(context).style,
+                    children: textContent,
+                  ),
+                  textDirection: verseDirection,
                 ),
-                textDirection: verseDirection,
+                //subtitle: Text(verseReference, style: _highlightStyle),
+                onTap: () {
+                  Navigator.pop(context, bcvList);
+                  // note: do not use the following line to load interlinearView directly, which cause instability.
+                  // _loadInterlinearView(context, bcvList);
+                },
               ),
-              //subtitle: Text(verseReference, style: _highlightStyle),
-              onTap: () {
-                Navigator.pop(context, bcvList);
-                // note: do not use the following line to load interlinearView directly, which cause instability.
-                // _loadInterlinearView(context, bcvList);
-              },
             ),
-          ),
-        );
-      });
-      if (selected != null) _loadInterlinearView(context, selected);
+          );
+        });
+        if (selected != null) _loadInterlinearView(context, selected);
+      }
+    } else {
+      _nonPlusMessage(this.interfaceBottom[this.abbreviations][0]);
     }
   }
 
@@ -1033,7 +1037,7 @@ class UniqueBibleState extends State<UniqueBible> {
                 tooltip: this.interfaceBottom[this.abbreviations][0],
                 icon: const Icon(Icons.layers),
                 onPressed: () {
-                  (_plus) ? showInterlinear(context, _currentActiveVerse) : _nonPlusMessage(this.interfaceBottom[this.abbreviations][0]);
+                  showInterlinear(context, _currentActiveVerse);
                 },
               ),
               IconButton(
