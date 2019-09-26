@@ -688,7 +688,7 @@ class WordView extends StatelessWidget {
     String data = _data[key].toString();
     if (data.contains(","))
       data = data.split(",").sublist(0, data.split(",").length - 1).join(", ");
-    IconButton trailing = null;
+    IconButton trailing;
     if (key == "Morphology") {
       trailing = IconButton(
         tooltip: interface[_config.abbreviations].last,

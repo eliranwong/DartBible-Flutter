@@ -9,6 +9,7 @@ import 'package:indexed_list_view/indexed_list_view.dart';
 import 'package:swipedetector/swipedetector.dart';
 import 'package:sqflite/sqflite.dart';
 import 'package:flutter_tts/flutter_tts.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'config.dart';
 import 'Bibles.dart';
 import 'BibleSearchDelegate.dart';
@@ -85,9 +86,9 @@ class UniqueBibleState extends State<UniqueBible> {
   };
 
   Map interfaceBottom = {
-    "ENG": ["Popover Interlinear", "Bible Topics", "Bible Promises", "Parallel Passages", "Bible People", "Bible Locations", "Share", "Speak"],
-    "TC": ["原文逐字翻譯", "聖經主題", "聖經應許", "對觀經文", "聖經人物", "聖經地點", "分享", "誦讀"],
-    "SC": ["原文逐字翻译", "圣经主题", "圣经应许", "对观经文", "圣经人物", "圣经地点", "分享", "诵读"],
+    "ENG": ["Popover Interlinear", "Bible Topics", "Bible Promises", "Parallel Passages", "Bible People", "Bible Locations", "Share", "Speak", "User Manual"],
+    "TC": ["原文逐字翻譯", "聖經主題", "聖經應許", "對觀經文", "聖經人物", "聖經地點", "分享", "誦讀", "使用手册"],
+    "SC": ["原文逐字翻译", "圣经主题", "圣经应许", "对观经文", "圣经人物", "圣经地点", "分享", "诵读", "使用手册"],
   };
 
   Map interfaceMessage = {
@@ -1105,10 +1106,26 @@ class UniqueBibleState extends State<UniqueBible> {
                   Share.share("$chapterReference\n$verses");
                 },
               ),
+              IconButton(
+                tooltip: this.interfaceBottom[this.abbreviations][8],
+                icon: const Icon(Icons.help_outline),
+                onPressed: () {
+                  _launchUserManual();
+                },
+              ),
             ]
         ),
       ),
     );
+  }
+
+  Future _launchUserManual() async {
+    String url = 'https://www.uniquebible.app/mobile';
+    if (await canLaunch(url)) {
+      await launch(url);
+    } else {
+      throw 'Could not launch $url';
+    }
   }
 
   Widget _buildVerses(BuildContext context) {

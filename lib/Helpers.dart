@@ -62,7 +62,7 @@ class SqliteHelper {
     var dbDir = await getDatabasesPath();
     var newPathName = join(dbDir, filename);
 
-    ByteData data = await rootBundle.load("assets/morphology.sqlite");
+    ByteData data = await rootBundle.load("assets/$filename");
     List<int> bytes = data.buffer.asUint8List(data.offsetInBytes, data.lengthInBytes);
     await File(newPathName).writeAsBytes(bytes);
 
@@ -88,7 +88,7 @@ class SqliteHelper {
 
     double latestMorphologyVersion = 0.3;
 
-    // check if database had been setup in first launch
+    // check if database is up-to-date
     if (this.config.morphologyVersion < latestMorphologyVersion) {
       // Delete any existing database:
       await deleteDatabase(dbPath);
@@ -113,22 +113,20 @@ class SqliteHelper {
     return morphology;
   }
 
-  initToolsDb() async {
+  Future initToolsDb() async {
     // Construct the path to the app's writable database file:
     var dbDir = await getDatabasesPath();
     var dbPath = join(dbDir, "tools.sqlite");
 
-    double latestToolsVersion = 0.8;
+    double latestToolsVersion = 0.9;
 
-    // check if database had been setup in first launch
+    // check if database is up-to-date
     if (this.config.toolsVersion < latestToolsVersion) {
       // Delete any existing database:
       await deleteDatabase(dbPath);
 
-      // Create the writable database file from the bundled database file:
-      ByteData data = await rootBundle.load("assets/tools.sqlite");
-      List<int> bytes = data.buffer.asUint8List(data.offsetInBytes, data.lengthInBytes);
-      await File(dbPath).writeAsBytes(bytes);
+      // copy database file from assets folder
+      dbPath = await copyLargeFile("tools.sqlite");
 
       // save config to avoid copying the database file again
       this.config.toolsVersion = latestToolsVersion;
@@ -176,22 +174,20 @@ class SqliteHelper {
     return tools;
   }
 
-  initLexiconDb() async {
+  Future initLexiconDb() async {
     // Construct the path to the app's writable database file:
     var dbDir = await getDatabasesPath();
     var dbPath = join(dbDir, "lexicon.sqlite");
 
-    double latestLexiconVersion = 0.6;
+    double latestLexiconVersion = 0.7;
 
-    // check if database had been setup in first launch
+    // check if database is up-to-date
     if (this.config.lexiconVersion < latestLexiconVersion) {
       // Delete any existing database:
       await deleteDatabase(dbPath);
 
-      // Create the writable database file from the bundled database file:
-      ByteData data = await rootBundle.load("assets/lexicon.sqlite");
-      List<int> bytes = data.buffer.asUint8List(data.offsetInBytes, data.lengthInBytes);
-      await File(dbPath).writeAsBytes(bytes);
+      // copy database file from assets folder
+      dbPath = await copyLargeFile("lexicon.sqlite");
 
       // save config to avoid copying the database file again
       this.config.lexiconVersion = latestLexiconVersion;
