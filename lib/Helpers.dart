@@ -1,6 +1,7 @@
 import 'package:flutter/services.dart' show rootBundle, ByteData;
 import 'package:flutter/material.dart';
 import 'package:large_file_copy/large_file_copy.dart';
+import 'package:path_provider/path_provider.dart';
 import 'dart:convert';
 import 'config.dart';
 
@@ -58,6 +59,7 @@ class SqliteHelper {
 
   SqliteHelper(this.config);
 
+  /*
   Future<String> copyFile(String filename) async {
     var dbDir = await getDatabasesPath();
     var newPathName = join(dbDir, filename);
@@ -67,7 +69,9 @@ class SqliteHelper {
     await File(newPathName).writeAsBytes(bytes);
 
     return newPathName;
+    //e.g. /data/user/0/app.bibletools.unique_bible_app_plus/databases/morphology.sqlite
   }
+  */
 
   Future<String> copyLargeFile(String filename) async {
     String newPathName;
@@ -83,10 +87,10 @@ class SqliteHelper {
 
   Future initMorphologyDb() async {
     // Construct the path to the app's writable database file:
-    var dbDir = await getDatabasesPath();
-    var dbPath = join(dbDir, "morphology.sqlite");
+    Directory directory = await getApplicationDocumentsDirectory();
+    var dbPath = join(directory.path, "morphology.sqlite");
 
-    double latestMorphologyVersion = 0.3;
+    double latestMorphologyVersion = 0.8;
 
     // check if database is up-to-date
     if (this.config.morphologyVersion < latestMorphologyVersion) {
@@ -115,10 +119,10 @@ class SqliteHelper {
 
   Future initToolsDb() async {
     // Construct the path to the app's writable database file:
-    var dbDir = await getDatabasesPath();
-    var dbPath = join(dbDir, "tools.sqlite");
+    Directory directory = await getApplicationDocumentsDirectory();
+    var dbPath = join(directory.path, "tools.sqlite");
 
-    double latestToolsVersion = 0.9;
+    double latestToolsVersion = 1.0;
 
     // check if database is up-to-date
     if (this.config.toolsVersion < latestToolsVersion) {
@@ -176,10 +180,10 @@ class SqliteHelper {
 
   Future initLexiconDb() async {
     // Construct the path to the app's writable database file:
-    var dbDir = await getDatabasesPath();
-    var dbPath = join(dbDir, "lexicon.sqlite");
+    Directory directory = await getApplicationDocumentsDirectory();
+    var dbPath = join(directory.path, "lexicon.sqlite");
 
-    double latestLexiconVersion = 0.7;
+    double latestLexiconVersion = 0.8;
 
     // check if database is up-to-date
     if (this.config.lexiconVersion < latestLexiconVersion) {
