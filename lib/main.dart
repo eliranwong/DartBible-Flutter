@@ -49,7 +49,8 @@ class UniqueBibleState extends State<UniqueBible> {
 
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
 
-  bool _startup = false;
+  bool _plus = false;
+
   bool _parallelBibles = false;
   List<dynamic> _data = [
     [
@@ -86,9 +87,9 @@ class UniqueBibleState extends State<UniqueBible> {
   };
 
   Map interfaceBottom = {
-    "ENG": ["Popover Interlinear", "Bible Topics", "Bible Promises", "Parallel Passages", "Bible People", "Bible Locations", "Share", "Speak", "User Manual"],
-    "TC": ["原文逐字翻譯", "聖經主題", "聖經應許", "對觀經文", "聖經人物", "聖經地點", "分享", "誦讀", "使用手册"],
-    "SC": ["原文逐字翻译", "圣经主题", "圣经应许", "对观经文", "圣经人物", "圣经地点", "分享", "诵读", "使用手册"],
+    "ENG": ["Instant Interlinear", "Bible Topics", "Bible Promises", "Harmonies & Parallels", "Bible People", "Bible Locations", "Share", "Bible Audio", "User Manual", "Learn more", "is only available in our '+' version."],
+    "TC": ["即時原文逐字翻譯", "聖經主題", "聖經應許", "對觀經文", "聖經人物", "聖經地點", "分享", "聖經語音", "使用手册", "了解更多", "只能在我們的'＋'升級版使用。"],
+    "SC": ["即时原文逐字翻译", "圣经主题", "圣经应许", "对观经文", "圣经人物", "圣经地点", "分享", "圣经语音", "使用手册", "了解更多", "只能在我们的'＋'升级版使用。"],
   };
 
   Map interfaceMessage = {
@@ -107,9 +108,6 @@ class UniqueBibleState extends State<UniqueBible> {
   FlutterTts flutterTts;
   dynamic languages;
   dynamic voices;
-  //String language;
-  //String voice;
-  //int silencems;
   TtsState ttsState = TtsState.stopped;
   get isPlaying => ttsState == TtsState.playing;
   get isStopped => ttsState == TtsState.stopped;
@@ -131,6 +129,30 @@ class UniqueBibleState extends State<UniqueBible> {
   void dispose() {
     super.dispose();
     flutterTts.stop();
+  }
+
+  void _nonPlusMessage(String feature) {
+    String message = "'$feature' ${interfaceBottom[this.abbreviations][10]}";
+    final snackBar = SnackBar(
+      content: Text(message),
+      action: SnackBarAction(
+        label: interfaceBottom[this.abbreviations][9],
+        onPressed: () {
+          _launchPlusPage();
+        },
+      ),
+    );
+    _scaffoldKey.currentState.showSnackBar(snackBar);
+  }
+
+  Future _launchPlusPage() async {
+    _stopRunningActions();
+    String url = 'https://play.google.com/store/apps/details?id=app.bibletools.unique_bible_app_plus';
+    if (await canLaunch(url)) {
+      await launch(url);
+    } else {
+      throw 'Could not launch $url';
+    }
   }
 
   initTts() {
@@ -266,38 +288,33 @@ class UniqueBibleState extends State<UniqueBible> {
   }
 
   Future _setup() async {
-    if (!_startup) {
-      await this.config.setDefault();
-      await flutterTts.setSpeechRate(this.config.speechRate);
+    await this.config.setDefault();
+    await flutterTts.setSpeechRate(this.config.speechRate);
 
-      this.abbreviations = this.config.abbreviations;
-      this.bibles = Bibles(this.abbreviations);
+    this.abbreviations = this.config.abbreviations;
+    this.bibles = Bibles(this.abbreviations);
 
-      // pre-load bible1 data
-      this.bibles.bible1 = Bible(this.config.bible1, this.abbreviations);
-      await this.bibles.bible1.loadData();
+    // pre-load bible1 data
+    this.bibles.bible1 = Bible(this.config.bible1, this.abbreviations);
+    await this.bibles.bible1.loadData();
 
-      // pre-load bible headings
-      await _loadHeadings();
+    // pre-load bible headings
+    await _loadHeadings();
 
-      // pre-load bible2 data
-      this.bibles.bible2 = Bible(this.config.bible2, this.abbreviations);
-      this.bibles.bible2.loadData();
+    // pre-load bible2 data
+    this.bibles.bible2 = Bible(this.config.bible2, this.abbreviations);
+    this.bibles.bible2.loadData();
 
-      // pre-load interlinear bible
-      this.bibles.iBible = Bible("OHGBi", this.abbreviations);
-      this.bibles.iBible.loadData();
+    // pre-load interlinear bible
+    this.bibles.iBible = Bible("OHGBi", this.abbreviations);
+    this.bibles.iBible.loadData();
 
-      // make sure these function runs on startup only
-      _startup = true;
-
-      setState(() {
-        _currentActiveVerse = List<int>.from(this.config.historyActiveVerse.first);
-        _data = this.bibles.bible1.openSingleChapter(_currentActiveVerse);
-        _scrollIndex = getScrollIndex();
-        _activeIndex = _scrollIndex;
-      });
-    }
+    setState(() {
+      _currentActiveVerse = List<int>.from(this.config.historyActiveVerse.first);
+      _data = this.bibles.bible1.openSingleChapter(_currentActiveVerse);
+      _scrollIndex = getScrollIndex();
+      _activeIndex = _scrollIndex;
+    });
   }
 
   Future _loadHeadings() async {
@@ -915,7 +932,7 @@ class UniqueBibleState extends State<UniqueBible> {
         },
       ),
       */
-      appBar: _buildAppBar(),
+      appBar: _buildAppBar(context),
       body: Container(
         color: _backgroundColor,
         child: SwipeDetector(
@@ -928,7 +945,7 @@ class UniqueBibleState extends State<UniqueBible> {
           },
         ),
       ),
-      bottomNavigationBar: _buildBottomAppBar(),
+      bottomNavigationBar: _buildBottomAppBar(context),
       floatingActionButtonLocation: FloatingActionButtonLocation.endDocked,
       floatingActionButton: FloatingActionButton(
         backgroundColor: _appBarColor,
@@ -945,7 +962,7 @@ class UniqueBibleState extends State<UniqueBible> {
     );
   }
 
-  Widget _buildAppBar() {
+  Widget _buildAppBar(BuildContext context) {
     //original color: Theme.of(context).appBarTheme.color
     return AppBar(
       backgroundColor: _appBarColor,
@@ -967,15 +984,7 @@ class UniqueBibleState extends State<UniqueBible> {
           tooltip: this.interfaceApp[this.abbreviations][2],
           icon: const Icon(Icons.search),
           onPressed: () async {
-            _stopRunningActions();
-            final List selected = await showSearch(
-              context: context,
-              delegate: BibleSearchDelegate(context, this.bibles.bible1, this.interfaceDialog, this.config, this.searchData, _currentActiveVerse),
-            );
-            if (selected != null) {
-              this.searchData = selected.first;
-              _newVerseSelected(this.searchData[selected.last]);
-            }
+            await _launchBibleSearch(context);
           },
         ),
         IconButton(
@@ -998,7 +1007,19 @@ class UniqueBibleState extends State<UniqueBible> {
     );
   }
 
-  Widget _buildBottomAppBar() {
+  Future _launchBibleSearch(BuildContext context) async {
+    _stopRunningActions();
+    final List selected = await showSearch(
+      context: context,
+      delegate: BibleSearchDelegate(context, this.bibles.bible1, this.interfaceDialog, this.config, this.searchData, _currentActiveVerse),
+    );
+    if (selected != null) {
+      this.searchData = selected.first;
+      _newVerseSelected(this.searchData[selected.last]);
+    }
+  }
+
+  Widget _buildBottomAppBar(BuildContext context) {
     return BottomAppBar(
       // Container placed here is necessary for controlling the height of the ListView.
       child: Container(
@@ -1009,10 +1030,10 @@ class UniqueBibleState extends State<UniqueBible> {
             scrollDirection: Axis.horizontal,
             children: <Widget>[
               IconButton(
-                tooltip: this.interfaceBottom[this.abbreviations].first,
+                tooltip: this.interfaceBottom[this.abbreviations][0],
                 icon: const Icon(Icons.layers),
                 onPressed: () {
-                  showInterlinear(context, _currentActiveVerse);
+                  (_plus) ? showInterlinear(context, _currentActiveVerse) : _nonPlusMessage(this.interfaceBottom[this.abbreviations][0]);
                 },
               ),
               IconButton(
@@ -1063,38 +1084,14 @@ class UniqueBibleState extends State<UniqueBible> {
                 tooltip: this.interfaceBottom[this.abbreviations][3],
                 icon: const Icon(Icons.compare),
                 onPressed: () {
-                  Map title = {
-                    "ENG": this.interfaceBottom["ENG"][3],
-                    "TC": this.interfaceBottom["TC"][3],
-                    "SC": this.interfaceBottom["SC"][3],
-                  };
-                  List menu = [
-                    "History of Israel I",
-                    "History of Israel II",
-                    "Gospels I",
-                    "Gospels II",
-                    "摩西五經",
-                    "撒母耳記，列王紀，歷代志",
-                    "詩篇",
-                    "福音書（可，太，路〔順序〕，約） x 54",
-                    "福音書（可，太，路〔不順序〕） x 14",
-                    "福音書（可，太） x 11",
-                    "福音書（可，太，約） x 4",
-                    "福音書（可，路） x 7",
-                    "福音書（太，路） x 32",
-                    "福音書（可〔獨家記載〕） x 5",
-                    "福音書（太〔獨家記載〕） x 30",
-                    "福音書（路〔獨家記載〕） x 39",
-                    "福音書（約〔獨家記載〕） x 61",
-                  ];
-                  _loadTools(context, title, "PARALLEL", menu, Icon(Icons.compare, color: this.config.myColors["black"],));
+                  (_plus) ? _launchHarmonies(context) : _nonPlusMessage(this.interfaceBottom[this.abbreviations][3]);
                 },
               ),
               IconButton(
                 tooltip: this.interfaceBottom[this.abbreviations][7],
                 icon: _ttsIcon,
                 onPressed: () {
-                  _readVerse();
+                  (_plus) ? _readVerse() : _nonPlusMessage(this.interfaceBottom[this.abbreviations][7]);
                 },
               ),
               IconButton(
@@ -1117,6 +1114,34 @@ class UniqueBibleState extends State<UniqueBible> {
         ),
       ),
     );
+  }
+
+  void _launchHarmonies(BuildContext context) {
+    Map title = {
+      "ENG": this.interfaceBottom["ENG"][3],
+      "TC": this.interfaceBottom["TC"][3],
+      "SC": this.interfaceBottom["SC"][3],
+    };
+    List menu = [
+      "History of Israel I",
+      "History of Israel II",
+      "Gospels I",
+      "Gospels II",
+      "摩西五經",
+      "撒母耳記，列王紀，歷代志",
+      "詩篇",
+      "福音書（可，太，路〔順序〕，約） x 54",
+      "福音書（可，太，路〔不順序〕） x 14",
+      "福音書（可，太） x 11",
+      "福音書（可，太，約） x 4",
+      "福音書（可，路） x 7",
+      "福音書（太，路） x 32",
+      "福音書（可〔獨家記載〕） x 5",
+      "福音書（太〔獨家記載〕） x 30",
+      "福音書（路〔獨家記載〕） x 39",
+      "福音書（約〔獨家記載〕） x 61",
+    ];
+    _loadTools(context, title, "PARALLEL", menu, Icon(Icons.compare, color: this.config.myColors["black"],));
   }
 
   Future _launchUserManual() async {
