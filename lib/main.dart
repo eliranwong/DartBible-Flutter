@@ -87,9 +87,9 @@ class UniqueBibleState extends State<UniqueBible> {
   };
 
   Map interfaceBottom = {
-    "ENG": ["Instant Interlinear", "Bible Topics", "Bible Promises", "Harmonies & Parallels", "Bible People", "Bible Locations", "Share", "Bible Audio", "User Manual", "Learn more", "is only available in our '+' version."],
-    "TC": ["即時原文逐字翻譯", "聖經主題", "聖經應許", "對觀經文", "聖經人物", "聖經地點", "分享", "聖經語音", "使用手册", "了解更多", "只能在我們的'＋'升級版使用。"],
-    "SC": ["即时原文逐字翻译", "圣经主题", "圣经应许", "对观经文", "圣经人物", "圣经地点", "分享", "圣经语音", "使用手册", "了解更多", "只能在我们的'＋'升级版使用。"],
+    "ENG": ["Instant Interlinear", "Bible Topics", "Bible Promises", "Harmonies & Parallels", "Bible People", "Bible Locations", "Share", "Bible Audio", "User Manual", "Learn more", "is available in our 'PLUS' version."],
+    "TC": ["即時原文逐字翻譯", "聖經主題", "聖經應許", "對觀經文", "聖經人物", "聖經地點", "分享", "聖經語音", "使用手册", "了解更多", "可以在我們的「PLUS」加強版上使用。"],
+    "SC": ["即时原文逐字翻译", "圣经主题", "圣经应许", "对观经文", "圣经人物", "圣经地点", "分享", "圣经语音", "使用手册", "了解更多", "可以在我们的「PLUS」加强版上使用。"],
   };
 
   Map interfaceMessage = {
@@ -147,7 +147,7 @@ class UniqueBibleState extends State<UniqueBible> {
 
   Future _launchPlusPage() async {
     _stopRunningActions();
-    String url = (Platform.isAndroid) ? 'https://play.google.com/store/apps/details?id=app.bibletools.unique_bible_app_plus' : 'https://play.google.com/store/apps/details?id=app.bibletools.unique_bible_app_plus';
+    String url = (Platform.isAndroid) ? 'https://play.google.com/store/apps/details?id=app.bibletools.unique_bible_app_plus_paid' : 'https://apps.apple.com/us/app/unique-bible-app-plus/id1480768821?ls=1';
     if (await canLaunch(url)) {
       await launch(url);
     } else {

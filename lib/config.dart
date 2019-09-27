@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -7,17 +8,54 @@ class Config {
 
   String assets = "assets";
 
+  Map allBibleMap = {
+    "ABG": "Apostolic Bible Greek Text",
+    "ASV": "American Standard Version",
+    "BBE": "Bible in Basic English",
+    "BSB": "Berean Study Bible",
+    "CCB": "當代聖經修訂版",
+    "CEB": "Common English Bible",
+    "CEV": "Contemporary English Version",
+    "CSB": "Christian Standard Bible",
+    "CUV": "中文和合本〔繁體〕",
+    "CUVs": "中文和合本〔简体〕",
+    "ERV": "English Revised Version",
+    "ESV": "English Standard Version",
+    "EXP": "The Expanded Bible",
+    "ISV": "International Standard Version",
+    "KJV": "King James Version",
+    "LEB": "Lexham English Bible",
+    "LXX1": "Septuagint [Rahlfs 1935]; main text",
+    "LXX2": "Septuagint [Rahlfs 1935]; alternate text",
+    "LXXE": "Brenton English Septuagint",
+    "LXXk": "Septuagint [KJV versification]",
+    "NASB": "New American Standard Bible",
+    "NET": "New English Translation",
+    "NIV": "New International Version",
+    "NLT": "New Living Translation",
+    "NRSV": "New Revised Standard Version",
+    "OHGB": "Open Hebrew & Greek Bible",
+    "OHGBi": "Open Hebrew & Greek Bible [interlinear]",
+    "T4T": "Translation for Translators",
+    "ULT": "UnfoldingWord Literal Text",
+    "UST": "UnfoldingWord Simplified Text",
+    "WEB": "World English Bible",
+  };
+
   List<String> hebrewBibles = ["OHGB", "OHGBi"];
   List<String> greekBibles = ["ABG", "LXX1", "LXX2", "LXXk", "OHGB", "OHGBi"];
   List<String> interlinearBibles = ["OHGBi"];
 
+  // public versions
   List<String> allBibleList = ["ABG", "ASV", "BBE", "BSB", "CUV", "CUVs", "ERV", "ISV", "KJV", "LEB", "LXX1", "LXX2", "LXXE", "LXXk", "NET", "OHGB", "OHGBi", "T4T", "ULT", "UST", "WEB"];
-  // the following line is written for personal use only [not for public]
+  // private versions
   //List<String> allBibleList = ["ABG", "ASV", "BBE", "BSB", "CCB", "CEB", "CEV", "CSB", "CUV", "CUVs", "ERV", "ESV", "EXP", "ISV", "KJV", "LEB", "LXX1", "LXX2", "LXXE", "LXXk", "NASB", "NET", "NIV", "NLT", "NRSV", "OHGB", "OHGBi", "T4T", "ULT", "UST", "WEB"];
 
   // variables linked with shared preferences
+
+  // public versions
   List<String> compareBibleList = ["ASV", "BSB", "ERV", "ISV", "KJV", "LEB", "LXXk", "NET", "OHGB", "WEB"];
-  // the following line is written for personal use only [not for public]
+  // private versions
   //List<String> compareBibleList = ["CEV", "CSB", "CUV", "ESV", "EXP", "ISV", "KJV", "LEB", "LXXE", "LXXk", "NASB", "NET", "NIV", "OHGB"];
 
   double fontSize = 20.0;
@@ -32,7 +70,7 @@ class Config {
   int instantAction = 0;
   int favouriteAction = 1;
   int backgroundColor = 0;
-  double speechRate = 1.0;
+  double speechRate = (Platform.isAndroid) ? 1.0 : 0.5;
   String ttsChinese = "zh-CN";
   String ttsEnglish = "en-GB";
 

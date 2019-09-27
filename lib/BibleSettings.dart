@@ -639,9 +639,8 @@ class BibleSettingsState extends State<BibleSettings> {
     return Container(
       color: dropdownBackground,
       child: CheckboxListTile(
-        title: Text(version, style: TextStyle(color: (int.parse(_colorDegreeValue) >= 700) ? Colors.blue[300] : Colors.blue[700]),),
-        //activeColor: (int.parse(_colorDegreeValue) >= 500) ? Colors.blueGrey[int.parse(_colorDegreeValue) - 200] : Colors.blue[600],
-        //checkColor: (int.parse(_colorDegreeValue) >= 500) ? Colors.grey[300] : Colors.black,
+        title: Text(_config.allBibleMap[version], style: TextStyle(color: (int.parse(_colorDegreeValue) >= 700) ? Colors.blue[300] : Colors.blue[700]),),
+        subtitle: Text(version, style: TextStyle(color: (int.parse(_colorDegreeValue) >= 700) ? Colors.grey[400] : _config.myColors["grey"],),),
         value: (_compareBibleList.contains(version)),
         onChanged: (bool value) {
           setState(() {
