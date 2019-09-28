@@ -8,7 +8,6 @@ import 'BibleSearchDelegate.dart';
 import 'BibleParser.dart';
 import 'HtmlWrapper.dart';
 
-
 class ToolMenu extends StatelessWidget {
   final Map _title;
   final String _module;
@@ -19,7 +18,8 @@ class ToolMenu extends StatelessWidget {
   final Map _interfaceDialog;
   final List _bcvList;
 
-  ToolMenu(this._title, this._module, this._data, this._config, this._bible, this._icon, this._interfaceDialog, this._bcvList);
+  ToolMenu(this._title, this._module, this._data, this._config, this._bible,
+      this._icon, this._interfaceDialog, this._bcvList);
 
   @override
   Widget build(BuildContext context) {
@@ -48,27 +48,27 @@ class ToolMenu extends StatelessWidget {
     return ListTile(
       leading: _icon,
       title: Text(itemData, style: _config.verseTextStyle["verseFont"]),
-
       onTap: () {
         _openTool(context, i);
       },
-
     );
   }
 
   Future _openTool(BuildContext context, int tool) async {
     final Database db = await SqliteHelper(_config).initToolsDb();
-    var statement = "SELECT Topic, Passages FROM $_module WHERE Tool = ? ORDER BY Number";
+    var statement =
+        "SELECT Topic, Passages FROM $_module WHERE Tool = ? ORDER BY Number";
     List<Map> tools = await db.rawQuery(statement, [tool]);
     db.close();
 
     final selected = await Navigator.push(
       context,
-      MaterialPageRoute(builder: (context) => ToolView(_data[tool], tools, _config, _bible, _interfaceDialog, _icon, _bcvList)),
+      MaterialPageRoute(
+          builder: (context) => ToolView(_data[tool], tools, _config, _bible,
+              _interfaceDialog, _icon, _bcvList)),
     );
     if (selected != null) Navigator.pop(context, selected);
   }
-
 }
 
 class ToolView extends StatelessWidget {
@@ -80,7 +80,8 @@ class ToolView extends StatelessWidget {
   final Icon _icon;
   final List _bcvList;
 
-  ToolView(this._title, this._data, this._config, this._bible, this._interfaceDialog, this._icon, this._bcvList);
+  ToolView(this._title, this._data, this._config, this._bible,
+      this._interfaceDialog, this._icon, this._bcvList);
 
   @override
   Widget build(BuildContext context) {
@@ -110,24 +111,23 @@ class ToolView extends StatelessWidget {
     return ListTile(
       leading: _icon,
       title: Text(topic, style: _config.verseTextStyle["verseFont"]),
-
       onTap: () {
         _openPassages(context, itemData);
       },
-
     );
   }
 
   Future _openPassages(BuildContext context, Map itemData) async {
     String topic = itemData["Topic"].replaceAll("％", "\n");
-    List bcvLists = BibleParser(_config.abbreviations).extractAllReferences(itemData["Passages"]);
+    List bcvLists = BibleParser(_config.abbreviations)
+        .extractAllReferences(itemData["Passages"]);
     List passages = _bible.openMultipleVerses(bcvLists, topic);
     final List selected = await showSearch(
         context: context,
-        delegate: BibleSearchDelegate(context, _bible, _interfaceDialog, _config, passages, _bcvList));
+        delegate: BibleSearchDelegate(
+            context, _bible, _interfaceDialog, _config, passages, _bcvList));
     if (selected != null) Navigator.pop(context, selected);
   }
-
 }
 
 class Relationship extends StatefulWidget {
@@ -138,10 +138,12 @@ class Relationship extends StatefulWidget {
   final Map _interfaceDialog;
   final List _bcvList;
 
-  Relationship(this._title, this._data, this._config, this._bible, this._interfaceDialog, this._bcvList);
+  Relationship(this._title, this._data, this._config, this._bible,
+      this._interfaceDialog, this._bcvList);
 
   @override
-  RelationshipState createState() => RelationshipState(this._title, this._data, this._config, this._bible, this._interfaceDialog, this._bcvList);
+  RelationshipState createState() => RelationshipState(this._title, this._data,
+      this._config, this._bible, this._interfaceDialog, this._bcvList);
 }
 
 class RelationshipState extends State<Relationship> {
@@ -157,7 +159,8 @@ class RelationshipState extends State<Relationship> {
     "SC": ["搜索"],
   };
 
-  RelationshipState(this._title, this._data, this._config, this._bible, this._interfaceDialog, this._bcvList);
+  RelationshipState(this._title, this._data, this._config, this._bible,
+      this._interfaceDialog, this._bcvList);
 
   @override
   Widget build(BuildContext context) {
@@ -183,29 +186,43 @@ class RelationshipState extends State<Relationship> {
 
   Widget _buildItemRow(BuildContext context, int i) {
     Map itemData = _data[i];
-    Icon icon = (itemData["Sex"] == "F") ? Icon(Icons.person_outline, color: _config.myColors["black"],) : Icon(Icons.person, color: _config.myColors["black"],);
+    Icon icon = (itemData["Sex"] == "F")
+        ? Icon(
+            Icons.person_outline,
+            color: _config.myColors["black"],
+          )
+        : Icon(
+            Icons.person,
+            color: _config.myColors["black"],
+          );
     return ListTile(
       leading: icon,
       title: Text(itemData["Name"], style: _config.verseTextStyle["verseFont"]),
-      subtitle: Text(itemData["Relationship"], style: TextStyle(fontSize: _config.fontSize - 4, color: _config.myColors["grey"],)),
+      subtitle: Text(itemData["Relationship"],
+          style: TextStyle(
+            fontSize: _config.fontSize - 4,
+            color: _config.myColors["grey"],
+          )),
       trailing: IconButton(
         tooltip: interface[_config.abbreviations][0],
-        icon: Icon(Icons.search, color: _config.myColors["black"],),
+        icon: Icon(
+          Icons.search,
+          color: _config.myColors["black"],
+        ),
         onPressed: () {
           _loadPeopleVerses(context, itemData["PersonID"]);
         },
       ),
-
       onTap: () {
         _updateRelationship(context, itemData);
       },
-
     );
   }
 
   Future _updateRelationship(BuildContext context, Map itemData) async {
     final Database db = await SqliteHelper(_config).initToolsDb();
-    var statement = "SELECT PersonID, Name, Sex, Relationship FROM PEOPLERELATIONSHIP WHERE RelatedPersonID = ? AND Relationship != '[Reference]' ORDER BY RelationshipOrder";
+    var statement =
+        "SELECT PersonID, Name, Sex, Relationship FROM PEOPLERELATIONSHIP WHERE RelatedPersonID = ? AND Relationship != '[Reference]' ORDER BY RelationshipOrder";
     List<Map> tools = await db.rawQuery(statement, [itemData["PersonID"]]);
     db.close();
     setState(() {
@@ -216,21 +233,22 @@ class RelationshipState extends State<Relationship> {
 
   Future _loadPeopleVerses(BuildContext context, int personID) async {
     final Database db = await SqliteHelper(_config).initToolsDb();
-    var statement = "SELECT Book, Chapter, Verse FROM PEOPLE WHERE PersonID = ?";
+    var statement =
+        "SELECT Book, Chapter, Verse FROM PEOPLE WHERE PersonID = ?";
     List<Map> tools = await db.rawQuery(statement, [personID]);
     db.close();
-    List<List> bcvLists = tools.map((i) => [i["Book"], i["Chapter"], i["Verse"]]).toList();
+    List<List> bcvLists =
+        tools.map((i) => [i["Book"], i["Chapter"], i["Verse"]]).toList();
     List verseData = _bible.openMultipleVerses(bcvLists);
     final List selected = await showSearch(
         context: context,
-        delegate: BibleSearchDelegate(context, _bible, _interfaceDialog, _config, verseData, _bcvList));
+        delegate: BibleSearchDelegate(
+            context, _bible, _interfaceDialog, _config, verseData, _bcvList));
     if (selected != null) Navigator.pop(context, selected);
   }
-
 }
 
 class Timeline extends StatefulWidget {
-
   final String _file;
   final String _title;
   final List _timelines;
@@ -239,11 +257,11 @@ class Timeline extends StatefulWidget {
   Timeline(this._file, this._title, this._timelines, this._config);
 
   @override
-  TimelineState createState() => TimelineState(this._file, this._title, this._timelines, this._config);
+  TimelineState createState() =>
+      TimelineState(this._file, this._title, this._timelines, this._config);
 }
 
 class TimelineState extends State<Timeline> {
-
   String _file;
   String _title;
   final Config _config;
@@ -294,14 +312,12 @@ class TimelineState extends State<Timeline> {
         ),
         body: Container(
             child: PhotoView(
-              imageProvider: AssetImage("assets/timelines/$_file.png"),
-              minScale: PhotoViewComputedScale.contained * 0.8,
-            )
-        ),
+          imageProvider: AssetImage("assets/timelines/$_file.png"),
+          minScale: PhotoViewComputedScale.contained * 0.8,
+        )),
       ),
     );
   }
-
 }
 
 /*
@@ -332,7 +348,6 @@ class TopicViewState extends State<TopicView> {
 */
 
 class TopicView extends StatelessWidget {
-
   final List _topicEntries;
   final Config _config;
   final Bibles _bibles;
@@ -351,7 +366,10 @@ class TopicView extends StatelessWidget {
     String _entry = item["Entry"];
     String _content = item["Content"];
 
-    Widget headingRichText = Text(_entry, style: TextStyle(color: _config.myColors["grey"]),);
+    Widget headingRichText = Text(
+      _entry,
+      style: TextStyle(color: _config.myColors["grey"]),
+    );
     Widget contentRichText = _wrapper.buildRichText(context, _content);
 
     return [headingRichText, contentRichText];
@@ -396,5 +414,4 @@ class TopicView extends StatelessWidget {
       ),
     );
   }
-
 }

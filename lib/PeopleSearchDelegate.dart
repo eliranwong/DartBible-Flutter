@@ -4,7 +4,6 @@ import 'config.dart';
 import 'Helpers.dart';
 
 class PeopleSearchDelegate extends SearchDelegate<List> {
-
   List _data;
   Config _config;
   String abbreviations;
@@ -24,7 +23,8 @@ class PeopleSearchDelegate extends SearchDelegate<List> {
 
   Future _fetch(BuildContext context, String searchItem) async {
     final Database db = await SqliteHelper(_config).initToolsDb();
-    var statement = "SELECT PersonID, Name, Sex FROM PEOPLERELATIONSHIP WHERE Name LIKE ? AND Relationship = '[Reference]'";
+    var statement =
+        "SELECT PersonID, Name, Sex FROM PEOPLERELATIONSHIP WHERE Name LIKE ? AND Relationship = '[Reference]'";
     _data = await db.rawQuery(statement, ['%$searchItem%']);
     db.close();
     showSuggestions(context);
@@ -81,24 +81,32 @@ class PeopleSearchDelegate extends SearchDelegate<List> {
 
   Widget _buildItemRow(int i, BuildContext context) {
     var itemData = _data[i];
-    Icon icon = (itemData["Sex"] == "F") ? Icon(Icons.person_outline, color: _config.myColors["black"],) : Icon(Icons.person, color: _config.myColors["black"],);
+    Icon icon = (itemData["Sex"] == "F")
+        ? Icon(
+            Icons.person_outline,
+            color: _config.myColors["black"],
+          )
+        : Icon(
+            Icons.person,
+            color: _config.myColors["black"],
+          );
 
     return ListTile(
       leading: icon,
       title: Text(itemData["Name"], style: _config.verseTextStyle["verseFont"]),
       trailing: IconButton(
         tooltip: interface[this.abbreviations][1],
-        icon: Icon(Icons.search, color: _config.myColors["black"],),
+        icon: Icon(
+          Icons.search,
+          color: _config.myColors["black"],
+        ),
         onPressed: () {
           close(context, [1, itemData["PersonID"]]);
         },
       ),
-
       onTap: () {
         close(context, [0, itemData["PersonID"], itemData["Name"]]);
       },
-
     );
   }
-
 }

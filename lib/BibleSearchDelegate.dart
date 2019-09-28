@@ -2,19 +2,22 @@ import 'package:flutter/services.dart' show Clipboard, ClipboardData;
 import 'package:flutter/material.dart';
 import 'package:share/share.dart';
 import 'BibleParser.dart';
-import 'DialogAction.dart';
 import 'config.dart';
 import 'Helpers.dart';
 
 class BibleSearchDelegate extends SearchDelegate<List> {
-
   final _bcvList;
   final _bible;
   final _interfaceDialog;
   final _pageSize = 20;
   String abbreviations;
   Map interfaceBibleSearch = {
-    "ENG": ["is not properly formatted for search. Please correct and try again.", "Clear", "More ...", "Search"],
+    "ENG": [
+      "is not properly formatted for search. Please correct and try again.",
+      "Clear",
+      "More ...",
+      "Search"
+    ],
     "TC": ["組成的格式不正確，請更正然後再嘗試", "清空", "更多 …", "搜索"],
     "SC": ["组成的格式不正确，请更正然后再尝试", "清空", "更多 …", "搜索"],
   };
@@ -30,7 +33,9 @@ class BibleSearchDelegate extends SearchDelegate<List> {
   @override
   String get searchFieldLabel => interfaceBibleSearch[this.abbreviations].last;
 
-  BibleSearchDelegate(BuildContext context, this._bible, this._interfaceDialog, Config config, this._data, this._bcvList, [this._rawData]) {
+  BibleSearchDelegate(BuildContext context, this._bible, this._interfaceDialog,
+      Config config, this._data, this._bcvList,
+      [this._rawData]) {
     _verseNoFont = config.verseTextStyle["verseNoFont"];
     _verseFont = config.verseTextStyle["verseFont"];
     _verseFontHebrew = config.verseTextStyle["verseFontHebrew"];
@@ -51,13 +56,17 @@ class BibleSearchDelegate extends SearchDelegate<List> {
 
   // The option of lazy loading is achieved with "_loadData" & "_loadMoreData"
   Future _loadData() async {
-    _data = (_rawData.length <= _pageSize) ? _bible.openMultipleVerses(_rawData) : _bible.openMultipleVerses(_rawData.sublist(0, _pageSize));
+    _data = (_rawData.length <= _pageSize)
+        ? _bible.openMultipleVerses(_rawData)
+        : _bible.openMultipleVerses(_rawData.sublist(0, _pageSize));
   }
 
   Future _loadMoreData(BuildContext context, int i) async {
     int start = i;
     int end = i + _pageSize;
-    List newBcvList = (end > _rawData.length) ? _rawData.sublist(start) : _rawData.sublist(start, end);
+    List newBcvList = (end > _rawData.length)
+        ? _rawData.sublist(start)
+        : _rawData.sublist(start, end);
     _data = [..._data, ..._bible.openMultipleVerses(newBcvList)];
     // visual update; SearchDelegate doesn't have method setState; the following 3 lines is a workaround for visual update.
     String tempString = query;
@@ -81,7 +90,8 @@ class BibleSearchDelegate extends SearchDelegate<List> {
             for (var book in bookList) {
               bookString += "${book.trim()} 0; ";
             }
-            bookReferenceList = BibleParser(this.abbreviations).extractAllReferences(bookString);
+            bookReferenceList = BibleParser(this.abbreviations)
+                .extractAllReferences(bookString);
           } else {
             bookReferenceList = [_bcvList];
           }
@@ -95,10 +105,15 @@ class BibleSearchDelegate extends SearchDelegate<List> {
       }
 
       // check if the query contains verse references or not.
-      var verseReferenceList = BibleParser(this.abbreviations).extractAllReferences(query);
-      (verseReferenceList.isEmpty) ? fetchResults = _bible.search(query) : fetchResults = _bible.openMultipleVerses(verseReferenceList);
+      var verseReferenceList =
+          BibleParser(this.abbreviations).extractAllReferences(query);
+      (verseReferenceList.isEmpty)
+          ? fetchResults = _bible.search(query)
+          : fetchResults = _bible.openMultipleVerses(verseReferenceList);
     } catch (e) {
-      fetchResults = [[[], "['$query' ${interfaceBibleSearch[this.abbreviations][0]}", ""]];
+      fetchResults = [
+        [[], "['$query' ${interfaceBibleSearch[this.abbreviations][0]}", ""]
+      ];
     }
 
     return fetchResults;
@@ -152,26 +167,31 @@ class BibleSearchDelegate extends SearchDelegate<List> {
   }
 
   Widget _buildVerses(BuildContext context) {
-    int count = ((_rawData.isNotEmpty) && (_rawData.length > _data.length)) ? (_data.length + 1) : _data.length;
+    int count = ((_rawData.isNotEmpty) && (_rawData.length > _data.length))
+        ? (_data.length + 1)
+        : _data.length;
     return Container(
       color: Colors.blueGrey[_backgroundColor],
       child: ListView.builder(
           padding: EdgeInsets.zero,
           itemCount: count,
           itemBuilder: (context, i) {
-            return (i == _data.length) ? _buildMoreRow(context, i) : _buildVerseRow(context, i);
+            return (i == _data.length)
+                ? _buildMoreRow(context, i)
+                : _buildVerseRow(context, i);
           }),
     );
   }
 
   Widget _buildMoreRow(BuildContext context, int i) {
     return ListTile(
-      title: Text("[${interfaceBibleSearch[this.abbreviations][2]}]", style: _activeVerseFont,),
-
+      title: Text(
+        "[${interfaceBibleSearch[this.abbreviations][2]}]",
+        style: _activeVerseFont,
+      ),
       onTap: () {
         _loadMoreData(context, i);
       },
-
     );
   }
 
@@ -180,15 +200,12 @@ class BibleSearchDelegate extends SearchDelegate<List> {
 
     return ListTile(
       title: _buildVerseText(context, verseData),
-
       onTap: () {
         close(context, [_data, i]);
       },
-
       onLongPress: () {
         _longPressedVerse(context, _data[i]);
       },
-
     );
   }
 
@@ -215,13 +232,18 @@ class BibleSearchDelegate extends SearchDelegate<List> {
     if (tempList.isNotEmpty) versePrefix = "${tempList[0]}]";
     if (tempList.length > 1) verseContent = tempList.sublist(1).join("]");
 
-    List<TextSpan> textContent = [TextSpan(text: versePrefix, style: _verseNoFont)];
+    List<TextSpan> textContent = [
+      TextSpan(text: versePrefix, style: _verseNoFont)
+    ];
     try {
       String searchEntry = query;
-      if (query.contains(":::")) searchEntry = query.split(":::").sublist(1).join(":::");
+      if (query.contains(":::"))
+        searchEntry = query.split(":::").sublist(1).join(":::");
       if (this.interlinearBibles.contains(verseModule)) {
-        List<TextSpan> interlinearSpan = InterlinearHelper(this.verseTextStyle).getInterlinearSpan(verseContent, verseData[0][0]);
-        textContent = interlinearSpan..insert(0, TextSpan(text: versePrefix, style: _verseNoFont));
+        List<TextSpan> interlinearSpan = InterlinearHelper(this.verseTextStyle)
+            .getInterlinearSpan(verseContent, verseData[0][0]);
+        textContent = interlinearSpan
+          ..insert(0, TextSpan(text: versePrefix, style: _verseNoFont));
       } else if (searchEntry.isEmpty) {
         textContent.add(TextSpan(text: verseContent, style: verseFont));
       } else {
@@ -261,21 +283,26 @@ class BibleSearchDelegate extends SearchDelegate<List> {
             title: Text(_interfaceDialog[this.abbreviations][0]),
             children: <Widget>[
               SimpleDialogOption(
-                onPressed: () { Navigator.pop(context, DialogAction.share); },
+                onPressed: () {
+                  Navigator.pop(context, DialogAction.share);
+                },
                 child: Text(_interfaceDialog[this.abbreviations][1]),
               ),
               SimpleDialogOption(
-                onPressed: () { Navigator.pop(context, DialogAction.copy); },
+                onPressed: () {
+                  Navigator.pop(context, DialogAction.copy);
+                },
                 child: Text(_interfaceDialog[this.abbreviations][2]),
               ),
               SimpleDialogOption(
-                onPressed: () { Navigator.pop(context, DialogAction.addCopy); },
+                onPressed: () {
+                  Navigator.pop(context, DialogAction.addCopy);
+                },
                 child: Text(_interfaceDialog[this.abbreviations][3]),
               ),
             ],
           );
-        }
-    )) {
+        })) {
       case DialogAction.share:
         Share.share(verseData[1]);
         break;
@@ -290,5 +317,4 @@ class BibleSearchDelegate extends SearchDelegate<List> {
       default:
     }
   }
-
 }

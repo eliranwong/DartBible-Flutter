@@ -1,9 +1,12 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:sqflite/sqflite.dart';
+import 'package:flutter_tts/flutter_tts.dart';
+import 'package:url_launcher/url_launcher.dart';
+import 'Bibles.dart';
 import 'BibleParser.dart';
 import 'config.dart';
 import 'Helpers.dart';
-import 'Bibles.dart';
 import 'HtmlWrapper.dart';
 
 class InterlinearView extends StatefulWidget {
@@ -22,6 +25,8 @@ class InterlinearView extends StatefulWidget {
 }
 
 class InterlinearViewState extends State<InterlinearView> {
+  final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
+
   // [{WordID: 1, ClauseID: 1, Book: 1, Chapter: 1, Verse: 1, Word: בְּ, LexicalEntry: E70001,H9003,, MorphologyCode: prep, Morphology: preposition,, Lexeme: בְּ, Transliteration: bĕ, Pronunciation: bᵊ, Interlinear: in, Translation: In, Gloss: in}]
   final List<Map> _data;
   final bool _firstOpened;
@@ -29,17 +34,113 @@ class InterlinearViewState extends State<InterlinearView> {
   final Config _config;
   final Bibles _bibles;
   double _fontSize;
+  bool _isHebrew;
   String abbreviations;
   final Map interface = {
-    "ENG": ["Interlinear", "More"],
-    "TC": ["原文逐字翻譯", "更多"],
-    "SC": ["原文逐字翻译", "更多"],
+    "ENG": ["Interlinear", "More", "Audio"],
+    "TC": ["原文逐字翻譯", "更多", "語音功能"],
+    "SC": ["原文逐字翻译", "更多", "语音功能"],
   };
+
+  // Variables to work with TTS
+  FlutterTts flutterTts;
+  TtsState ttsState = TtsState.stopped;
+  get isPlaying => ttsState == TtsState.playing;
+  get isStopped => ttsState == TtsState.stopped;
 
   InterlinearViewState(
       this._data, this._firstOpened, this._module, this._config, this._bibles) {
     this._fontSize = this._config.fontSize;
     this.abbreviations = this._config.abbreviations;
+    this._isHebrew = ((_module == "OHGB") &&
+        (_data != null) &&
+        (_data.isNotEmpty) &&
+        (_data.first["Book"] < 40));
+  }
+
+  @override
+  initState() {
+    super.initState();
+    initTts();
+  }
+
+  @override
+  void dispose() {
+    super.dispose();
+    flutterTts.stop();
+  }
+
+  initTts() {
+    flutterTts = FlutterTts();
+
+    flutterTts.setStartHandler(() {
+      setState(() {
+        ttsState = TtsState.playing;
+      });
+    });
+
+    flutterTts.setCompletionHandler(() {
+      setState(() {
+        ttsState = TtsState.stopped;
+      });
+    });
+
+    flutterTts.setErrorHandler((msg) {
+      setState(() {
+        ttsState = TtsState.stopped;
+      });
+    });
+  }
+
+  Future _speak(String message) async {
+    if (isPlaying) await _stop();
+    if ((message != null) && (message.isNotEmpty)) {
+      if (_isHebrew) {
+        (Platform.isAndroid)
+            ? await flutterTts.setLanguage(_config.ttsEnglish)
+            : await flutterTts.setLanguage("he-IL");
+      } else if (_config.greekBibles.contains(_module)) {
+        message = TtsHelper().removeGreekAccents(message);
+        await flutterTts.setLanguage("el-GR");
+      }
+      var result = await flutterTts.speak(message);
+      if (result == 1)
+        setState(() {
+          ttsState = TtsState.playing;
+        });
+    }
+  }
+
+  Future _stop() async {
+    var result = await flutterTts.stop();
+    if (result == 1)
+      setState(() {
+        ttsState = TtsState.stopped;
+      });
+  }
+
+  void _nonPlusMessage(String feature) {
+    String message =
+        "'$feature' ${_config.plusMessage[this.abbreviations].first}";
+    final snackBar = SnackBar(
+      content: Text(message),
+      action: SnackBarAction(
+        label: _config.plusMessage[this.abbreviations].last,
+        onPressed: () {
+          _launchPlusPage();
+        },
+      ),
+    );
+    _scaffoldKey.currentState.showSnackBar(snackBar);
+  }
+
+  Future _launchPlusPage() async {
+    String url = _config.plusURL;
+    if (await canLaunch(url)) {
+      await launch(url);
+    } else {
+      throw 'Could not launch $url';
+    }
   }
 
   @override
@@ -48,11 +149,11 @@ class InterlinearViewState extends State<InterlinearView> {
     if (_data.isNotEmpty)
       verseRef = BibleParser(this.abbreviations).bcvToVerseReference(
           [_data[0]["Book"], _data[0]["Chapter"], _data[0]["Verse"]]);
-    final title =
-        "${interface[this.abbreviations][0]} - $verseRef";
+    final title = "${interface[this.abbreviations][0]} - $verseRef";
     return Theme(
       data: _config.mainTheme,
       child: Scaffold(
+        key: _scaffoldKey,
         appBar: AppBar(
           title: Text(title),
           actions: <Widget>[
@@ -81,8 +182,11 @@ class InterlinearViewState extends State<InterlinearView> {
 
   Widget _buildCard(BuildContext context, int i) {
     final wordData = _data[i];
-    final textStyle = TextStyle(fontSize: (_fontSize - 2), color: _config.myColors["grey"],);
-    TextStyle originalStyle = ((wordData["Book"] < 40) && (_module == "OHGB"))
+    final textStyle = TextStyle(
+      fontSize: (_fontSize - 2),
+      color: _config.myColors["grey"],
+    );
+    TextStyle originalStyle = (_isHebrew)
         ? _config.verseTextStyle["verseFontHebrew"]
         : _config.verseTextStyle["verseFontGreek"];
     Widget word;
@@ -93,7 +197,23 @@ class InterlinearViewState extends State<InterlinearView> {
           mainAxisSize: MainAxisSize.min,
           children: <Widget>[
             ListTile(
-              leading: Icon(Icons.album, color: _config.myColors["black"],),
+              leading: IconButton(
+                tooltip: interface[this.abbreviations][2],
+                icon: Icon(
+                  Icons.volume_up,
+                  color: _config.myColors["black"],
+                ),
+                onPressed: () {
+                  if (_config.plus) {
+                    String wordText = ((_isHebrew) && (Platform.isAndroid))
+                        ? wordData["Transliteration"]
+                        : wordData["Word"];
+                    _speak(wordText);
+                  } else {
+                    _nonPlusMessage(interface[this.abbreviations][2]);
+                  }
+                },
+              ),
               title: word,
               subtitle: Text(wordData["Interlinear"], style: textStyle),
               onTap: () {
@@ -101,7 +221,10 @@ class InterlinearViewState extends State<InterlinearView> {
               },
               trailing: IconButton(
                 tooltip: interface[this.abbreviations][1],
-                icon: Icon(Icons.more_vert, color: _config.myColors["black"],),
+                icon: Icon(
+                  Icons.more_vert,
+                  color: _config.myColors["black"],
+                ),
                 onPressed: () {
                   _loadWordView(context, wordData);
                 },
@@ -117,8 +240,7 @@ class InterlinearViewState extends State<InterlinearView> {
     final selected = await Navigator.push(
       context,
       MaterialPageRoute(
-          builder: (context) =>
-              WordView(wordData, _module, _config, _bibles)),
+          builder: (context) => WordView(wordData, _module, _config, _bibles)),
     );
     if (selected != null) Navigator.pop(context, selected);
   }
@@ -141,11 +263,11 @@ class InterlinearViewState extends State<InterlinearView> {
     List lexicons = await SqliteHelper(_config).getLexicons(lexicalEntries);
     final selected = await Navigator.push(
       context,
-      MaterialPageRoute(builder: (context) => LexiconView(_config, lexicons, _bibles)),
+      MaterialPageRoute(
+          builder: (context) => LexiconView(_config, lexicons, _bibles)),
     );
     if (selected != null) Navigator.pop(context, selected);
   }
-
 }
 
 class MorphologyView extends StatefulWidget {
@@ -164,6 +286,8 @@ class MorphologyView extends StatefulWidget {
 }
 
 class MorphologyViewState extends State<MorphologyView> {
+  final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
+
   // [{WordID: 1, ClauseID: 1, Book: 1, Chapter: 1, Verse: 1, Word: בְּ, LexicalEntry: E70001,H9003,, MorphologyCode: prep, Morphology: preposition,, Lexeme: בְּ, Transliteration: bĕ, Pronunciation: bᵊ, Interlinear: in, Translation: In, Gloss: in}]
   final List<Map> _data;
   final bool _firstOpened;
@@ -172,16 +296,119 @@ class MorphologyViewState extends State<MorphologyView> {
   final Bibles _bibles;
   double _fontSize;
   String abbreviations;
+  bool _isHebrew;
   final Map interface = {
-    "ENG": ["Morphology", "Less", "Search", "More"],
-    "TC": ["原文形態學", "翻譯", "搜索", "更多"],
-    "SC": ["原文形态学", "翻译", "搜索", "更多"],
+    "ENG": [
+      "Morphology",
+      "Less",
+      "Search",
+      "More",
+      "Audio",
+      "Search this morphology"
+    ],
+    "TC": ["原文形態學", "翻譯", "搜索", "更多", "語音功能", "搜索此形態"],
+    "SC": ["原文形态学", "翻译", "搜索", "更多", "语音功能", "搜索此形态"],
   };
+
+  // Variables to work with TTS
+  FlutterTts flutterTts;
+  TtsState ttsState = TtsState.stopped;
+  get isPlaying => ttsState == TtsState.playing;
+  get isStopped => ttsState == TtsState.stopped;
 
   MorphologyViewState(
       this._data, this._firstOpened, this._module, this._config, this._bibles) {
     this._fontSize = this._config.fontSize;
     this.abbreviations = this._config.abbreviations;
+    this._isHebrew = ((_module == "OHGB") &&
+        (_data != null) &&
+        (_data.isNotEmpty) &&
+        (_data.first["Book"] < 40));
+  }
+
+  @override
+  initState() {
+    super.initState();
+    initTts();
+  }
+
+  @override
+  void dispose() {
+    super.dispose();
+    flutterTts.stop();
+  }
+
+  initTts() {
+    flutterTts = FlutterTts();
+
+    flutterTts.setStartHandler(() {
+      setState(() {
+        ttsState = TtsState.playing;
+      });
+    });
+
+    flutterTts.setCompletionHandler(() {
+      setState(() {
+        ttsState = TtsState.stopped;
+      });
+    });
+
+    flutterTts.setErrorHandler((msg) {
+      setState(() {
+        ttsState = TtsState.stopped;
+      });
+    });
+  }
+
+  Future _speak(String message) async {
+    if (isPlaying) await _stop();
+    if ((message != null) && (message.isNotEmpty)) {
+      if (_isHebrew) {
+        (Platform.isAndroid)
+            ? await flutterTts.setLanguage(_config.ttsEnglish)
+            : await flutterTts.setLanguage("he-IL");
+      } else if (_config.greekBibles.contains(_module)) {
+        message = TtsHelper().removeGreekAccents(message);
+        await flutterTts.setLanguage("el-GR");
+      }
+      var result = await flutterTts.speak(message);
+      if (result == 1)
+        setState(() {
+          ttsState = TtsState.playing;
+        });
+    }
+  }
+
+  Future _stop() async {
+    var result = await flutterTts.stop();
+    if (result == 1)
+      setState(() {
+        ttsState = TtsState.stopped;
+      });
+  }
+
+  void _nonPlusMessage(String feature) {
+    String message =
+        "'$feature' ${_config.plusMessage[this.abbreviations].first}";
+    final snackBar = SnackBar(
+      content: Text(message),
+      action: SnackBarAction(
+        label: _config.plusMessage[this.abbreviations].last,
+        onPressed: () {
+          _launchPlusPage();
+        },
+      ),
+    );
+    _scaffoldKey.currentState.showSnackBar(snackBar);
+  }
+
+  Future _launchPlusPage() async {
+    String url = _config.plusURL;
+    if (await canLaunch(url)) {
+      await launch(url);
+    } else {
+      throw 'Could not launch $url';
+    }
   }
 
   Future searchMorphology(BuildContext context, String lexicalEntry,
@@ -222,11 +449,11 @@ class MorphologyViewState extends State<MorphologyView> {
     if (_data.isNotEmpty)
       verseRef = BibleParser(this.abbreviations).bcvToVerseReference(
           [_data[0]["Book"], _data[0]["Chapter"], _data[0]["Verse"]]);
-    final title =
-        "${interface[this.abbreviations][0]} - $verseRef";
+    final title = "${interface[this.abbreviations][0]} - $verseRef";
     return Theme(
       data: _config.mainTheme,
       child: Scaffold(
+        key: _scaffoldKey,
         appBar: AppBar(
           title: Text(title),
           actions: <Widget>[
@@ -266,12 +493,15 @@ class MorphologyViewState extends State<MorphologyView> {
     final wordData = _data[i];
     String morphology = wordData["Morphology"].replaceAll(",", ", ");
     morphology = morphology.substring(0, (morphology.length - 2));
-    final textStyle = TextStyle(fontSize: (_fontSize - 2), color: _config.myColors["grey"],);
-    TextStyle originalStyle = ((wordData["Book"] < 40) && (_module == "OHGB"))
+    final textStyle = TextStyle(
+      fontSize: (_fontSize - 2),
+      color: _config.myColors["grey"],
+    );
+    TextStyle originalStyle = (_isHebrew)
         ? _config.verseTextStyle["verseFontHebrew"]
         : _config.verseTextStyle["verseFontGreek"];
-    String lexemeText = wordData["Lexeme"];
     Widget word = Text(wordData["Word"], style: originalStyle);
+    String lexemeText = wordData["Lexeme"];
     Widget lexeme = Text(lexemeText, style: originalStyle);
     String lexicalEntry = "";
     if (wordData["LexicalEntry"].isNotEmpty)
@@ -282,7 +512,23 @@ class MorphologyViewState extends State<MorphologyView> {
           mainAxisSize: MainAxisSize.min,
           children: <Widget>[
             ListTile(
-              leading: Icon(Icons.album, color: _config.myColors["black"],),
+              leading: IconButton(
+                tooltip: interface[this.abbreviations][4],
+                icon: Icon(
+                  Icons.volume_up,
+                  color: _config.myColors["black"],
+                ),
+                onPressed: () {
+                  if (_config.plus) {
+                    String wordText = ((_isHebrew) && (Platform.isAndroid))
+                        ? wordData["Transliteration"]
+                        : wordData["Word"];
+                    _speak(wordText);
+                  } else {
+                    _nonPlusMessage(interface[this.abbreviations][4]);
+                  }
+                },
+              ),
               title: word,
               subtitle: Text(
                   "${wordData["Transliteration"]} [${wordData["Pronunciation"]}]",
@@ -292,14 +538,27 @@ class MorphologyViewState extends State<MorphologyView> {
               },
               trailing: IconButton(
                 tooltip: interface[this.abbreviations][3],
-                icon: Icon(Icons.more_vert, color: _config.myColors["black"],),
+                icon: Icon(
+                  Icons.more_vert,
+                  color: _config.myColors["black"],
+                ),
                 onPressed: () {
                   _loadWordView(context, wordData);
                 },
               ),
             ),
             ListTile(
-              leading: Icon(Icons.label_outline, color: _config.myColors["black"],),
+              leading: IconButton(
+                tooltip: interface[this.abbreviations][5],
+                icon: Icon(
+                  Icons.label_outline,
+                  color: _config.myColors["black"],
+                ),
+                onPressed: () {
+                  searchMorphology(
+                      context, lexicalEntry, morphology.split(", "));
+                },
+              ),
               title: lexeme,
               subtitle: Text(morphology, style: textStyle),
               onTap: () {
@@ -307,7 +566,10 @@ class MorphologyViewState extends State<MorphologyView> {
               },
               trailing: IconButton(
                 tooltip: interface[this.abbreviations][2],
-                icon: Icon(Icons.search, color: _config.myColors["black"],),
+                icon: Icon(
+                  Icons.search,
+                  color: _config.myColors["black"],
+                ),
                 onPressed: () {
                   _loadMorphologySearchView(context, lexemeText,
                       wordData["LexicalEntry"], morphology);
@@ -324,8 +586,7 @@ class MorphologyViewState extends State<MorphologyView> {
     final selected = await Navigator.push(
       context,
       MaterialPageRoute(
-          builder: (context) =>
-              WordView(wordData, _module, _config, _bibles)),
+          builder: (context) => WordView(wordData, _module, _config, _bibles)),
     );
     if (selected != null) Navigator.pop(context, selected);
   }
@@ -345,7 +606,8 @@ class MorphologyViewState extends State<MorphologyView> {
     List lexicons = await SqliteHelper(_config).getLexicons(lexicalEntries);
     final selected = await Navigator.push(
       context,
-      MaterialPageRoute(builder: (context) => LexiconView(_config, lexicons, _bibles)),
+      MaterialPageRoute(
+          builder: (context) => LexiconView(_config, lexicons, _bibles)),
     );
     if (selected != null) Navigator.pop(context, selected);
   }
@@ -370,6 +632,8 @@ class MorphologySearchView extends StatefulWidget {
 }
 
 class MorphologySearchViewState extends State<MorphologySearchView> {
+  final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
+
   final String _lexeme, _lexicalEntry, _morphology, _module;
   final Config _config;
   final Bibles _bibles;
@@ -377,9 +641,9 @@ class MorphologySearchViewState extends State<MorphologySearchView> {
   List<String> morphologyItems, selectedMorphologyItems;
 
   final Map interface = {
-    "ENG": ["Search"],
-    "TC": ["搜索"],
-    "SC": ["翻译"],
+    "ENG": ["Search", "Selective Morphology Search"],
+    "TC": ["搜索", "選定形態搜索"],
+    "SC": ["搜索", "选订形态搜索"],
   };
 
   MorphologySearchViewState(this._lexeme, this._lexicalEntry, this._morphology,
@@ -388,6 +652,30 @@ class MorphologySearchViewState extends State<MorphologySearchView> {
     selectedMorphologyItems = List<String>.from(morphologyItems);
     if (_lexicalEntry.isNotEmpty)
       this.lexicalEntry = _lexicalEntry.split(",").toList()[0];
+  }
+
+  void _nonPlusMessage(String feature) {
+    String message =
+        "'$feature' ${_config.plusMessage[_config.abbreviations].first}";
+    final snackBar = SnackBar(
+      content: Text(message),
+      action: SnackBarAction(
+        label: _config.plusMessage[_config.abbreviations].last,
+        onPressed: () {
+          _launchPlusPage();
+        },
+      ),
+    );
+    _scaffoldKey.currentState.showSnackBar(snackBar);
+  }
+
+  Future _launchPlusPage() async {
+    String url = _config.plusURL;
+    if (await canLaunch(url)) {
+      await launch(url);
+    } else {
+      throw 'Could not launch $url';
+    }
   }
 
   Future searchMorphology(BuildContext context) async {
@@ -424,6 +712,7 @@ class MorphologySearchViewState extends State<MorphologySearchView> {
     return Theme(
       data: _config.mainTheme,
       child: Scaffold(
+        key: _scaffoldKey,
         appBar: AppBar(
           title: Text("Search"),
           actions: <Widget>[
@@ -431,7 +720,9 @@ class MorphologySearchViewState extends State<MorphologySearchView> {
               tooltip: interface[_config.abbreviations][0],
               icon: const Icon(Icons.search),
               onPressed: () {
-                searchMorphology(context);
+                (_config.plus)
+                    ? searchMorphology(context)
+                    : _nonPlusMessage(interface[_config.abbreviations][1]);
               },
             ),
           ],
@@ -446,8 +737,14 @@ class MorphologySearchViewState extends State<MorphologySearchView> {
         morphologyItems.map((i) => _buildMorphologyRow(i)).toList();
     return ListView(children: <Widget>[
       ListTile(
-        title: Text(_lexeme, style: TextStyle(color: _config.myColors["black"]),),
-        subtitle: Text(lexicalEntry, style: TextStyle(color: _config.myColors["grey"]),),
+        title: Text(
+          _lexeme,
+          style: TextStyle(color: _config.myColors["black"]),
+        ),
+        subtitle: Text(
+          lexicalEntry,
+          style: TextStyle(color: _config.myColors["grey"]),
+        ),
       ),
       ExpansionTile(
         title: Text("+"),
@@ -460,7 +757,10 @@ class MorphologySearchViewState extends State<MorphologySearchView> {
 
   Widget _buildMorphologyRow(String item) {
     return CheckboxListTile(
-        title: Text(item, style: TextStyle(color: _config.myColors["black"]),),
+        title: Text(
+          item,
+          style: TextStyle(color: _config.myColors["black"]),
+        ),
         value: (selectedMorphologyItems.contains(item)),
         onChanged: (bool value) {
           setState(() {
@@ -534,7 +834,10 @@ class MorphologySearchResultsState extends State<MorphologySearchResults> {
 
   Widget _buildCard(BuildContext context, int i) {
     final wordData = _data[i];
-    final textStyle = TextStyle(fontSize: (_fontSize - 2), color: _config.myColors["grey"],);
+    final textStyle = TextStyle(
+      fontSize: (_fontSize - 2),
+      color: _config.myColors["grey"],
+    );
     TextStyle originalStyle = ((wordData["Book"] < 40) && (_module == "OHGB"))
         ? _config.verseTextStyle["verseFontHebrew"]
         : _config.verseTextStyle["verseFontGreek"];
@@ -550,7 +853,10 @@ class MorphologySearchResultsState extends State<MorphologySearchResults> {
             mainAxisSize: MainAxisSize.min,
             children: <Widget>[
               ListTile(
-                leading: Icon(Icons.album, color: _config.myColors["black"],),
+                leading: Icon(
+                  Icons.album,
+                  color: _config.myColors["black"],
+                ),
                 title: word,
                 subtitle: Text(verseReference, style: textStyle),
                 onTap: () {
@@ -558,7 +864,10 @@ class MorphologySearchResultsState extends State<MorphologySearchResults> {
                 },
                 trailing: IconButton(
                   tooltip: interface[this.abbreviations][2],
-                  icon: Icon(Icons.more_vert, color: _config.myColors["black"],),
+                  icon: Icon(
+                    Icons.more_vert,
+                    color: _config.myColors["black"],
+                  ),
                   onPressed: () {
                     _loadWordView(context, wordData);
                   },
@@ -575,35 +884,163 @@ class MorphologySearchResultsState extends State<MorphologySearchResults> {
     final selected = await Navigator.push(
       context,
       MaterialPageRoute(
-          builder: (context) =>
-              WordView(wordData, _module, _config, _bibles)),
+          builder: (context) => WordView(wordData, _module, _config, _bibles)),
     );
     if (selected != null) Navigator.pop(context, selected);
   }
-
 }
 
-class WordView extends StatelessWidget {
+class WordView extends StatefulWidget {
   final Map _data;
   final String _module;
   final Config _config;
   final Bibles _bibles;
 
-  final Map interface = {
-    "ENG": ["Lexicon", "Search"],
-    "TC": ["原文辭典", "搜索"],
-    "SC": ["原文词典", "搜索"],
-  };
-
   WordView(this._data, this._module, this._config, this._bibles);
 
   @override
+  WordViewState createState() =>
+      WordViewState(this._data, this._module, this._config, this._bibles);
+}
+
+class WordViewState extends State<WordView> {
+  final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
+
+  final Map _data;
+  final String _module;
+  final Config _config;
+  final Bibles _bibles;
+  bool _isHebrew;
+  RegexHelper _regex;
+
+  final Map interface = {
+    "ENG": ["Lexicon", "Search", "Audio"],
+    "TC": ["原文辭典", "搜索", "語音功能"],
+    "SC": ["原文词典", "搜索", "语音功能"],
+  };
+
+  // Variables to work with TTS
+  FlutterTts flutterTts;
+  TtsState ttsState = TtsState.stopped;
+  get isPlaying => ttsState == TtsState.playing;
+  get isStopped => ttsState == TtsState.stopped;
+
+  WordViewState(this._data, this._module, this._config, this._bibles) {
+    this._isHebrew = ((_module == "OHGB") &&
+        (_data != null) &&
+        (_data.isNotEmpty) &&
+        (_data["Book"] < 40));
+    // setup regexHelper
+    _regex = RegexHelper();
+  }
+
+  @override
+  initState() {
+    super.initState();
+    initTts();
+  }
+
+  @override
+  void dispose() {
+    super.dispose();
+    flutterTts.stop();
+  }
+
+  initTts() {
+    flutterTts = FlutterTts();
+
+    flutterTts.setStartHandler(() {
+      setState(() {
+        ttsState = TtsState.playing;
+      });
+    });
+
+    flutterTts.setCompletionHandler(() {
+      setState(() {
+        ttsState = TtsState.stopped;
+      });
+    });
+
+    flutterTts.setErrorHandler((msg) {
+      setState(() {
+        ttsState = TtsState.stopped;
+      });
+    });
+  }
+
+  Future _speak(String message) async {
+    if (isPlaying) await _stop();
+    if ((message != null) && (message.isNotEmpty)) {
+      if (_isHebrew) {
+        (Platform.isAndroid)
+            ? await flutterTts.setLanguage(_config.ttsEnglish)
+            : await flutterTts.setLanguage("he-IL");
+      } else if (_config.greekBibles.contains(_module)) {
+        message = TtsHelper().removeGreekAccents(message);
+        await flutterTts.setLanguage("el-GR");
+      }
+      var result = await flutterTts.speak(message);
+      if (result == 1)
+        setState(() {
+          ttsState = TtsState.playing;
+        });
+    }
+  }
+
+  Future _stop() async {
+    var result = await flutterTts.stop();
+    if (result == 1)
+      setState(() {
+        ttsState = TtsState.stopped;
+      });
+  }
+
+  void _nonPlusMessage(String feature) {
+    String message =
+        "'$feature' ${_config.plusMessage[_config.abbreviations].first}";
+    final snackBar = SnackBar(
+      content: Text(message),
+      action: SnackBarAction(
+        label: _config.plusMessage[_config.abbreviations].last,
+        onPressed: () {
+          _launchPlusPage();
+        },
+      ),
+    );
+    _scaffoldKey.currentState.showSnackBar(snackBar);
+  }
+
+  Future _launchPlusPage() async {
+    String url = _config.plusURL;
+    if (await canLaunch(url)) {
+      await launch(url);
+    } else {
+      throw 'Could not launch $url';
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
-    TextSpan originalWord = ((_module == "OHGB") && (_data["Book"] < 40)) ? TextSpan(text: _data["Word"], style: TextStyle(fontFamily: "Ezra SIL", fontSize: 22.0)) : TextSpan(text: _data["Word"], style: TextStyle(fontSize: 22.0));
-    Widget title = RichText(text: TextSpan(children: <TextSpan>[TextSpan(text: "[${BibleParser(_config.abbreviations).bcvToVerseReference([_data["Book"], _data["Chapter"], _data["Verse"]])}] ", style: TextStyle(fontSize: 18.0)), originalWord]));
+    TextSpan originalWord = (_isHebrew)
+        ? TextSpan(
+            text: _data["Word"],
+            style: TextStyle(fontFamily: "Ezra SIL", fontSize: 22.0))
+        : TextSpan(text: _data["Word"], style: TextStyle(fontSize: 22.0));
+    Widget title = RichText(
+        text: TextSpan(children: <TextSpan>[
+      TextSpan(
+          text: "[${BibleParser(_config.abbreviations).bcvToVerseReference([
+            _data["Book"],
+            _data["Chapter"],
+            _data["Verse"]
+          ])}] ",
+          style: TextStyle(fontSize: 18.0)),
+      originalWord
+    ]));
     return Theme(
       data: _config.mainTheme,
       child: Scaffold(
+        key: _scaffoldKey,
         appBar: AppBar(
           title: title,
         ),
@@ -613,14 +1050,16 @@ class WordView extends StatelessWidget {
   }
 
   Widget _buildKeys(BuildContext context) {
-    Text originalWord = ((_module == "OHGB") && (_data["Book"] < 40)) ? Text(_data["Word"], style: _config.verseTextStyle["verseFontHebrew"]) : Text(_data["Word"], style: _config.verseTextStyle["verseFontGreek"]);
+    Text originalWord = (_isHebrew)
+        ? Text(_data["Word"], style: _config.verseTextStyle["verseFontHebrew"])
+        : Text(_data["Word"], style: _config.verseTextStyle["verseFontGreek"]);
 
     List bcvList = [_data["Book"], _data["Chapter"], _data["Verse"]];
 
     List<Bible> bibleList = [_bibles.bible1, _bibles.bible2, _bibles.iBible];
     List<Widget> verseList = bibleList
-        .map((bible) => _buildVerseRow(context, bible.openSingleVerse(bcvList),
-            bible.module, bcvList))
+        .map((bible) => _buildVerseRow(
+            context, bible.openSingleVerse(bcvList), bible.module, bcvList))
         .toList();
 
     List<String> keys = _data.keys.toList();
@@ -629,7 +1068,12 @@ class WordView extends StatelessWidget {
 
     return ListView(children: <Widget>[
       ExpansionTile(
-        title: Text(BibleParser(_config.abbreviations).bcvToVerseReference(bcvList), style: TextStyle(color: _config.myColors["black"],),),
+        title: Text(
+          BibleParser(_config.abbreviations).bcvToVerseReference(bcvList),
+          style: TextStyle(
+            color: _config.myColors["black"],
+          ),
+        ),
         initiallyExpanded: false,
         backgroundColor: Theme.of(context).accentColor.withOpacity(0.025),
         children: verseList,
@@ -643,14 +1087,13 @@ class WordView extends StatelessWidget {
     ]);
   }
 
-  Widget _buildVerseRow(BuildContext context, String text, String module, List bcvList) {
+  Widget _buildVerseRow(
+      BuildContext context, String text, String module, List bcvList) {
     int book = bcvList[0];
-    bool isHebrewBible =
-        ((_config.hebrewBibles.contains(module)) && (book < 40));
     TextDirection verseDirection =
-        isHebrewBible ? TextDirection.rtl : TextDirection.ltr;
+        (_isHebrew) ? TextDirection.rtl : TextDirection.ltr;
     TextStyle verseFont;
-    if (isHebrewBible) {
+    if (_isHebrew) {
       verseFont = _config.verseTextStyle["verseFontHebrew"];
     } else if (_config.greekBibles.contains(module)) {
       verseFont = _config.verseTextStyle["verseFontGreek"];
@@ -669,7 +1112,12 @@ class WordView extends StatelessWidget {
         ),
         textDirection: verseDirection,
       ),
-      subtitle: Text("[$module]", style: TextStyle(color: _config.myColors["blue"],),),
+      subtitle: Text(
+        "[$module]",
+        style: TextStyle(
+          color: _config.myColors["blue"],
+        ),
+      ),
       onTap: () {
         Navigator.pop(context, [bcvList, "", module]);
       },
@@ -682,31 +1130,63 @@ class WordView extends StatelessWidget {
     TextStyle dataStyle = _config.verseTextStyle["verseFont"];
     if ((key == "Word") || (key == "Lexeme"))
       dataStyle = _config.verseTextStyle["verseFontGreek"];
-    if (((_module == "OHGB") && (_data["Book"] < 40)) &&
-        ((key == "Word") || (key == "Lexeme")))
+    if ((_isHebrew) && ((key == "Word") || (key == "Lexeme")))
       dataStyle = _config.verseTextStyle["verseFontHebrew"];
     String data = _data[key].toString();
     if (data.contains(","))
       data = data.split(",").sublist(0, data.split(",").length - 1).join(", ");
+
+    // add trailing icon & action where it is appropriate
     IconButton trailing;
     if (key == "Morphology") {
       trailing = IconButton(
-        tooltip: interface[_config.abbreviations].last,
-        icon: Icon(Icons.search, color: _config.myColors["black"],),
+        tooltip: interface[_config.abbreviations][1],
+        icon: Icon(
+          Icons.search,
+          color: _config.myColors["black"],
+        ),
         onPressed: () {
-          _loadMorphologySearchView(context, _data["Lexeme"],
-              _data["LexicalEntry"], data);
+          _loadMorphologySearchView(
+              context, _data["Lexeme"], _data["LexicalEntry"], data);
         },
       );
     } else if (key == "LexicalEntry") {
       trailing = IconButton(
-        tooltip: interface[_config.abbreviations].first,
-        icon: Icon(Icons.translate, color: _config.myColors["black"],),
+        tooltip: interface[_config.abbreviations][0],
+        icon: Icon(
+          Icons.translate,
+          color: _config.myColors["black"],
+        ),
         onPressed: () {
           _loadLexiconView(context, _data["LexicalEntry"]);
         },
       );
+    } else if (key == "Word") {
+      trailing = IconButton(
+        tooltip: interface[_config.abbreviations][2],
+        icon: Icon(
+          Icons.volume_up,
+          color: _config.myColors["black"],
+        ),
+        onPressed: () {
+          if (_config.plus) {
+            String wordText = ((_isHebrew) && (Platform.isAndroid))
+                ? _data["Transliteration"]
+                : _data["Word"];
+            _speak(wordText);
+          } else {
+            _nonPlusMessage(interface[_config.abbreviations][2]);
+          }
+        },
+      );
     }
+
+    // add spacing to connected words in key
+    _regex.searchReplace = [
+      ['([a-z])([A-Z])', r'\1 \2'],
+    ];
+    key = _regex.doSearchReplace(key);
+
     return ListTile(
       title: Text(key, style: titleStyle),
       subtitle: Text(data, style: dataStyle),
@@ -718,7 +1198,8 @@ class WordView extends StatelessWidget {
     List lexicons = await SqliteHelper(_config).getLexicons(lexicalEntries);
     final selected = await Navigator.push(
       context,
-      MaterialPageRoute(builder: (context) => LexiconView(_config, lexicons, _bibles)),
+      MaterialPageRoute(
+          builder: (context) => LexiconView(_config, lexicons, _bibles)),
     );
     if (selected != null) Navigator.pop(context, selected);
   }
@@ -733,7 +1214,6 @@ class WordView extends StatelessWidget {
     );
     if (selected != null) Navigator.pop(context, selected);
   }
-
 }
 
 /*
@@ -763,7 +1243,6 @@ class LexiconViewState extends State<LexiconView> {
   LexiconViewState(this._config, this._lexicalEntries, this._bibles);
 */
 class LexiconView extends StatelessWidget {
-
   final List _lexicalEntries;
   final Config _config;
   final Bibles _bibles;
@@ -787,9 +1266,13 @@ class LexiconView extends StatelessWidget {
     String _lexicon = item["Lexicon"];
     String _content = item["Content"];
 
-    Widget headingRichText = Text(_lexicon, style: TextStyle(color: _config.myColors["grey"]),);
+    Widget headingRichText = Text(
+      _lexicon,
+      style: TextStyle(color: _config.myColors["grey"]),
+    );
 
-    String content = "<h>$_lexeme</h><p>Transliteration: $_transliteration<br>Morphology: $_morphology<br>Gloss: $_gloss</p><p>$_content</p>";
+    String content =
+        "<h>$_lexeme</h><p>Transliteration: $_transliteration<br>Morphology: $_morphology<br>Gloss: $_gloss</p><p>$_content</p>";
     Widget contentRichText = _wrapper.buildRichText(context, content);
 
     return [headingRichText, contentRichText];
@@ -834,5 +1317,4 @@ class LexiconView extends StatelessWidget {
       ),
     );
   }
-
 }

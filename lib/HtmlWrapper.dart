@@ -7,14 +7,20 @@ import 'Bibles.dart';
 
 // This wrapper deals with simple html elements only.
 class HtmlWrapper {
-
   final Bibles _bibles;
   final Config _config;
   int currentBible = 1;
   String _abbreviations;
   BibleParser _parser;
   RegexHelper _regex;
-  TextStyle _defaultStyle, _bcvStyle, _hStyle, _iStyle, _uStyle, _bStyle, _hebStyle, _grkStyle;
+  TextStyle _defaultStyle,
+      _bcvStyle,
+      _hStyle,
+      _iStyle,
+      _uStyle,
+      _bStyle,
+      _hebStyle,
+      _grkStyle;
 
   HtmlWrapper(this._bibles, this._config) {
     this._abbreviations = _config.abbreviations;
@@ -25,18 +31,33 @@ class HtmlWrapper {
 
   setHtmlTextStyle() {
     _defaultStyle = _config.verseTextStyle["verseFont"];
-    _bcvStyle = TextStyle(fontSize: (_config.fontSize - 2), color: _config.myColors["blue"], decoration: TextDecoration.underline);
-    _hStyle = TextStyle(fontSize: (_config.fontSize + 4), color: _config.myColors["black"], fontWeight: FontWeight.bold);
-    _iStyle = TextStyle(fontSize: _config.fontSize, color: _config.myColors["black"], fontStyle: FontStyle.italic);
-    _uStyle = TextStyle(fontSize: _config.fontSize, color: _config.myColors["black"], decoration: TextDecoration.underline);
-    _bStyle = TextStyle(fontSize: _config.fontSize, color: _config.myColors["black"], fontWeight: FontWeight.bold);
+    _bcvStyle = TextStyle(
+        fontSize: (_config.fontSize - 2),
+        color: _config.myColors["blue"],
+        decoration: TextDecoration.underline);
+    _hStyle = TextStyle(
+        fontSize: (_config.fontSize + 4),
+        color: _config.myColors["black"],
+        fontWeight: FontWeight.bold);
+    _iStyle = TextStyle(
+        fontSize: _config.fontSize,
+        color: _config.myColors["black"],
+        fontStyle: FontStyle.italic);
+    _uStyle = TextStyle(
+        fontSize: _config.fontSize,
+        color: _config.myColors["black"],
+        decoration: TextDecoration.underline);
+    _bStyle = TextStyle(
+        fontSize: _config.fontSize,
+        color: _config.myColors["black"],
+        fontWeight: FontWeight.bold);
     _hebStyle = _config.verseTextStyle["verseFontHebrew"];
     _grkStyle = _config.verseTextStyle["verseFontGreek"];
   }
 
   convertHtmlText(String htmlText, [bool tagBcv = true]) {
-    String text = (tagBcv) ? _parser.parseText(htmlText): htmlText;
-    
+    String text = (tagBcv) ? _parser.parseText(htmlText) : htmlText;
+
     _regex.searchReplace = [
       //['\n|<p>|<author>|</author>|<date>|</date>|<re>|</re>|<note>|</note>|<Lat>|</Lat>|<foreign.*?>|</foreign>|<corr>|</corr>', ''],
       ['\n|<ind>|</ind>|<font.*?>|</font>|<div.*?>', ''],
@@ -68,7 +89,11 @@ class HtmlWrapper {
         List<dynamic> bcvList = text.substring(1).split(",");
         bcvList = bcvList.map((i) => int.parse(i)).toList();
         String bcvReference = _parser.bcvToVerseReference(bcvList);
-        textSpans.add(TextSpan(text: bcvReference, style: _bcvStyle, recognizer: TapGestureRecognizer()..onTap = () => popUpVerse(context, bcvList)));
+        textSpans.add(TextSpan(
+            text: bcvReference,
+            style: _bcvStyle,
+            recognizer: TapGestureRecognizer()
+              ..onTap = () => popUpVerse(context, bcvList)));
       } else if (text.startsWith("＄")) {
         textSpans.add(TextSpan(text: text.substring(1), style: _hStyle));
       } else if (text.startsWith("｛")) {
@@ -111,28 +136,36 @@ class HtmlWrapper {
         break;
       default:
     }
-    final selected = await showModalBottomSheet(context: context, builder: (BuildContext context) {
-      return Container(
-        color: _config.myColors["background"],
-        child: Padding(
-          padding: const EdgeInsets.symmetric(vertical: 5.0),
-          child: ListTile(
-            title: verseText,
-            subtitle: Text("[$reference, $module]", style: TextStyle(color: _config.myColors["blue"]),),
-            onTap: () {
-              Navigator.pop(context, [bcvList, "", module]);
-            },
-            trailing: IconButton(
-              //tooltip: "",
-              icon: Icon(Icons.swap_vert, color: _config.myColors["black"],),
-              onPressed: () {
-                Navigator.pop(context, [bcvList, "", currentBible]);
-              },
+    final selected = await showModalBottomSheet(
+        context: context,
+        builder: (BuildContext context) {
+          return Container(
+            color: _config.myColors["background"],
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: 5.0),
+              child: ListTile(
+                title: verseText,
+                subtitle: Text(
+                  "[$reference, $module]",
+                  style: TextStyle(color: _config.myColors["blue"]),
+                ),
+                onTap: () {
+                  Navigator.pop(context, [bcvList, "", module]);
+                },
+                trailing: IconButton(
+                  //tooltip: "",
+                  icon: Icon(
+                    Icons.swap_vert,
+                    color: _config.myColors["black"],
+                  ),
+                  onPressed: () {
+                    Navigator.pop(context, [bcvList, "", currentBible]);
+                  },
+                ),
+              ),
             ),
-          ),
-        ),
-      );
-    });
+          );
+        });
     if (selected != null) {
       if (selected[2] is int) {
         currentBible = (currentBible < 3) ? currentBible + 1 : 1;
@@ -147,10 +180,14 @@ class HtmlWrapper {
   Widget buildVerseRichText(Bible bible, List bcvList) {
     String module = bible.module;
     int book = bcvList[0];
-    String text = (bcvList.length > 3) ? bible.openSingleVerseRange(bcvList) : bible.openSingleVerse(bcvList);
+    String text = (bcvList.length > 3)
+        ? bible.openSingleVerseRange(bcvList)
+        : bible.openSingleVerse(bcvList);
 
-    bool isHebrewBible = ((_config.hebrewBibles.contains(module)) && (book < 40));
-    TextDirection verseDirection = (isHebrewBible) ? TextDirection.rtl : TextDirection.ltr;
+    bool isHebrewBible =
+        ((_config.hebrewBibles.contains(module)) && (book < 40));
+    TextDirection verseDirection =
+        (isHebrewBible) ? TextDirection.rtl : TextDirection.ltr;
     TextStyle verseFont;
     if (isHebrewBible) {
       verseFont = _config.verseTextStyle["verseFontHebrew"];
@@ -161,7 +198,8 @@ class HtmlWrapper {
     }
 
     List<TextSpan> wordSpans = (_config.interlinearBibles.contains(module))
-        ? InterlinearHelper(_config.verseTextStyle).getInterlinearSpan(text, book)
+        ? InterlinearHelper(_config.verseTextStyle)
+            .getInterlinearSpan(text, book)
         : <TextSpan>[TextSpan(text: text, style: verseFont)];
     return RichText(
       text: TextSpan(
@@ -171,5 +209,4 @@ class HtmlWrapper {
       textDirection: verseDirection,
     );
   }
-
 }

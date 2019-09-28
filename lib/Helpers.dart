@@ -1,60 +1,123 @@
 import 'package:flutter/services.dart' show rootBundle;
 import 'package:flutter/material.dart';
-import 'package:large_file_copy/large_file_copy.dart';
-import 'package:path_provider/path_provider.dart';
 import 'dart:convert';
 import 'config.dart';
-
 // work with sqLite files
 import 'dart:io';
 import 'package:path/path.dart';
 import 'package:sqflite/sqflite.dart';
+import 'package:large_file_copy/large_file_copy.dart';
+import 'package:path_provider/path_provider.dart';
+
+enum DialogAction {
+  cancel,
+  share,
+  addFavourite,
+  removeFavourite,
+  copy,
+  addCopy,
+  compareAll,
+  crossReference,
+  interlinearOHGB,
+  morphologyOHGB,
+  interlinearLXX1,
+  morphologyLXX1,
+  interlinearLXX2,
+  morphologyLXX2,
+  interlinearABP,
+  openVerse,
+}
+
+enum TtsState {
+  playing,
+  stopped,
+}
+
+class TtsHelper {
+  String removeGreekAccents(String text) {
+    List searchReplace = [
+      ['[ἀἄᾄἂἆἁἅᾅἃάᾴὰᾶᾷᾳᾆᾀ]', 'α'],
+      ['[ἈἌἎἉἍἋ]', 'Α'],
+      ['[ἐἔἑἕἓέὲ]', 'ε'],
+      ['[ἘἜἙἝἛ]', 'Ε'],
+      ['[ἠἤᾔἢἦᾖᾐἡἥἣἧᾗᾑήῄὴῆῇῃ]', 'η'],
+      ['[ἨἬἪἮἩἭἫ]', 'Η'],
+      ['[ἰἴἶἱἵἳἷίὶῖϊΐῒ]', 'ι'],
+      ['[ἸἼἹἽ]', 'Ι'],
+      ['[ὀὄὂὁὅὃόὸ]', 'ο'],
+      ['[ὈὌὉὍὋ]', 'Ο'],
+      ['[ῥ]', 'ρ'],
+      ['[Ῥ]', 'Ρ'],
+      ['[ὐὔὒὖὑὕὓὗύὺῦϋΰῢ]', 'υ'],
+      ['[ὙὝὟ]', 'Υ'],
+      ['[ὠὤὢὦᾠὡὥὧᾧώῴὼῶῷῳᾤὣ]', 'ω'],
+      ['[ὨὬὪὮὩὭὯ]', 'Ω'],
+      [
+        "[\-\—\,\;\:\\\?\.\·\·\'\‘\’\᾿\‹\›\“\”\«\»\(\)\[\]\{\}\⧼\⧽\〈\〉\*\‿\᾽\⇔\¦]",
+        ""
+      ],
+    ];
+    for (var i in searchReplace) {
+      String search = i.first;
+      String replace = i.last;
+      text = text.replaceAll(RegExp(search), replace);
+    }
+    return text;
+  }
+}
 
 class FileIOHelper {
-
   String getDataPath(String dataType, [String module]) {
     var config = Config();
     return "${config.assets}/$dataType/$module.json";
   }
-
 }
 
 class JsonHelper {
-
   Future getJsonObject(filePath) async {
     var jsonString = await rootBundle.loadString(filePath);
     var jsonObject = jsonDecode(jsonString);
     return jsonObject;
   }
-
 }
 
 class RegexHelper {
-
   var searchReplace;
 
   var searchPattern;
 
   var patternString;
 
-  String Function(Match) replacement(String pattern) => (Match match) => pattern.replaceAllMapped(new RegExp(r'\\(\d+)'), (m) => match[int.parse(m[1])]);
+  String Function(Match) replacement(String pattern) => (Match match) => pattern
+      .replaceAllMapped(new RegExp(r'\\(\d+)'), (m) => match[int.parse(m[1])]);
 
-  String replaceAllSmart(String source, Pattern pattern, String replacementPattern) => source.replaceAllMapped(pattern, replacement(replacementPattern));
+  String replaceAllSmart(
+          String source, Pattern pattern, String replacementPattern) =>
+      source.replaceAllMapped(pattern, replacement(replacementPattern));
 
-  String doSearchReplace(String text, {bool multiLine = false, bool caseSensitive = true, bool unicode = false, bool dotAll = false}) {
+  String doSearchReplace(String text,
+      {bool multiLine = false,
+      bool caseSensitive = true,
+      bool unicode = false,
+      bool dotAll = false}) {
     var replacedText = text;
     for (var i in this.searchReplace) {
       var search = i[0];
       var replace = i[1];
-      replacedText = this.replaceAllSmart(replacedText, RegExp(search, multiLine: multiLine, caseSensitive: caseSensitive, unicode: unicode, dotAll: dotAll), replace);
+      replacedText = this.replaceAllSmart(
+          replacedText,
+          RegExp(search,
+              multiLine: multiLine,
+              caseSensitive: caseSensitive,
+              unicode: unicode,
+              dotAll: dotAll),
+          replace);
     }
     return replacedText;
   }
-
 }
 
 class SqliteHelper {
-
   final Config config;
 
   SqliteHelper(this.config);
@@ -111,7 +174,8 @@ class SqliteHelper {
 
   Future getMorphology(List bcvList, String module) async {
     final Database db = await this.initMorphologyDb();
-    var statement = "SELECT * FROM $module WHERE Book = ? AND Chapter = ? AND Verse = ?";
+    var statement =
+        "SELECT * FROM $module WHERE Book = ? AND Chapter = ? AND Verse = ?";
     List<Map> morphology = await db.rawQuery(statement, bcvList);
     db.close();
     return morphology;
@@ -152,7 +216,8 @@ class SqliteHelper {
   Future getTopics(List bcvList, String module) async {
     List bcvList2 = [...bcvList, bcvList[2]];
     final Database db = await this.initToolsDb();
-    var statement = "SELECT Tool, Entry, Topic FROM $module WHERE Book = ? AND Chapter = ? AND Verse <= ? AND toVerse >= ?";
+    var statement =
+        "SELECT Tool, Entry, Topic FROM $module WHERE Book = ? AND Chapter = ? AND Verse <= ? AND toVerse >= ?";
     List<Map> tools = await db.rawQuery(statement, bcvList2);
     db.close();
 
@@ -171,7 +236,8 @@ class SqliteHelper {
 
   Future getTools(List bcvList, String module) async {
     final Database db = await this.initToolsDb();
-    var statement = "SELECT * FROM $module WHERE Book = ? AND Chapter = ? AND Verse = ? ORDER BY Number";
+    var statement =
+        "SELECT * FROM $module WHERE Book = ? AND Chapter = ? AND Verse = ? ORDER BY Number";
     List<Map> tools = await db.rawQuery(statement, bcvList);
     db.close();
 
@@ -203,7 +269,9 @@ class SqliteHelper {
   }
 
   Future getLexicons(String lexicalEntries) async {
-    List entries = lexicalEntries.split(",").sublist(0, (lexicalEntries.split(",").length - 1));
+    List entries = lexicalEntries
+        .split(",")
+        .sublist(0, (lexicalEntries.split(",").length - 1));
     List data = [];
     for (var entry in entries) {
       List entryData = await getLexicon(entry);
@@ -219,12 +287,15 @@ class SqliteHelper {
     db.close();
     return lexicon;
   }
-
 }
 
 class InterlinearHelper {
-
-  TextStyle _verseFontGreek, _activeVerseFontGreek, _verseFontHebrew, _activeVerseFontHebrew, _interlinearStyleDim, _interlinearStyle;
+  TextStyle _verseFontGreek,
+      _activeVerseFontGreek,
+      _verseFontHebrew,
+      _activeVerseFontHebrew,
+      _interlinearStyleDim,
+      _interlinearStyle;
 
   InterlinearHelper(Map verseTextStyle) {
     _verseFontGreek = verseTextStyle["verseFontGreek"];
@@ -261,7 +332,8 @@ class InterlinearHelper {
             }
           }
         } else {
-          words.add(TextSpan(text: word.substring(1), style: _interlinearStyle));
+          words
+              .add(TextSpan(text: word.substring(1), style: _interlinearStyle));
         }
       } else {
         words.add(TextSpan(text: word, style: originalStyle));
@@ -270,5 +342,4 @@ class InterlinearHelper {
 
     return words;
   }
-
 }

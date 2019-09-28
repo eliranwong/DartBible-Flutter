@@ -2,25 +2,24 @@ import 'package:flutter/material.dart';
 import 'config.dart';
 import 'Bibles.dart';
 import 'BibleParser.dart';
-import 'DialogAction.dart';
+import 'Helpers.dart';
 import 'Tools.dart';
 
 class MyDrawer extends StatefulWidget {
-
   final Config config;
   final Bible _bible, _headings;
   final List _currentActiveVerse;
   final Function onTap;
 
-  MyDrawer(this.config, this._bible, this._headings, this._currentActiveVerse, this.onTap);
+  MyDrawer(this.config, this._bible, this._headings, this._currentActiveVerse,
+      this.onTap);
 
   @override
-  _MyDrawerState createState() => _MyDrawerState(this.config, this._bible, this._headings, this._currentActiveVerse, this.onTap);
-
+  _MyDrawerState createState() => _MyDrawerState(this.config, this._bible,
+      this._headings, this._currentActiveVerse, this.onTap);
 }
 
 class _MyDrawerState extends State<MyDrawer> {
-
   final Config config;
   final Bible _bible, _headings;
   final List _currentActiveVerse;
@@ -33,18 +32,64 @@ class _MyDrawerState extends State<MyDrawer> {
   TextStyle _generalTextStyle, _entryTextStyle;
 
   Map interfaceApp = {
-    "ENG": ["Unique Bible App", "Navigation menu", "Search", "Quick swap", "Settings", "Parallel mode", "Favourites", "History", "Books", "Chapters", "Timelines", "Headings"],
-    "TC": ["跨平台聖經工具", "菜單", "搜索", "快速轉換", "設定", "平衡模式", "收藏", "歷史", "書卷", "章", "時序圖", "標題"],
-    "SC": ["跨平台圣经工具", "菜单", "搜索", "快速转换", "设定", "平衡模式", "收藏", "历史", "书卷", "章", "时序图", "标题"],
+    "ENG": [
+      "Unique Bible App",
+      "Navigation menu",
+      "Search",
+      "Quick swap",
+      "Settings",
+      "Parallel mode",
+      "Favourites",
+      "History",
+      "Books",
+      "Chapters",
+      "Timelines",
+      "Headings"
+    ],
+    "TC": [
+      "跨平台聖經工具",
+      "菜單",
+      "搜索",
+      "快速轉換",
+      "設定",
+      "平衡模式",
+      "收藏",
+      "歷史",
+      "書卷",
+      "章",
+      "時序圖",
+      "標題"
+    ],
+    "SC": [
+      "跨平台圣经工具",
+      "菜单",
+      "搜索",
+      "快速转换",
+      "设定",
+      "平衡模式",
+      "收藏",
+      "历史",
+      "书卷",
+      "章",
+      "时序图",
+      "标题"
+    ],
   };
 
   Map interfaceAlert = {
-    "ENG": ["CANCEL", "ADD", "REMOVE", "Add to Favourites?", "Remove from Favourites?"],
+    "ENG": [
+      "CANCEL",
+      "ADD",
+      "REMOVE",
+      "Add to Favourites?",
+      "Remove from Favourites?"
+    ],
     "TC": ["取消", "收藏", "删除", "收藏？", "删除？"],
     "SC": ["取消", "收藏", "删除", "收藏？", "删除？"],
   };
 
-  _MyDrawerState(this.config, this._bible, this._headings, this._currentActiveVerse, this.onTap) {
+  _MyDrawerState(this.config, this._bible, this._headings,
+      this._currentActiveVerse, this.onTap) {
     this.abbreviations = this.config.abbreviations;
     this._selectedBook = this._currentActiveVerse.first;
     this._headingBook = _selectedBook;
@@ -82,7 +127,9 @@ class _MyDrawerState extends State<MyDrawer> {
             padding: EdgeInsets.zero,
             children: <Widget>[
               UserAccountsDrawerHeader(
-                decoration: BoxDecoration(color: this.config.myColors["appBarColor"],),
+                decoration: BoxDecoration(
+                  color: this.config.myColors["appBarColor"],
+                ),
                 currentAccountPicture: const CircleAvatar(
                   backgroundImage: AssetImage("assets/images/account.png"),
                 ),
@@ -130,23 +177,34 @@ class _MyDrawerState extends State<MyDrawer> {
       ["23", "John"],
       ["24", "4 Gospels"],
     ];
-    List<Widget> timelineRowList = timelines.map((i) => _buildTimelineRow(context, i[0], i[1], timelines)).toList();
+    List<Widget> timelineRowList = timelines
+        .map((i) => _buildTimelineRow(context, i[0], i[1], timelines))
+        .toList();
     return ExpansionTile(
-      title: Text(this.interfaceApp[this.abbreviations][10], style: _generalTextStyle),
+      title: Text(this.interfaceApp[this.abbreviations][10],
+          style: _generalTextStyle),
       //initiallyExpanded: true,
       backgroundColor: Theme.of(context).accentColor.withOpacity(0.025),
       children: timelineRowList,
     );
   }
 
-  Widget _buildTimelineRow(BuildContext context, String file, String title, List timelines) {
+  Widget _buildTimelineRow(
+      BuildContext context, String file, String title, List timelines) {
     return ListTile(
-      leading: Icon(Icons.timeline, color: this.config.myColors["grey"],),
-      title: Text(title, style: _entryTextStyle,),
+      leading: Icon(
+        Icons.timeline,
+        color: this.config.myColors["grey"],
+      ),
+      title: Text(
+        title,
+        style: _entryTextStyle,
+      ),
       onTap: () {
         Navigator.push(
           context,
-          MaterialPageRoute(builder: (context) => Timeline(file, title, timelines, config)),
+          MaterialPageRoute(
+              builder: (context) => Timeline(file, title, timelines, config)),
         );
       },
     );
@@ -154,14 +212,18 @@ class _MyDrawerState extends State<MyDrawer> {
 
   Widget _buildHeadingList(BuildContext context) {
     List<Widget> headingRowList;
-    if ((_currentActiveVerse.join(".") == "0.0.0") || (_headings?.data == null)) {
+    if ((_currentActiveVerse.join(".") == "0.0.0") ||
+        (_headings?.data == null)) {
       headingRowList = [_emptyRow(context)];
     } else {
-      List headings = _headings.openSingleChapter([_headingBook, _selectedChapter, 0]);
-      headingRowList = headings.map((i) => _buildHeadingRow(context, i)).toList();
+      List headings =
+          _headings.openSingleChapter([_headingBook, _selectedChapter, 0]);
+      headingRowList =
+          headings.map((i) => _buildHeadingRow(context, i)).toList();
     }
     return ExpansionTile(
-      title: Text(this.interfaceApp[this.abbreviations][11], style: _generalTextStyle),
+      title: Text(this.interfaceApp[this.abbreviations][11],
+          style: _generalTextStyle),
       backgroundColor: Theme.of(context).accentColor.withOpacity(0.025),
       initiallyExpanded: true,
       children: headingRowList,
@@ -170,14 +232,20 @@ class _MyDrawerState extends State<MyDrawer> {
 
   Widget _buildHeadingRow(BuildContext context, List verseItem) {
     return ListTile(
-      leading: Icon(Icons.outlined_flag, color: this.config.myColors["grey"],),
+      leading: Icon(
+        Icons.outlined_flag,
+        color: this.config.myColors["grey"],
+      ),
       title: Text(
         verseItem[1],
         style: _entryTextStyle,
       ),
       onTap: () {
         Navigator.pop(context);
-        onTap(["open", [verseItem.first, "", _bible.module]]);
+        onTap([
+          "open",
+          [verseItem.first, "", _bible.module]
+        ]);
       },
     );
   }
@@ -192,7 +260,8 @@ class _MyDrawerState extends State<MyDrawer> {
           favouriteList.map((i) => _buildFavouriteRow(context, i)).toList();
     }
     return ExpansionTile(
-      title: Text(this.interfaceApp[this.abbreviations][6], style: _generalTextStyle),
+      title: Text(this.interfaceApp[this.abbreviations][6],
+          style: _generalTextStyle),
       backgroundColor: Theme.of(context).accentColor.withOpacity(0.025),
       children: favouriteRowList,
     );
@@ -202,16 +271,21 @@ class _MyDrawerState extends State<MyDrawer> {
     var parser = BibleParser(this.abbreviations);
     String hxReference = parser.bcvToVerseReference(hxBcvList);
     return ListTile(
-      leading: Icon(Icons.favorite_border, color: this.config.myColors["grey"],),
+      leading: Icon(
+        Icons.favorite_border,
+        color: this.config.myColors["grey"],
+      ),
       title: Text(
         hxReference,
         style: _entryTextStyle,
       ),
       onTap: () {
         Navigator.pop(context);
-        onTap(["open", [hxBcvList, "", _bible.module]]);
+        onTap([
+          "open",
+          [hxBcvList, "", _bible.module]
+        ]);
       },
-
       onLongPress: () {
         _removeFromFavouriteDialog(context, hxBcvList);
       },
@@ -228,7 +302,8 @@ class _MyDrawerState extends State<MyDrawer> {
           historyList.map((i) => _buildHistoryRow(context, i)).toList();
     }
     return ExpansionTile(
-      title: Text(this.interfaceApp[this.abbreviations][7], style: _generalTextStyle),
+      title: Text(this.interfaceApp[this.abbreviations][7],
+          style: _generalTextStyle),
       backgroundColor: Theme.of(context).accentColor.withOpacity(0.025),
       children: historyRowList,
     );
@@ -238,14 +313,20 @@ class _MyDrawerState extends State<MyDrawer> {
     var parser = BibleParser(this.abbreviations);
     String hxReference = parser.bcvToVerseReference(hxBcvList);
     return ListTile(
-      leading: Icon(Icons.history, color: this.config.myColors["grey"],),
+      leading: Icon(
+        Icons.history,
+        color: this.config.myColors["grey"],
+      ),
       title: Text(
         hxReference,
         style: _entryTextStyle,
       ),
       onTap: () {
         Navigator.pop(context);
-        onTap(["open", [hxBcvList, "", _bible.module]]);
+        onTap([
+          "open",
+          [hxBcvList, "", _bible.module]
+        ]);
       },
       onLongPress: () {
         _addToFavouriteDialog(context, hxBcvList);
@@ -255,7 +336,8 @@ class _MyDrawerState extends State<MyDrawer> {
 
   Widget _buildBookList(BuildContext context) {
     List<Widget> bookRowList;
-    if ((_currentActiveVerse.join(".") == "0.0.0") || (_bible?.bookList == null)) {
+    if ((_currentActiveVerse.join(".") == "0.0.0") ||
+        (_bible?.bookList == null)) {
       bookRowList = [_emptyRow(context)];
     } else {
       bookRowList = [
@@ -269,7 +351,8 @@ class _MyDrawerState extends State<MyDrawer> {
       ];
     }
     return ExpansionTile(
-      title: Text(this.interfaceApp[this.abbreviations][8], style: _generalTextStyle),
+      title: Text(this.interfaceApp[this.abbreviations][8],
+          style: _generalTextStyle),
       initiallyExpanded: true,
       backgroundColor: Theme.of(context).accentColor.withOpacity(0.025),
       children: bookRowList,
@@ -286,7 +369,7 @@ class _MyDrawerState extends State<MyDrawer> {
     if (_displayAllBooks) {
       bookChips = List<Widget>.generate(
         bookList.length,
-            (int index) {
+        (int index) {
           int book = bookList[index];
           abb = parser.standardAbbreviation[book.toString()];
           return ChoiceChip(
@@ -322,7 +405,8 @@ class _MyDrawerState extends State<MyDrawer> {
 
   Widget _buildChapterList(BuildContext context) {
     List<Widget> chapterRowList;
-    if ((_currentActiveVerse.join(".") == "0.0.0") || (_bible?.bookList == null)) {
+    if ((_currentActiveVerse.join(".") == "0.0.0") ||
+        (_bible?.bookList == null)) {
       chapterRowList = [_emptyRow(context)];
     } else {
       List chapterList;
@@ -330,7 +414,9 @@ class _MyDrawerState extends State<MyDrawer> {
       int currentBook = _currentActiveVerse[0];
       if ((_selectedBook != null) && (_selectedBook != currentBook)) {
         chapterList = _bible.getChapterList(_selectedBook);
-        (chapterList.isNotEmpty) ? selectedChapter = chapterList[0] : selectedChapter = 0;
+        (chapterList.isNotEmpty)
+            ? selectedChapter = chapterList[0]
+            : selectedChapter = 0;
         selectedBook = _selectedBook;
         _selectedBook = currentBook;
       } else {
@@ -346,7 +432,7 @@ class _MyDrawerState extends State<MyDrawer> {
             spacing: 3.0,
             children: List<Widget>.generate(
               chapterList.length,
-                  (int index) {
+              (int index) {
                 int chapter = chapterList[index];
                 return ChoiceChip(
                   label: Text(chapter.toString()),
@@ -355,7 +441,14 @@ class _MyDrawerState extends State<MyDrawer> {
                     List verses = _bible.getVerseList(selectedBook, chapter);
                     if (verses.isNotEmpty) {
                       Navigator.pop(context);
-                      onTap(["open", [[selectedBook, chapter, verses[0]], "", _bible.module]]);
+                      onTap([
+                        "open",
+                        [
+                          [selectedBook, chapter, verses[0]],
+                          "",
+                          _bible.module
+                        ]
+                      ]);
                     }
                   },
                 );
@@ -366,7 +459,8 @@ class _MyDrawerState extends State<MyDrawer> {
       ];
     }
     return ExpansionTile(
-      title: Text(this.interfaceApp[this.abbreviations][9], style: _generalTextStyle),
+      title: Text(this.interfaceApp[this.abbreviations][9],
+          style: _generalTextStyle),
       initiallyExpanded: true,
       backgroundColor: Theme.of(context).accentColor.withOpacity(0.025),
       children: chapterRowList,
@@ -385,7 +479,8 @@ class _MyDrawerState extends State<MyDrawer> {
   // reference: https://github.com/flutter/flutter/blob/master/examples/flutter_gallery/lib/demo/material/dialog_demo.dart
   void _addToFavouriteDialog(BuildContext context, List bcvList) {
     final ThemeData theme = Theme.of(context);
-    final TextStyle dialogTextStyle = theme.textTheme.subhead.copyWith(color: theme.textTheme.caption.color);
+    final TextStyle dialogTextStyle =
+        theme.textTheme.subhead.copyWith(color: theme.textTheme.caption.color);
     showMyDialog<DialogAction>(
       bcvList,
       context: context,
@@ -414,7 +509,8 @@ class _MyDrawerState extends State<MyDrawer> {
 
   void _removeFromFavouriteDialog(BuildContext context, List bcvList) {
     final ThemeData theme = Theme.of(context);
-    final TextStyle dialogTextStyle = theme.textTheme.subhead.copyWith(color: theme.textTheme.caption.color);
+    final TextStyle dialogTextStyle =
+        theme.textTheme.subhead.copyWith(color: theme.textTheme.caption.color);
     showMyDialog<DialogAction>(
       bcvList,
       context: context,
@@ -455,5 +551,4 @@ class _MyDrawerState extends State<MyDrawer> {
       }
     });
   }
-
 }

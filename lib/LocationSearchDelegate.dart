@@ -3,7 +3,6 @@ import 'package:url_launcher/url_launcher.dart';
 import 'config.dart';
 
 class LocationSearchDelegate extends SearchDelegate<List> {
-
   List _data;
   Config _config;
   String abbreviations;
@@ -13,7 +12,7 @@ class LocationSearchDelegate extends SearchDelegate<List> {
     "TC": ["清空", "搜索", "聖經地點"],
     "SC": ["清空", "搜索", "圣经地点"],
   };
-  
+
   List locations = [
     {"LocationID": "BL1", "Name": "Abana"},
     {"LocationID": "BL2", "Name": "Abarim"},
@@ -1211,7 +1210,8 @@ class LocationSearchDelegate extends SearchDelegate<List> {
   // Function triggered when "ENTER" is pressed.
   @override
   Widget buildResults(BuildContext context) {
-    if (query.isNotEmpty) _data = locations.where((i) => i["Name"].contains(query)).toList();
+    if (query.isNotEmpty)
+      _data = locations.where((i) => i["Name"].contains(query)).toList();
     return _buildItems(context);
   }
 
@@ -1238,30 +1238,33 @@ class LocationSearchDelegate extends SearchDelegate<List> {
     var itemData = _data[i];
 
     return ListTile(
-      leading: Icon(Icons.pin_drop, color: _config.myColors["black"],),
+      leading: Icon(
+        Icons.pin_drop,
+        color: _config.myColors["black"],
+      ),
       title: Text(itemData["Name"], style: _config.verseTextStyle["verseFont"]),
       trailing: IconButton(
         tooltip: this.interface[this.abbreviations][1],
-        icon: Icon(Icons.search, color: _config.myColors["black"],),
+        icon: Icon(
+          Icons.search,
+          color: _config.myColors["black"],
+        ),
         onPressed: () {
           close(context, [itemData["LocationID"]]);
         },
       ),
-
       onTap: () {
         _launchMarvelEXLBL(itemData["LocationID"]);
       },
-
     );
   }
 
   Future _launchMarvelEXLBL(String locationID) async {
     String url = 'https://marvel.bible/tool.php?exlbl=$locationID';
     if (await canLaunch(url)) {
-    await launch(url);
+      await launch(url);
     } else {
-    throw 'Could not launch $url';
+      throw 'Could not launch $url';
     }
   }
-
 }

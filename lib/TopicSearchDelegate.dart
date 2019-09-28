@@ -4,7 +4,6 @@ import 'config.dart';
 import 'Helpers.dart';
 
 class TopicSearchDelegate extends SearchDelegate<List> {
-
   List _data;
   Config _config;
   String abbreviations;
@@ -97,22 +96,30 @@ class TopicSearchDelegate extends SearchDelegate<List> {
     var itemData = _data[i];
 
     return ListTile(
-      leading: Icon(Icons.title, color: _config.myColors["black"],),
-      title: Text(itemData["Topic"], style: _config.verseTextStyle["verseFont"]),
-      subtitle: Text(itemData["Tool"], style: TextStyle(fontSize: (_config.fontSize - 5), color: _config.myColors["grey"],)),
+      leading: Icon(
+        Icons.title,
+        color: _config.myColors["black"],
+      ),
+      title:
+          Text(itemData["Topic"], style: _config.verseTextStyle["verseFont"]),
+      subtitle: Text(itemData["Tool"],
+          style: TextStyle(
+            fontSize: (_config.fontSize - 5),
+            color: _config.myColors["grey"],
+          )),
       trailing: IconButton(
         tooltip: this.interface[this.abbreviations][1],
-        icon: Icon(Icons.search, color: _config.myColors["black"],),
+        icon: Icon(
+          Icons.search,
+          color: _config.myColors["black"],
+        ),
         onPressed: () {
           close(context, [itemData["Entry"], "search"]);
         },
       ),
-
       onTap: () {
         close(context, [itemData["Entry"], "open"]);
       },
-
     );
   }
-
 }
