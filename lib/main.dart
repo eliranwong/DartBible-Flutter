@@ -220,6 +220,7 @@ class UniqueBibleState extends State<UniqueBible> {
   get isPlaying => ttsState == TtsState.playing;
   get isStopped => ttsState == TtsState.stopped;
   Icon _ttsIcon = Icon(Icons.volume_up);
+  bool _speakOneVerse = false;
 
   @override
   initState() {
@@ -262,8 +263,12 @@ class UniqueBibleState extends State<UniqueBible> {
         ttsState = TtsState.stopped;
         _ttsIcon = Icon(Icons.volume_up);
       });
-      _scrollIndex += 1;
-      _readVerse();
+      if (_speakOneVerse) {
+        _speakOneVerse = false;
+      } else {
+        _scrollIndex += 1;
+        _readVerse();
+      }
     });
 
     flutterTts.setErrorHandler((msg) {
@@ -350,6 +355,7 @@ class UniqueBibleState extends State<UniqueBible> {
     var result = await flutterTts.stop();
     if (result == 1)
       setState(() {
+        _speakOneVerse = false;
         ttsState = TtsState.stopped;
         _ttsIcon = Icon(Icons.volume_up);
         _scrollIndex = _activeIndex;
@@ -484,7 +490,8 @@ class UniqueBibleState extends State<UniqueBible> {
             BibleParser(this.abbreviations).bcvToVerseReference(bcvList);
 
         var verseDirection = TextDirection.ltr;
-        if (bcvList.first < 40) verseDirection = TextDirection.rtl;
+        bool isHebrew = (bcvList.first < 40);
+        if (isHebrew) verseDirection = TextDirection.rtl;
 
         String verseText = this.bibles.iBible.openSingleVerse(bcvList);
         List<TextSpan> textContent =
@@ -515,6 +522,19 @@ class UniqueBibleState extends State<UniqueBible> {
                       Navigator.pop(context, bcvList);
                       // note: do not use the following line to load interlinearView directly, which cause instability.
                       // _loadInterlinearView(context, bcvList);
+                    },
+                    onLongPress: () async {
+                      if (isPlaying) _stop();
+                      (isHebrew) ? await flutterTts.setLanguage("he-IL") : await flutterTts.setLanguage("el-GR");;
+                      if ((isHebrew) && (Platform.isAndroid)) {
+                        verseText = this.bibles.tBible.openSingleVerse(bcvList);
+                        await flutterTts.setLanguage(this.config.ttsEnglish);
+                      } else {
+                        verseText = "$verseText ｜";
+                        verseText = verseText.replaceAll(RegExp("｜＠.*? ｜"), "");
+                      }
+                      _speakOneVerse = true;
+                      _speak(verseText);
                     },
                   ),
                 ),
