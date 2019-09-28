@@ -525,7 +525,7 @@ class UniqueBibleState extends State<UniqueBible> {
                     },
                     onLongPress: () async {
                       if (isPlaying) _stop();
-                      (isHebrew) ? await flutterTts.setLanguage("he-IL") : await flutterTts.setLanguage("el-GR");;
+                      (isHebrew) ? await flutterTts.setLanguage("he-IL") : await flutterTts.setLanguage("el-GR");
                       if ((isHebrew) && (Platform.isAndroid)) {
                         verseText = TtsHelper().workaroundHebrew(this.bibles.tBible.openSingleVerse(bcvList));
                         //verseText = verseText.replaceAll("ʾ", "");
