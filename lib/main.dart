@@ -132,6 +132,7 @@ class UniqueBibleState extends State<UniqueBible> {
   }
 
   void _nonPlusMessage(String feature) {
+    _stopRunningActions();
     String message = "'$feature' ${interfaceBottom[this.abbreviations][10]}";
     final snackBar = SnackBar(
       content: Text(message),
@@ -147,7 +148,7 @@ class UniqueBibleState extends State<UniqueBible> {
 
   Future _launchPlusPage() async {
     _stopRunningActions();
-    String url = (Platform.isAndroid) ? 'https://play.google.com/store/apps/details?id=app.bibletools.unique_bible_app_plus_paid' : 'https://apps.apple.com/us/app/unique-bible-app-plus/id1480768821?ls=1';
+    String url = (Platform.isAndroid) ? 'https://play.google.com/store/apps/details?id=app.bibletools.unique_bible_app_plus_paid' : 'https://apps.apple.com/app/unique-bible-app-plus/id1480768821?ls=1';
     if (await canLaunch(url)) {
       await launch(url);
     } else {
