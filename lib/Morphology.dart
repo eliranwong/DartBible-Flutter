@@ -97,7 +97,7 @@ class InterlinearViewState extends State<InterlinearView> {
     if ((message != null) && (message.isNotEmpty)) {
       if (_isHebrew) {
         (Platform.isAndroid)
-            ? await flutterTts.setLanguage(_config.ttsEnglish)
+            ? await flutterTts.setLanguage("el-GR")
             : await flutterTts.setLanguage("he-IL");
       } else if (_config.greekBibles.contains(_module)) {
         message = TtsHelper().removeGreekAccents(message);
@@ -206,7 +206,7 @@ class InterlinearViewState extends State<InterlinearView> {
                 onPressed: () {
                   if (_config.plus) {
                     String wordText = ((_isHebrew) && (Platform.isAndroid))
-                        ? wordData["Transliteration"]
+                        ? TtsHelper().workaroundHebrew(wordData["Transliteration"])
                         : wordData["Word"];
                     _speak(wordText);
                   } else {
@@ -365,7 +365,7 @@ class MorphologyViewState extends State<MorphologyView> {
     if ((message != null) && (message.isNotEmpty)) {
       if (_isHebrew) {
         (Platform.isAndroid)
-            ? await flutterTts.setLanguage(_config.ttsEnglish)
+            ? await flutterTts.setLanguage("el-GR")
             : await flutterTts.setLanguage("he-IL");
       } else if (_config.greekBibles.contains(_module)) {
         message = TtsHelper().removeGreekAccents(message);
@@ -521,7 +521,7 @@ class MorphologyViewState extends State<MorphologyView> {
                 onPressed: () {
                   if (_config.plus) {
                     String wordText = ((_isHebrew) && (Platform.isAndroid))
-                        ? wordData["Transliteration"]
+                        ? TtsHelper().workaroundHebrew(wordData["Transliteration"])
                         : wordData["Word"];
                     _speak(wordText);
                   } else {
@@ -973,7 +973,7 @@ class WordViewState extends State<WordView> {
     if ((message != null) && (message.isNotEmpty)) {
       if (_isHebrew) {
         (Platform.isAndroid)
-            ? await flutterTts.setLanguage(_config.ttsEnglish)
+            ? await flutterTts.setLanguage("el-GR")
             : await flutterTts.setLanguage("he-IL");
       } else if (_config.greekBibles.contains(_module)) {
         message = TtsHelper().removeGreekAccents(message);
@@ -1171,7 +1171,7 @@ class WordViewState extends State<WordView> {
         onPressed: () {
           if (_config.plus) {
             String wordText = ((_isHebrew) && (Platform.isAndroid))
-                ? _data["Transliteration"]
+                ? TtsHelper().workaroundHebrew(_data["Transliteration"])
                 : _data["Word"];
             _speak(wordText);
           } else {

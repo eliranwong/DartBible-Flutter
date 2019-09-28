@@ -34,6 +34,26 @@ enum TtsState {
 }
 
 class TtsHelper {
+  String workaroundHebrew(String text) {
+    List searchReplace = [
+      ['w', 'v'],
+      ['ō|ō|Ō|ô|ŏ', 'ο'],
+      ['ê|ē|ĕ', 'e'],
+      ['î|ī', 'i'],
+      ['û', 'u'],
+      //['š', 'sh'],
+      ['ś', 's'],
+      ['ă|ā|â', 'a'],
+      ['[ʿʾ]', ''],
+    ];
+    for (var i in searchReplace) {
+      String search = i.first;
+      String replace = i.last;
+      text = text.replaceAll(RegExp(search), replace);
+    }
+    return text;
+  }
+
   String removeGreekAccents(String text) {
     List searchReplace = [
       ['[ἀἄᾄἂἆἁἅᾅἃάᾴὰᾶᾷᾳᾆᾀ]', 'α'],

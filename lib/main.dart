@@ -304,7 +304,7 @@ class UniqueBibleState extends State<UniqueBible> {
           ((this.config.ttsGreek != "modern") &&
               (this.config.hebrewBibles.contains(module)) &&
               (bcvList.first >= 40))) {
-        verse = this.bibles.tBible.openSingleVerse(bcvList);
+        verse = TtsHelper().workaroundHebrew(this.bibles.tBible.openSingleVerse(bcvList));
       } else if (this.config.interlinearBibles.contains(module)) {
         verse = "$verse ｜";
         verse = verse.replaceAll(RegExp("｜＠.*? ｜"), "");
@@ -317,7 +317,7 @@ class UniqueBibleState extends State<UniqueBible> {
       } else if ((item.first.first < 40) &&
           (this.config.hebrewBibles.contains(module))) {
         (Platform.isAndroid)
-            ? await flutterTts.setLanguage(this.config.ttsEnglish)
+            ? await flutterTts.setLanguage("el-GR")
             : await flutterTts.setLanguage("he-IL");
       } else if (this.config.greekBibles.contains(module)) {
         if ((this.config.ttsGreek != "modern") &&
@@ -527,8 +527,9 @@ class UniqueBibleState extends State<UniqueBible> {
                       if (isPlaying) _stop();
                       (isHebrew) ? await flutterTts.setLanguage("he-IL") : await flutterTts.setLanguage("el-GR");;
                       if ((isHebrew) && (Platform.isAndroid)) {
-                        verseText = this.bibles.tBible.openSingleVerse(bcvList);
-                        await flutterTts.setLanguage(this.config.ttsEnglish);
+                        verseText = TtsHelper().workaroundHebrew(this.bibles.tBible.openSingleVerse(bcvList));
+                        //verseText = verseText.replaceAll("ʾ", "");
+                        await flutterTts.setLanguage("el-GR");
                       } else {
                         verseText = "$verseText ｜";
                         verseText = verseText.replaceAll(RegExp("｜＠.*? ｜"), "");
