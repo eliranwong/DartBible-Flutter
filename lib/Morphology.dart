@@ -1090,8 +1090,7 @@ class WordViewState extends State<WordView> {
   Widget _buildVerseRow(
       BuildContext context, String text, String module, List bcvList) {
     int book = bcvList[0];
-    TextDirection verseDirection =
-        (_isHebrew) ? TextDirection.rtl : TextDirection.ltr;
+    TextDirection verseDirection = ((_config.hebrewBibles.contains(module)) && (_isHebrew)) ? TextDirection.rtl : TextDirection.ltr;
     TextStyle verseFont;
     if (_isHebrew) {
       verseFont = _config.verseTextStyle["verseFontHebrew"];
