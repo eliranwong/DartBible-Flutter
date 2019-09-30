@@ -1,16 +1,22 @@
 # DartBible-Flutter
 Flutter version of the <a href="https://github.com/eliranwong/DartBible">DartBible</a> project; bible tools written in Dart programming language.
 
-Materials in this repository is for building cross-platform apps.
+Materials in this repository is for building cross-platform apps, 'Unique Bible App' & 'Unique Bible App Plus'.
 For command-line version, please visit https://github.com/eliranwong/DartBible.
+
+# 'Unique Bible App' & 'Unique Bible App Plus' are now published in both Google Play Store and Apple App Store
+
+<a href='https://biblebento.com/UniqueBibleApp.html'>https://biblebento.com/UniqueBibleApp.html</a>
 
 # Android version is now published on Goolge Play
 
-https://play.google.com/store/apps/details?id=app.bibletools.unique_bible_app_plus
+FREE version: <a href='https://play.google.com/store/apps/details?id=app.bibletools.unique_bible_app'>https://play.google.com/store/apps/details?id=app.bibletools.unique_bible_app</a><br>
+Premium version: <a href='https://play.google.com/store/apps/details?id=app.bibletools.unique_bible_app_plus_paid'>https://play.google.com/store/apps/details?id=app.bibletools.unique_bible_app_plus_paid</a>
 
 # iPhone / iPad version will be published soon
 
-...
+FREE version: <a href='https://apps.apple.com/app/unique-bible-app/id1481496200'>https://apps.apple.com/app/unique-bible-app/id1481496200</a><br>
+Premium version: <a href='https://apps.apple.com/app/unique-bible-app-plus/id1480768821?ls=1'>https://apps.apple.com/app/unique-bible-app-plus/id1480768821?ls=1</a>
 
 # User Manual
 
