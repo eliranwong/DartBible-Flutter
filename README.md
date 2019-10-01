@@ -8,12 +8,12 @@ For command-line version, please visit https://github.com/eliranwong/DartBible.
 
 <a href='https://biblebento.com/UniqueBibleApp.html'>https://biblebento.com/UniqueBibleApp.html</a>
 
-# Android version is now published on Goolge Play
+# Android version is now published on Goolge Play Store
 
 FREE version: <a href='https://play.google.com/store/apps/details?id=app.bibletools.unique_bible_app'>https://play.google.com/store/apps/details?id=app.bibletools.unique_bible_app</a><br>
 Premium version: <a href='https://play.google.com/store/apps/details?id=app.bibletools.unique_bible_app_plus_paid'>https://play.google.com/store/apps/details?id=app.bibletools.unique_bible_app_plus_paid</a>
 
-# iPhone / iPad version will be published soon
+# iPhone / iPad version is now published on Apple App Store
 
 FREE version: <a href='https://apps.apple.com/app/unique-bible-app/id1481496200'>https://apps.apple.com/app/unique-bible-app/id1481496200</a><br>
 Premium version: <a href='https://apps.apple.com/app/unique-bible-app-plus/id1480768821?ls=1'>https://apps.apple.com/app/unique-bible-app-plus/id1480768821?ls=1</a>
