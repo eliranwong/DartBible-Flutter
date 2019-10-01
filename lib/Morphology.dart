@@ -1092,7 +1092,7 @@ class WordViewState extends State<WordView> {
     int book = bcvList[0];
     TextDirection verseDirection = ((_config.hebrewBibles.contains(module)) && (_isHebrew)) ? TextDirection.rtl : TextDirection.ltr;
     TextStyle verseFont;
-    if (_isHebrew) {
+    if ((_config.hebrewBibles.contains(module)) && (_isHebrew)) {
       verseFont = _config.verseTextStyle["verseFontHebrew"];
     } else if (_config.greekBibles.contains(module)) {
       verseFont = _config.verseTextStyle["verseFontGreek"];
