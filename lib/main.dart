@@ -1316,7 +1316,7 @@ class UniqueBibleState extends State<UniqueBible> {
       return Row(
         children: <Widget>[
           (_drawer) ? _buildTabletDrawer() : Container(),
-          _buildDivider(),
+          (_drawer) ? _buildDivider() : Container(),
           _wrap(
             OrientationBuilder(
               builder: (context, orientation) {
@@ -1363,7 +1363,7 @@ class UniqueBibleState extends State<UniqueBible> {
   List<Widget> _buildLayoutWidgets(BuildContext context) {
     return <Widget>[
       _wrap(_buildBibleChapter(context), 2),
-      _buildDivider(),
+      (_display) ? _buildDivider() : Container(),
       (_display) ? _wrap(_buildDisplayVerses(context), 2) : Container(),
     ];
   }

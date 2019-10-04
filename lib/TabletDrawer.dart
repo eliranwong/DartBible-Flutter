@@ -106,7 +106,25 @@ class TabletDrawerState extends State<TabletDrawer> {
   @override
   Widget build(BuildContext context) {
     updateInterface();
-    return ListView(
+    return Theme(
+      data: config.mainTheme,
+      child: Container(
+          color: config.myColors["background"],
+          child: ListView(
+            // Important: Remove any padding from the ListView.
+            padding: EdgeInsets.zero,
+            children: <Widget>[
+              _buildTimelineList(context),
+              _buildFavouriteList(context),
+              _buildHistoryList(context),
+              _buildBookList(context),
+              _buildChapterList(context),
+              _buildHeadingList(context),
+            ],
+          )
+      ),
+    );
+    /*return ListView(
       // Important: Remove any padding from the ListView.
       padding: EdgeInsets.zero,
       children: <Widget>[
@@ -117,7 +135,7 @@ class TabletDrawerState extends State<TabletDrawer> {
         _buildChapterList(context),
         _buildHeadingList(context),
       ],
-    );
+    );*/
   }
 
   Widget _buildTimelineList(BuildContext context) {
