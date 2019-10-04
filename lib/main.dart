@@ -10,6 +10,7 @@ import 'package:swipedetector/swipedetector.dart';
 import 'package:sqflite/sqflite.dart';
 import 'package:flutter_tts/flutter_tts.dart';
 import 'package:url_launcher/url_launcher.dart';
+//import 'package:provider/provider.dart';
 import 'config.dart';
 import 'Bibles.dart';
 import 'BibleSearchDelegate.dart';
@@ -19,11 +20,26 @@ import 'LocationSearchDelegate.dart';
 import 'BibleSettings.dart';
 import 'BibleParser.dart';
 import 'Morphology.dart';
+import 'MorphologyTablet.dart';
 import 'Helpers.dart';
 import 'Tools.dart';
 import 'MyDrawer.dart';
+import 'TabletDrawer.dart';
 
 void main() => runApp(MyApp());
+
+/*void main() {
+  runApp(
+    ChangeNotifierProvider(
+      builder: (context) => UpdateCenter(),
+      child: MyApp(),
+    ),
+  );
+}
+
+class UpdateCenter with ChangeNotifier {
+  Config config;
+}*/
 
 class MyApp extends StatelessWidget {
   @override
@@ -44,6 +60,7 @@ class UniqueBible extends StatefulWidget {
 class UniqueBibleState extends State<UniqueBible> {
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
 
+  String query = '';
   bool _parallelBibles = false;
   List<dynamic> _data = [
     [
@@ -54,6 +71,9 @@ class UniqueBibleState extends State<UniqueBible> {
   ];
   List<int> _currentActiveVerse = [0, 0, 0];
 
+  bool _drawer = false;
+  bool _typing = false;
+  bool _display = false;
   Bibles bibles;
   var scrollController;
   int _scrollIndex = 0;
@@ -72,8 +92,6 @@ class UniqueBibleState extends State<UniqueBible> {
     decoration: TextDecoration.underline,
     color: Colors.blue,
   );
-
-  List searchData = [];
 
   String abbreviations = "ENG";
   Map interfaceApp = {
@@ -129,7 +147,7 @@ class UniqueBibleState extends State<UniqueBible> {
       "Share",
       "Bible Audio",
       "User Manual",
-      "Learn more"
+      "Add / Remove Secondary View",
     ],
     "TC": [
       "即時原文逐字翻譯",
@@ -140,7 +158,8 @@ class UniqueBibleState extends State<UniqueBible> {
       "聖經地點",
       "分享",
       "聖經語音",
-      "使用手册"
+      "使用手册",
+      "加增／刪除輔助視窗",
     ],
     "SC": [
       "即时原文逐字翻译",
@@ -151,7 +170,8 @@ class UniqueBibleState extends State<UniqueBible> {
       "圣经地点",
       "分享",
       "圣经语音",
-      "使用手册"
+      "使用手册",
+      "加增／删除辅助视窗",
     ],
   };
 
@@ -221,6 +241,21 @@ class UniqueBibleState extends State<UniqueBible> {
   get isStopped => ttsState == TtsState.stopped;
   Icon _ttsIcon = Icon(Icons.volume_up);
   bool _speakOneVerse = false;
+
+  // Variables to work with previous search interface
+  final _pageSize = 20;
+  List _displayData = [];
+  List _rawData = [];
+  Map interfaceBibleSearch = {
+    "ENG": [
+      "is not properly formatted for search. Please correct and try again.",
+      "Clear",
+      "More ...",
+      "Search"
+    ],
+    "TC": ["組成的格式不正確，請更正然後再嘗試", "清空", "更多 …", "搜索"],
+    "SC": ["组成的格式不正确，请更正然后再尝试", "清空", "更多 …", "搜索"],
+  };
 
   @override
   initState() {
@@ -304,7 +339,8 @@ class UniqueBibleState extends State<UniqueBible> {
           ((this.config.ttsGreek != "modern") &&
               (this.config.hebrewBibles.contains(module)) &&
               (bcvList.first >= 40))) {
-        verse = TtsHelper().workaroundHebrew(this.bibles.tBible.openSingleVerse(bcvList));
+        verse = TtsHelper()
+            .workaroundHebrew(this.bibles.tBible.openSingleVerse(bcvList));
       } else if (this.config.interlinearBibles.contains(module)) {
         verse = "$verse ｜";
         verse = verse.replaceAll(RegExp("｜＠.*? ｜"), "");
@@ -525,9 +561,12 @@ class UniqueBibleState extends State<UniqueBible> {
                     },
                     onLongPress: () async {
                       if (isPlaying) _stop();
-                      (isHebrew) ? await flutterTts.setLanguage("he-IL") : await flutterTts.setLanguage("el-GR");
+                      (isHebrew)
+                          ? await flutterTts.setLanguage("he-IL")
+                          : await flutterTts.setLanguage("el-GR");
                       if ((isHebrew) && (Platform.isAndroid)) {
-                        verseText = TtsHelper().workaroundHebrew(this.bibles.tBible.openSingleVerse(bcvList));
+                        verseText = TtsHelper().workaroundHebrew(
+                            this.bibles.tBible.openSingleVerse(bcvList));
                         //verseText = verseText.replaceAll("ʾ", "");
                         await flutterTts.setLanguage("el-GR");
                       } else {
@@ -541,7 +580,10 @@ class UniqueBibleState extends State<UniqueBible> {
                 ),
               );
             });
-        if (selected != null) _loadInterlinearView(context, selected);
+        if (selected != null)
+          (this.config.bigScreen)
+              ? _loadOriginalWord(context, selected)
+              : _loadInterlinearView(context, selected);
       }
     } else {
       _nonPlusMessage(this.interfaceBottom[this.abbreviations][0]);
@@ -698,6 +740,10 @@ class UniqueBibleState extends State<UniqueBible> {
               )),
     );
     if (newBibleSettings != null) {
+      // Big Screen Mode
+      this.config.bigScreen = newBibleSettings.bigScreen;
+      this.config.save("bigScreen", newBibleSettings.bigScreen);
+      if ((_typing) && (!newBibleSettings.bigScreen)) _typing = !_typing;
       // Font size
       this.config.fontSize = newBibleSettings.fontSize;
       this.config.save("fontSize", newBibleSettings.fontSize);
@@ -731,6 +777,9 @@ class UniqueBibleState extends State<UniqueBible> {
       this.config.speechRate = newBibleSettings.speechRate;
       this.config.save("speechRate", newBibleSettings.speechRate);
       await flutterTts.setSpeechRate(newBibleSettings.speechRate);
+      // update UpdateCenter
+      //final state = Provider.of<UpdateCenter>(context);
+      //state.config = this.config;
       // Newly selected verse
       var newVerse = [
         [
@@ -760,13 +809,20 @@ class UniqueBibleState extends State<UniqueBible> {
     var xRefData = await this.bibles.crossReference(bcvList);
     _scaffoldKey.currentState.removeCurrentSnackBar();
 
-    final List selected = await showSearch(
-        context: context,
-        delegate: BibleSearchDelegate(context, this.bibles.bible1,
-            this.interfaceDialog, this.config, xRefData, _currentActiveVerse));
-    if (selected != null) {
-      this.searchData = selected.first;
-      _newVerseSelected(this.searchData[selected.last]);
+    if (this.config.bigScreen) {
+      setState(() {
+        if (!_display) _display = true;
+        _displayData = xRefData;
+      });
+    } else {
+      final List selected = await showSearch(
+          context: context,
+          delegate: BibleSearchDelegate(context, this.bibles.bible1,
+              this.interfaceDialog, this.config, xRefData));
+      if (selected != null) {
+        this._displayData = selected.first;
+        _newVerseSelected(this._displayData[selected.last]);
+      }
     }
   }
 
@@ -780,18 +836,42 @@ class UniqueBibleState extends State<UniqueBible> {
         await this.bibles.compareBibles(this.config.compareBibleList, bcvList);
     _scaffoldKey.currentState.removeCurrentSnackBar();
 
-    final List selected = await showSearch(
-        context: context,
-        delegate: BibleSearchDelegate(
+    if (this.config.bigScreen) {
+      setState(() {
+        if (!_display) _display = true;
+        _displayData = compareData;
+      });
+    } else {
+      final List selected = await showSearch(
+          context: context,
+          delegate: BibleSearchDelegate(
             context,
             this.bibles.bible1,
             this.interfaceDialog,
             this.config,
             compareData,
-            _currentActiveVerse));
-    if (selected != null) {
-      this.searchData = selected.first;
-      _newVerseSelected(this.searchData[selected.last]);
+          ));
+      if (selected != null) {
+        this._displayData = selected.first;
+        _newVerseSelected(this._displayData[selected.last]);
+      }
+    }
+  }
+
+  Future _loadOriginalWord(BuildContext context, List bcvList,
+      [String module]) async {
+    if (isAllBiblesReady()) {
+      _stopRunningActions();
+      String table = module ?? "OHGB";
+      final List<Map> morphology =
+          await SqliteHelper(this.config).getMorphology(bcvList, table);
+      final selected = await Navigator.push(
+        context,
+        MaterialPageRoute(
+            builder: (context) =>
+                OriginalWord(morphology, table, this.config, this.bibles)),
+      );
+      if (selected != null) _newVerseSelected(selected);
     }
   }
 
@@ -835,19 +915,20 @@ class UniqueBibleState extends State<UniqueBible> {
       final selected = await Navigator.push(
         context,
         MaterialPageRoute(
-            builder: (context) => ToolMenu(
-                title,
-                table,
-                menu,
-                this.config,
-                this.bibles.bible1,
-                icon,
-                this.interfaceDialog,
-                _currentActiveVerse)),
+            builder: (context) => (this.config.bigScreen)
+                ? Tool(title, table, menu, this.config, this.bibles.bible1, icon, this.interfaceDialog)
+                : ToolMenu(title, table, menu, this.config, this.bibles.bible1, icon, this.interfaceDialog)
+        ),
       );
       if (selected != null) {
-        this.searchData = selected.first;
-        _newVerseSelected(this.searchData[selected.last]);
+        if (selected.last == "open") {
+          _newVerseSelected(selected.first);
+        } else {
+          setState(() {
+            if (!_display) _display = true;
+            _displayData = selected.first;
+          });
+        }
       }
     }
   }
@@ -878,19 +959,20 @@ class UniqueBibleState extends State<UniqueBible> {
     db.close();
     List<List> bcvLists =
         tools.map((i) => [i["Book"], i["Chapter"], i["Verse"]]).toList();
-    final List selected = await showSearch(
-        context: context,
-        delegate: BibleSearchDelegate(
-            context,
-            this.bibles.bible1,
-            this.interfaceDialog,
-            this.config,
-            [],
-            _currentActiveVerse,
-            bcvLists));
-    if (selected != null) {
-      this.searchData = selected.first;
-      _newVerseSelected(this.searchData[selected.last]);
+    if (this.config.bigScreen) {
+      setState(() {
+        if (!_display) _display = true;
+        _loadRawData(bcvLists);
+      });
+    } else {
+      final List selected = await showSearch(
+          context: context,
+          delegate: BibleSearchDelegate(context, this.bibles.bible1,
+              this.interfaceDialog, this.config, [], bcvLists));
+      if (selected != null) {
+        this._displayData = selected.first;
+        _newVerseSelected(this._displayData[selected.last]);
+      }
     }
   }
 
@@ -924,19 +1006,20 @@ class UniqueBibleState extends State<UniqueBible> {
     db.close();
     List<List> bcvLists =
         tools.map((i) => [i["Book"], i["Chapter"], i["Verse"]]).toList();
-    final List selected = await showSearch(
-        context: context,
-        delegate: BibleSearchDelegate(
-            context,
-            this.bibles.bible1,
-            this.interfaceDialog,
-            this.config,
-            [],
-            _currentActiveVerse,
-            bcvLists));
-    if (selected != null) {
-      this.searchData = selected.first;
-      _newVerseSelected(this.searchData[selected.last]);
+    if (this.config.bigScreen) {
+      setState(() {
+        if (!_display) _display = true;
+        _loadRawData(bcvLists);
+      });
+    } else {
+      final List selected = await showSearch(
+          context: context,
+          delegate: BibleSearchDelegate(context, this.bibles.bible1,
+              this.interfaceDialog, this.config, [], bcvLists));
+      if (selected != null) {
+        this._displayData = selected.first;
+        _newVerseSelected(this._displayData[selected.last]);
+      }
     }
   }
 
@@ -955,8 +1038,7 @@ class UniqueBibleState extends State<UniqueBible> {
               this.bibles.bible1, this.interfaceDialog, _currentActiveVerse)),
     );
     if (selected != null) {
-      this.searchData = selected.first;
-      _newVerseSelected(this.searchData[selected.last]);
+      _loadPeopleVerses(context, selected);
     }
   }
 
@@ -1011,20 +1093,20 @@ class UniqueBibleState extends State<UniqueBible> {
     List<List> bcvLists = bcvStrings
         .map((i) => i.split(".").map((i) => int.parse(i)).toList())
         .toList();
-    final List selected = await showSearch(
-        context: context,
-        //delegate: BibleSearchDelegate(context, this.bibles.bible1, this.interfaceDialog, this.config, verseData, _currentActiveVerse));
-        delegate: BibleSearchDelegate(
-            context,
-            this.bibles.bible1,
-            this.interfaceDialog,
-            this.config,
-            [],
-            _currentActiveVerse,
-            bcvLists));
-    if (selected != null) {
-      this.searchData = selected.first;
-      _newVerseSelected(this.searchData[selected.last]);
+    if (this.config.bigScreen) {
+      setState(() {
+        if (!_display) _display = true;
+        _loadRawData(bcvLists);
+      });
+    } else {
+      final List selected = await showSearch(
+          context: context,
+          delegate: BibleSearchDelegate(context, this.bibles.bible1,
+              this.interfaceDialog, this.config, [], bcvLists));
+      if (selected != null) {
+        this._displayData = selected.first;
+        _newVerseSelected(this._displayData[selected.last]);
+      }
     }
   }
 
@@ -1188,7 +1270,7 @@ class UniqueBibleState extends State<UniqueBible> {
 
     return Scaffold(
       key: _scaffoldKey,
-      drawer: _buildDrawer(),
+      drawer: (this.config.bigScreen) ? null : _buildDrawer(),
       //drawer: MyDrawer(this.config, this.bibles.bible1, _currentActiveVerse),
       /*
       // trigger actions when drawer is opened or closed:
@@ -1210,15 +1292,7 @@ class UniqueBibleState extends State<UniqueBible> {
       appBar: _buildAppBar(context),
       body: Container(
         color: _backgroundColor,
-        child: SwipeDetector(
-          child: _buildVerses(context),
-          onSwipeLeft: () {
-            goNextChapter();
-          },
-          onSwipeRight: () {
-            goPreviousChapter();
-          },
-        ),
+        child: _buildLayout(context),
       ),
       bottomNavigationBar: _buildBottomAppBar(context),
       floatingActionButtonLocation: FloatingActionButtonLocation.endDocked,
@@ -1237,11 +1311,112 @@ class UniqueBibleState extends State<UniqueBible> {
     );
   }
 
+  Widget _buildLayout(BuildContext context) {
+    if (this.config.bigScreen) {
+      return Row(
+        children: <Widget>[
+          (_drawer) ? _buildTabletDrawer() : Container(),
+          _buildDivider(),
+          _wrap(
+            OrientationBuilder(
+              builder: (context, orientation) {
+                List<Widget> layoutWidgets = _buildLayoutWidgets(context);
+                return (orientation == Orientation.portrait)
+                    ? Column(children: layoutWidgets)
+                    : Row(children: layoutWidgets);
+              },
+            ),
+            1,
+          ),
+        ],
+      );
+    }
+    return _buildBibleChapter(context);
+  }
+
+  Widget _buildTabletDrawer() {
+    if ((this.bibles?.bible1?.data == null) ||
+        (this.bibles?.headings?.data == null)) {
+      return Container();
+    }
+    return SizedBox(
+      width: 250,
+      child: TabletDrawer(this.config, this.bibles.bible1, this.bibles.headings,
+          (List data) {
+        Map actions = {
+          "open": _newVerseSelected,
+          "addFavourite": addToFavourite,
+          "removeFavourite": removeFromFavourite,
+        };
+        actions[data.first](data.last);
+      }),
+    );
+  }
+
+  Widget _wrap(Widget widget, int flex) {
+    return Expanded(
+      flex: flex,
+      child: widget,
+    );
+  }
+
+  List<Widget> _buildLayoutWidgets(BuildContext context) {
+    return <Widget>[
+      _wrap(_buildBibleChapter(context), 2),
+      _buildDivider(),
+      (_display) ? _wrap(_buildDisplayVerses(context), 2) : Container(),
+    ];
+  }
+
+  Widget _buildDivider() {
+    return Container(
+      decoration: BoxDecoration(
+          border: Border.all(color: this.config.myColors["grey"])),
+    );
+  }
+
+  Widget _buildBibleChapter(BuildContext context) {
+    return SwipeDetector(
+      child: _buildVerses(context),
+      onSwipeLeft: () {
+        goNextChapter();
+      },
+      onSwipeRight: () {
+        goPreviousChapter();
+      },
+    );
+  }
+
+  Widget _buildSearchBox() {
+    return Container(
+      alignment: Alignment.centerLeft,
+      color: Colors.white,
+      child: TextField(
+        decoration:
+            InputDecoration(border: InputBorder.none, hintText: 'Search'),
+        onSubmitted: (String value) {
+          if (value.isNotEmpty) {
+            setState(() {
+              query = value;
+              if (!_display) _display = true;
+              _displayData = _fetch(query);
+            });
+          }
+        },
+        //onChanged: ,
+        //onTap: ,
+        //onEditingComplete: ,
+      ),
+    );
+  }
+
   Widget _buildAppBar(BuildContext context) {
     //original color: Theme.of(context).appBarTheme.color
     return AppBar(
       backgroundColor: _appBarColor,
-      title: Text(this.interfaceApp[this.abbreviations].first),
+      title: (_typing)
+          ? _buildSearchBox()
+          : Text(this.interfaceApp[this.abbreviations].first),
       leading: Builder(
         builder: (BuildContext context) {
           return IconButton(
@@ -1249,7 +1424,13 @@ class UniqueBibleState extends State<UniqueBible> {
             tooltip: this.interfaceApp[this.abbreviations][1],
             icon: const Icon(Icons.menu),
             onPressed: () {
-              _scaffoldKey.currentState.openDrawer();
+              if (this.config.bigScreen) {
+                setState(() {
+                  _drawer = !_drawer;
+                });
+              } else {
+                _scaffoldKey.currentState.openDrawer();
+              }
             },
           );
         },
@@ -1257,9 +1438,15 @@ class UniqueBibleState extends State<UniqueBible> {
       actions: <Widget>[
         IconButton(
           tooltip: this.interfaceApp[this.abbreviations][2],
-          icon: const Icon(Icons.search),
+          icon: Icon((_typing) ? Icons.clear : Icons.search),
           onPressed: () async {
-            await _launchBibleSearch(context);
+            if (this.config.bigScreen) {
+              setState(() {
+                _typing = !_typing;
+              });
+            } else {
+              await _launchBibleSearch(context);
+            }
           },
         ),
         IconButton(
@@ -1287,16 +1474,16 @@ class UniqueBibleState extends State<UniqueBible> {
     final List selected = await showSearch(
       context: context,
       delegate: BibleSearchDelegate(
-          context,
-          this.bibles.bible1,
-          this.interfaceDialog,
-          this.config,
-          this.searchData,
-          _currentActiveVerse),
+        context,
+        this.bibles.bible1,
+        this.interfaceDialog,
+        this.config,
+        this._displayData,
+      ),
     );
     if (selected != null) {
-      this.searchData = selected.first;
-      _newVerseSelected(this.searchData[selected.last]);
+      this._displayData = selected.first;
+      _newVerseSelected(this._displayData[selected.last]);
     }
   }
 
@@ -1407,6 +1594,17 @@ class UniqueBibleState extends State<UniqueBible> {
               _launchUserManual();
             },
           ),
+          (!this.config.bigScreen)
+              ? Container()
+              : IconButton(
+                  tooltip: this.interfaceBottom[this.abbreviations][9],
+                  icon: const Icon(Icons.add_to_home_screen),
+                  onPressed: () {
+                    setState(() {
+                      _display = !_display;
+                    });
+                  },
+                ),
         ]),
       ),
     );
@@ -1604,8 +1802,8 @@ class UniqueBibleState extends State<UniqueBible> {
         addToFavourite,
         _loadXRef,
         _loadCompare,
-        _loadInterlinearView,
-        _loadMorphologyView
+        (this.config.bigScreen) ? _loadOriginalWord : _loadInterlinearView,
+        (this.config.bigScreen) ? _loadOriginalWord : _loadMorphologyView,
       ];
       favouriteActions[this.config.favouriteAction](context, bcvList);
     }
@@ -1776,27 +1974,226 @@ class UniqueBibleState extends State<UniqueBible> {
         _loadCompare(context, verseData.first);
         break;
       case DialogAction.interlinearOHGB:
-        _loadInterlinearView(context, verseData.first, "OHGB");
+        (this.config.bigScreen)
+            ? _loadOriginalWord(context, verseData.first, "OHGB")
+            : _loadInterlinearView(context, verseData.first, "OHGB");
         break;
       case DialogAction.morphologyOHGB:
-        _loadMorphologyView(context, verseData.first, "OHGB");
+        (this.config.bigScreen)
+            ? _loadOriginalWord(context, verseData.first, "OHGB")
+            : _loadMorphologyView(context, verseData.first, "OHGB");
         break;
       case DialogAction.interlinearLXX1:
-        _loadInterlinearView(context, verseData.first, "LXX1");
+        (this.config.bigScreen)
+            ? _loadOriginalWord(context, verseData.first, "LXX1")
+            : _loadInterlinearView(context, verseData.first, "LXX1");
         break;
       case DialogAction.morphologyLXX1:
-        _loadMorphologyView(context, verseData.first, "LXX1");
+        (this.config.bigScreen)
+            ? _loadOriginalWord(context, verseData.first, "LXX1")
+            : _loadMorphologyView(context, verseData.first, "LXX1");
         break;
       case DialogAction.interlinearLXX2:
-        _loadInterlinearView(context, verseData.first, "LXX2");
+        (this.config.bigScreen)
+            ? _loadOriginalWord(context, verseData.first, "LXX2")
+            : _loadInterlinearView(context, verseData.first, "LXX2");
         break;
       case DialogAction.morphologyLXX2:
-        _loadMorphologyView(context, verseData.first, "LXX2");
+        (this.config.bigScreen)
+            ? _loadOriginalWord(context, verseData.first, "LXX2")
+            : _loadMorphologyView(context, verseData.first, "LXX2");
         break;
       case DialogAction.interlinearABP:
-        _loadInterlinearView(context, verseData.first, "ABP");
+        (this.config.bigScreen)
+            ? _loadOriginalWord(context, verseData.first, "ABP")
+            : _loadInterlinearView(context, verseData.first, "ABP");
         break;
       default:
     }
+  }
+
+  // functions for display of verses
+
+  // The option of lazy loading is achieved with "_loadData" & "_loadMoreData"
+  Future _loadRawData(List rawData) async {
+    _rawData = rawData;
+    _displayData = (_rawData.length <= _pageSize)
+        ? this.bibles.bible1.openMultipleVerses(_rawData)
+        : this.bibles.bible1.openMultipleVerses(_rawData.sublist(0, _pageSize));
+  }
+
+  Future _loadMoreData(BuildContext context, int i) async {
+    int start = i;
+    int end = i + _pageSize;
+    List newBcvList = (end > _rawData.length)
+        ? _rawData.sublist(start)
+        : _rawData.sublist(start, end);
+    setState(() {
+      if (!_display) _display = true;
+      _displayData = [
+        ..._displayData,
+        ...this.bibles.bible1.openMultipleVerses(newBcvList)
+      ];
+    });
+  }
+
+  // This is the function which does the search.
+  List _fetch(String query) {
+    List<dynamic> fetchResults = [];
+
+    try {
+      // search in a book or books, e.g. John:::Jesus Christ or Matthew, John:::Jesus Christ
+      if (query.contains(":::")) {
+        List queryList = query.split(":::");
+        if (queryList.length >= 2) {
+          List bookReferenceList;
+          if (queryList[0].isNotEmpty) {
+            String bookString = "";
+            var bookList = queryList[0].split(",");
+            for (var book in bookList) {
+              bookString += "${book.trim()} 0; ";
+            }
+            bookReferenceList = BibleParser(this.abbreviations)
+                .extractAllReferences(bookString);
+          } else {
+            bookReferenceList = [_currentActiveVerse];
+          }
+          if (bookReferenceList.isNotEmpty) {
+            String queryText = queryList.sublist(1).join(":::");
+            if (queryText.isNotEmpty) {
+              return this
+                  .bibles
+                  .bible1
+                  .searchBooks(queryText, bookReferenceList);
+            }
+          }
+        }
+      }
+
+      // check if the query contains verse references or not.
+      var verseReferenceList =
+          BibleParser(this.abbreviations).extractAllReferences(query);
+      (verseReferenceList.isEmpty)
+          ? fetchResults = this.bibles.bible1.search(query)
+          : fetchResults =
+              this.bibles.bible1.openMultipleVerses(verseReferenceList);
+    } catch (e) {
+      fetchResults = [
+        [[], "['$query' ${interfaceBibleSearch[this.abbreviations][0]}", ""]
+      ];
+    }
+
+    return fetchResults;
+  }
+
+  Widget _buildDisplayVerses(BuildContext context) {
+    int count =
+        ((_rawData.isNotEmpty) && (_rawData.length > _displayData.length))
+            ? (_displayData.length + 1)
+            : _displayData.length;
+    return Container(
+      color: Colors.blueGrey[this.config.backgroundColor],
+      child: ListView.builder(
+          padding: EdgeInsets.zero,
+          itemCount: count,
+          itemBuilder: (context, i) {
+            return (i == _displayData.length)
+                ? _buildMoreDisplayVerseRow(context, i)
+                : _buildDisplayVerseRow(context, i);
+          }),
+    );
+  }
+
+  Widget _buildMoreDisplayVerseRow(BuildContext context, int i) {
+    return ListTile(
+      title: Text(
+        "[${interfaceBibleSearch[this.abbreviations][2]}]",
+        style: _activeVerseFont,
+      ),
+      onTap: () {
+        _loadMoreData(context, i);
+      },
+    );
+  }
+
+  Widget _buildDisplayVerseRow(BuildContext context, int i) {
+    var verseData = _displayData[i];
+
+    return ListTile(
+      title: _buildVerseText(context, verseData),
+      onTap: () {
+        _newVerseSelected(verseData);
+      },
+      onLongPress: () {
+        _longPressedVerse(context, _displayData[i]);
+      },
+    );
+  }
+
+  // This function gives RichText widget with search items highlighted.
+  Widget _buildVerseText(BuildContext context, List verseData) {
+    var verseDirection = TextDirection.ltr;
+    var verseFont = _verseFont;
+    var activeVerseFont = _activeVerseFont;
+    var versePrefix = "";
+    var verseContent = "";
+    var verseModule = verseData[2];
+
+    if ((this.config.hebrewBibles.contains(verseModule)) &&
+        (verseData[0][0] < 40)) {
+      verseFont = _verseFontHebrew;
+      activeVerseFont = _activeVerseFontHebrew;
+      verseDirection = TextDirection.rtl;
+    } else if (this.config.greekBibles.contains(verseModule)) {
+      verseFont = _verseFontGreek;
+      activeVerseFont = _activeVerseFontGreek;
+    }
+    var verseText = verseData[1];
+    var tempList = verseText.split("]");
+
+    if (tempList.isNotEmpty) versePrefix = "${tempList[0]}]";
+    if (tempList.length > 1) verseContent = tempList.sublist(1).join("]");
+
+    List<TextSpan> textContent = [
+      TextSpan(text: versePrefix, style: _verseNoFont)
+    ];
+    try {
+      String searchEntry = query;
+      if (query.contains(":::"))
+        searchEntry = query.split(":::").sublist(1).join(":::");
+      if (this.config.interlinearBibles.contains(verseModule)) {
+        List<TextSpan> interlinearSpan =
+            InterlinearHelper(this.config.verseTextStyle)
+                .getInterlinearSpan(verseContent, verseData[0][0]);
+        textContent = interlinearSpan
+          ..insert(0, TextSpan(text: versePrefix, style: _verseNoFont));
+      } else if (searchEntry.isEmpty) {
+        textContent.add(TextSpan(text: verseContent, style: verseFont));
+      } else {
+        var regex = RegexHelper();
+        regex.searchReplace = [
+          ["($searchEntry)", r'％\1％'],
+        ];
+        verseContent = regex.doSearchReplace(verseContent);
+        List<String> textList = verseContent.split("％");
+        for (var text in textList) {
+          if (RegExp(searchEntry).hasMatch(text)) {
+            textContent.add(TextSpan(text: text, style: activeVerseFont));
+          } else {
+            textContent.add(TextSpan(text: text, style: verseFont));
+          }
+        }
+      }
+    } catch (e) {
+      textContent.add(TextSpan(text: verseContent, style: verseFont));
+    }
+
+    return RichText(
+      text: TextSpan(
+        style: DefaultTextStyle.of(context).style,
+        children: textContent,
+      ),
+      textDirection: verseDirection,
+    );
   }
 }

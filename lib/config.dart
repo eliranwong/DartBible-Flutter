@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class Config {
-  bool plus = false;
+  bool plus = true;
   String plusURL = (Platform.isAndroid)
       ? 'https://play.google.com/store/apps/details?id=app.bibletools.unique_bible_app_plus_paid'
       : 'https://apps.apple.com/app/unique-bible-app-plus/id1480768821?ls=1';
@@ -98,12 +98,12 @@ class Config {
     "LXXk",
     "NET",
     "OHGB",
-    "OHGBt",
-    "WEB"
+    "WEB",
   ];
   // private versions
   //List<String> compareBibleList = ["CEV", "CSB", "CUV", "ESV", "EXP", "ISV", "KJV", "LEB", "LXXE", "LXXk", "NASB", "NET", "NIV", "OHGB"];
 
+  bool bigScreen = false;
   double fontSize = 20.0;
   String abbreviations = "ENG";
   String bible1 = "KJV";
@@ -148,6 +148,11 @@ class Config {
   Future setDefault() async {
     this.prefs = await SharedPreferences.getInstance();
 
+    if (prefs.getBool("bigScreen") == null) {
+      prefs.setBool("bigScreen", this.bigScreen);
+    } else {
+      this.bigScreen = prefs.getBool("bigScreen");
+    }
     if (prefs.getDouble("fontSize") == null) {
       prefs.setDouble("fontSize", this.fontSize);
     } else {
@@ -254,6 +259,8 @@ class Config {
   Future read() async {
     this.prefs = await SharedPreferences.getInstance();
 
+    if (prefs.getBool("bigScreen") == null)
+      this.bigScreen = prefs.getBool("bigScreen");
     if (prefs.getDouble("fontSize") != null)
       this.fontSize = prefs.getDouble("fontSize");
     if (prefs.getString("abbreviations") != null)
@@ -310,6 +317,9 @@ class Config {
 
   Future save(String feature, dynamic newSetting) async {
     switch (feature) {
+      case "bigScreen":
+        await prefs.setBool(feature, newSetting as bool);
+        break;
       case "fontSize":
         await prefs.setDouble(feature, newSetting as double);
         break;

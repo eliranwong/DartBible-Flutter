@@ -41,6 +41,7 @@ class BibleSettingsState extends State<BibleSettings> {
       "Speech Rate",
       "Normal",
       "Greek Speech",
+      "Big Screen Mode",
     ],
     "TC": [
       "設定",
@@ -60,6 +61,7 @@ class BibleSettingsState extends State<BibleSettings> {
       "發聲速度",
       "正常",
       "希臘語發聲",
+      "大屏幕模式",
     ],
     "SC": [
       "设定",
@@ -79,6 +81,7 @@ class BibleSettingsState extends State<BibleSettings> {
       "发声速度",
       "正常",
       "希腊语发声",
+      "大屏幕模式",
     ],
   };
 
@@ -149,6 +152,7 @@ class BibleSettingsState extends State<BibleSettings> {
     "900"
   ];
 
+  bool _bigScreenValue;
   double _speechRateValue;
 
   Map interfaceMap = {"English": "ENG", "繁體中文": "TC", "简体中文": "SC"};
@@ -170,6 +174,7 @@ class BibleSettingsState extends State<BibleSettings> {
     // This allows users to cancel the changes made by pressing the "back" button
     _compareBibleList = List<String>.from(_config.compareBibleList);
 
+    _bigScreenValue = _config.bigScreen;
     _fontSizeValue = _config.fontSize
         .toString()
         .substring(0, (_config.fontSize.toString().length - 2));
@@ -311,6 +316,7 @@ class BibleSettingsState extends State<BibleSettings> {
                       _ttsChineseValue,
                       _speechRateValue,
                       _ttsGreekValue,
+                      _bigScreenValue,
                     ));
               },
             ),
@@ -355,6 +361,19 @@ class BibleSettingsState extends State<BibleSettings> {
         padding: const EdgeInsets.all(24.0),
         child: ListView(
           children: <Widget>[
+            ListTile(
+              title: Text(_interface[17], style: style),
+              trailing: Switch(
+                  value: _bigScreenValue,
+                  onChanged: (!_config.plus)
+                      ? null
+                      : (bool value) {
+                    setState(() {
+                      _bigScreenValue = value;
+                    });
+                  }
+                  ),
+            ),
             ListTile(
               title: Text(_interface[1], style: style),
               trailing: DropdownButton<String>(
@@ -750,6 +769,7 @@ class BibleSettingsParser {
       ttsEnglish,
       ttsChinese,
       ttsGreek;
+  final bool bigScreen;
   final double speechRate;
   final List<String> _compareBibleList;
   final int _instantAction, _quickAction;
@@ -771,7 +791,8 @@ class BibleSettingsParser {
       this.ttsEnglish,
       this.ttsChinese,
       this.speechRate,
-      this.ttsGreek) {
+      this.ttsGreek,
+      this.bigScreen) {
     this.book = int.parse(_book);
     this.chapter = int.parse(_chapter);
     this.verse = int.parse(_verse);

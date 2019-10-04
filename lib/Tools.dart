@@ -1,12 +1,302 @@
 import 'package:flutter/material.dart';
 import 'package:sqflite/sqflite.dart';
 import 'package:photo_view/photo_view.dart';
+import 'package:flutter/services.dart' show Clipboard, ClipboardData;
+import 'package:share/share.dart';
 import 'config.dart';
 import 'Bibles.dart';
 import 'Helpers.dart';
 import 'BibleSearchDelegate.dart';
 import 'BibleParser.dart';
 import 'HtmlWrapper.dart';
+
+class Tool extends StatefulWidget {
+  final Map _title;
+  final String _module;
+  final List _menuData;
+  final List _toolData = [];
+  final Config _config;
+  final Bible _bible;
+  final Icon _icon;
+  final Map _interfaceDialog;
+
+  Tool(this._title, this._module, this._menuData, this._config, this._bible, this._icon, this._interfaceDialog);
+
+  @override
+  ToolState createState() => ToolState(this._title, this._module, this._menuData, this._config, this._bible, this._icon, this._interfaceDialog);
+}
+
+class ToolState extends State<Tool> {
+  final Map _title;
+  final String _module;
+  final List _menuData;
+  List _toolData = [];
+  List displayData = [];
+  final Config _config;
+  final Bible _bible;
+  final Icon _icon;
+  final Map _interfaceDialog;
+  TextStyle _verseNoFont, _verseFont, _verseFontHebrew, _verseFontGreek;
+  String abbreviations;
+
+  final Map interface = {
+    "ENG": ["Add to Home Screen"],
+    "TC": ["加增到主頁"],
+    "SC": ["加增到主页"],
+  };
+
+  ToolState(this._title, this._module, this._menuData, this._config, this._bible, this._icon, this._interfaceDialog) {
+    this.abbreviations = _config.abbreviations;
+    _setTextStyle();
+  }
+
+  void _setTextStyle() {
+    _verseNoFont = _config.verseTextStyle["verseNoFont"];
+    _verseFont = _config.verseTextStyle["verseFont"];
+    _verseFontHebrew = _config.verseTextStyle["verseFontHebrew"];
+    _verseFontGreek = _config.verseTextStyle["verseFontGreek"];
+    //_activeVerseNoFont = _config.verseTextStyle["activeVerseNoFont"];
+    //_activeVerseFont = _config.verseTextStyle["activeVerseFont"];
+    //_activeVerseFontHebrew = _config.verseTextStyle["activeVerseFontHebrew"];
+    //_activeVerseFontGreek = _config.verseTextStyle["activeVerseFontGreek"];
+    //_interlinearStyle = _config.verseTextStyle["interlinearStyle"];
+    //_interlinearStyleDim = _config.verseTextStyle["interlinearStyleDim"];
+  }
+
+  Widget _wrap(Widget widget, int flex) {
+    return Expanded(
+      flex: flex,
+      child: widget,
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Theme(
+      data: _config.mainTheme,
+      child: Scaffold(
+        appBar: AppBar(
+          title: Text(_title[_config.abbreviations]),
+          actions: <Widget>[
+            IconButton(
+              tooltip: this.interface[this.abbreviations].first,
+              icon: const Icon(Icons.add_to_home_screen),
+              onPressed: () async {
+                Navigator.pop(context, [displayData, "display"]);
+              },
+            ),
+          ],
+        ),
+        body: OrientationBuilder(
+          builder: (context, orientation) {
+            List<Widget> layoutWidgets = _buildLayoutWidgets(context);
+            return (orientation == Orientation.portrait)
+                ? Column(children: layoutWidgets)
+                : Row(children: layoutWidgets);
+          },
+        ),
+      ),
+    );
+  }
+
+  List<Widget> _buildLayoutWidgets(BuildContext context) {
+    return <Widget>[
+      _wrap(_buildMenuItems(context), 1),
+      _buildDivider(),
+      _wrap(_buildItems(context), 1),
+      _buildDivider(),
+      (displayData.isEmpty) ? Container() : _wrap(_buildVerses(context), 1)
+    ];
+  }
+
+  Widget _buildDivider() {
+    return Container(
+      decoration: BoxDecoration(
+          border: Border.all(color: _config.myColors["grey"])
+      ),
+    );
+  }
+
+  Widget _buildVerses(BuildContext context) {
+    return Container(
+      color: Colors.blueGrey[_config.backgroundColor],
+      child: ListView.builder(
+          padding: EdgeInsets.zero,
+          itemCount: displayData.length,
+          itemBuilder: (context, i) {
+            return _buildDisplayVerseRow(context, i);
+          }),
+    );
+  }
+
+  Widget _buildDisplayVerseRow(BuildContext context, int i) {
+    var verseData = displayData[i];
+    return ListTile(
+      title: _buildVerseText(context, verseData),
+      onTap: () {
+        Navigator.pop(context, [verseData, "open"]);
+      },
+      onLongPress: () {
+        _longPressedVerse(context, displayData[i]);
+      },
+    );
+  }
+
+  // This function gives RichText widget with search items highlighted.
+  Widget _buildVerseText(BuildContext context, List verseData) {
+    var verseDirection = TextDirection.ltr;
+    var verseFont = _verseFont;
+    //var activeVerseFont = _activeVerseFont;
+    var versePrefix = "";
+    var verseContent = "";
+    var verseModule = verseData[2];
+
+    if ((_config.hebrewBibles.contains(verseModule)) && (verseData[0][0] < 40)) {
+      verseFont = _verseFontHebrew;
+      //activeVerseFont = _activeVerseFontHebrew;
+      verseDirection = TextDirection.rtl;
+    } else if (_config.greekBibles.contains(verseModule)) {
+      verseFont = _verseFontGreek;
+      //activeVerseFont = _activeVerseFontGreek;
+    }
+    var verseText = verseData[1];
+    var tempList = verseText.split("]");
+
+    if (tempList.isNotEmpty) versePrefix = "${tempList[0]}]";
+    if (tempList.length > 1) verseContent = tempList.sublist(1).join("]");
+
+    List<TextSpan> textContent = [
+      TextSpan(text: versePrefix, style: _verseNoFont)
+    ];
+    try {
+      if (_config.interlinearBibles.contains(verseModule)) {
+        List<TextSpan> interlinearSpan = InterlinearHelper(_config.verseTextStyle)
+            .getInterlinearSpan(verseContent, verseData[0][0]);
+        textContent = interlinearSpan
+          ..insert(0, TextSpan(text: versePrefix, style: _verseNoFont));
+      } else {
+        textContent.add(TextSpan(text: verseContent, style: verseFont));
+      }
+    } catch (e) {
+      textContent.add(TextSpan(text: verseContent, style: verseFont));
+    }
+
+    return RichText(
+      text: TextSpan(
+        style: DefaultTextStyle.of(context).style,
+        children: textContent,
+      ),
+      textDirection: verseDirection,
+    );
+  }
+
+  Future<void> _longPressedVerse(BuildContext context, List verseData) async {
+    var copiedText = await Clipboard.getData('text/plain');
+    switch (await showDialog<DialogAction>(
+        context: context,
+        builder: (BuildContext context) {
+          return SimpleDialog(
+            title: Text(_interfaceDialog[this.abbreviations][0]),
+            children: <Widget>[
+              SimpleDialogOption(
+                onPressed: () {
+                  Navigator.pop(context, DialogAction.share);
+                },
+                child: Text(_interfaceDialog[this.abbreviations][1]),
+              ),
+              SimpleDialogOption(
+                onPressed: () {
+                  Navigator.pop(context, DialogAction.copy);
+                },
+                child: Text(_interfaceDialog[this.abbreviations][2]),
+              ),
+              SimpleDialogOption(
+                onPressed: () {
+                  Navigator.pop(context, DialogAction.addCopy);
+                },
+                child: Text(_interfaceDialog[this.abbreviations][3]),
+              ),
+            ],
+          );
+        })) {
+      case DialogAction.share:
+        Share.share(verseData[1]);
+        break;
+      case DialogAction.copy:
+        Clipboard.setData(ClipboardData(text: verseData[1]));
+        break;
+      case DialogAction.addCopy:
+        var combinedText = copiedText.text;
+        combinedText += "\n${verseData[1]}";
+        Clipboard.setData(ClipboardData(text: combinedText));
+        break;
+      default:
+    }
+  }
+
+  Widget _buildMenuItems(BuildContext context) {
+    return ListView.builder(
+        padding: const EdgeInsets.all(10.0),
+        itemCount: _menuData.length,
+        itemBuilder: (context, i) {
+          return _buildMenuItemRow(context, i);
+        });
+  }
+
+  Widget _buildMenuItemRow(BuildContext context, int i) {
+    String itemData = _menuData[i];
+    return ListTile(
+      leading: _icon,
+      title: Text(itemData, style: _config.verseTextStyle["verseFont"]),
+      onTap: () {
+        _openTool(context, i);
+      },
+    );
+  }
+
+  Future _openTool(BuildContext context, int tool) async {
+    final Database db = await SqliteHelper(_config).initToolsDb();
+    var statement =
+        "SELECT Topic, Passages FROM $_module WHERE Tool = ? ORDER BY Number";
+    List<Map> tools = await db.rawQuery(statement, [tool]);
+    db.close();
+
+    setState(() {
+      _toolData = tools;
+    });
+  }
+
+  Widget _buildItems(BuildContext context) {
+    return ListView.builder(
+        padding: const EdgeInsets.all(10.0),
+        itemCount: _toolData.length,
+        itemBuilder: (context, i) {
+          return _buildItemRow(context, i);
+        });
+  }
+
+  Widget _buildItemRow(BuildContext context, int i) {
+    Map itemData = _toolData[i];
+    String topic = itemData["Topic"].replaceAll("％", "\n");
+    return ListTile(
+      leading: _icon,
+      title: Text(topic, style: _config.verseTextStyle["verseFont"]),
+      onTap: () {
+        _openPassages(context, itemData);
+      },
+    );
+  }
+
+  Future _openPassages(BuildContext context, Map itemData) async {
+    String topic = itemData["Topic"].replaceAll("％", "\n");
+    List bcvLists = BibleParser(_config.abbreviations)
+        .extractAllReferences(itemData["Passages"]);
+    List passages = _bible.openMultipleVerses(bcvLists, topic);
+    setState(() {
+      displayData = passages;
+    });
+  }
+}
 
 class ToolMenu extends StatelessWidget {
   final Map _title;
@@ -16,10 +306,9 @@ class ToolMenu extends StatelessWidget {
   final Bible _bible;
   final Icon _icon;
   final Map _interfaceDialog;
-  final List _bcvList;
 
   ToolMenu(this._title, this._module, this._data, this._config, this._bible,
-      this._icon, this._interfaceDialog, this._bcvList);
+      this._icon, this._interfaceDialog);
 
   @override
   Widget build(BuildContext context) {
@@ -65,7 +354,7 @@ class ToolMenu extends StatelessWidget {
       context,
       MaterialPageRoute(
           builder: (context) => ToolView(_data[tool], tools, _config, _bible,
-              _interfaceDialog, _icon, _bcvList)),
+              _interfaceDialog, _icon)),
     );
     if (selected != null) Navigator.pop(context, selected);
   }
@@ -78,10 +367,9 @@ class ToolView extends StatelessWidget {
   final Bible _bible;
   final Map _interfaceDialog;
   final Icon _icon;
-  final List _bcvList;
 
   ToolView(this._title, this._data, this._config, this._bible,
-      this._interfaceDialog, this._icon, this._bcvList);
+      this._interfaceDialog, this._icon);
 
   @override
   Widget build(BuildContext context) {
@@ -98,7 +386,7 @@ class ToolView extends StatelessWidget {
 
   Widget _buildItems(BuildContext context) {
     return ListView.builder(
-        padding: const EdgeInsets.all(16.0),
+        padding: const EdgeInsets.all(10.0),
         itemCount: _data.length,
         itemBuilder: (context, i) {
           return _buildItemRow(context, i);
@@ -125,7 +413,7 @@ class ToolView extends StatelessWidget {
     final List selected = await showSearch(
         context: context,
         delegate: BibleSearchDelegate(
-            context, _bible, _interfaceDialog, _config, passages, _bcvList));
+            context, _bible, _interfaceDialog, _config, passages));
     if (selected != null) Navigator.pop(context, selected);
   }
 }
@@ -177,7 +465,7 @@ class RelationshipState extends State<Relationship> {
 
   Widget _buildItems(BuildContext context) {
     return ListView.builder(
-        padding: const EdgeInsets.all(16.0),
+        padding: const EdgeInsets.all(10.0),
         itemCount: _data.length,
         itemBuilder: (context, i) {
           return _buildItemRow(context, i);
@@ -210,7 +498,7 @@ class RelationshipState extends State<Relationship> {
           color: _config.myColors["black"],
         ),
         onPressed: () {
-          _loadPeopleVerses(context, itemData["PersonID"]);
+          Navigator.pop(context, itemData["PersonID"]);
         },
       ),
       onTap: () {
@@ -231,21 +519,6 @@ class RelationshipState extends State<Relationship> {
     });
   }
 
-  Future _loadPeopleVerses(BuildContext context, int personID) async {
-    final Database db = await SqliteHelper(_config).initToolsDb();
-    var statement =
-        "SELECT Book, Chapter, Verse FROM PEOPLE WHERE PersonID = ?";
-    List<Map> tools = await db.rawQuery(statement, [personID]);
-    db.close();
-    List<List> bcvLists =
-        tools.map((i) => [i["Book"], i["Chapter"], i["Verse"]]).toList();
-    List verseData = _bible.openMultipleVerses(bcvLists);
-    final List selected = await showSearch(
-        context: context,
-        delegate: BibleSearchDelegate(
-            context, _bible, _interfaceDialog, _config, verseData, _bcvList));
-    if (selected != null) Navigator.pop(context, selected);
-  }
 }
 
 class Timeline extends StatefulWidget {
@@ -390,7 +663,7 @@ class TopicView extends StatelessWidget {
 
   Widget _buildCardList(BuildContext context) {
     return ListView.builder(
-        padding: const EdgeInsets.all(15.0),
+        padding: const EdgeInsets.all(10.0),
         itemCount: _topicEntries.length,
         itemBuilder: (context, i) {
           return _buildCard(context, i);

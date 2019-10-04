@@ -103,21 +103,18 @@ class Bibles {
   Future crossReference(List bcvList) async {
     var xRefList;
     if (bcvList.isNotEmpty) xRefList = await this.getCrossReference(bcvList);
-    if (xRefList.isNotEmpty) {
-      xRefList = [bcvList, ...xRefList]; // include the original verse
-      var versesFound = this.bible1.openMultipleVerses(
-          xRefList, "[${interfaceBibles[this.abbreviations][1]}]");
-      return versesFound;
-    }
-    return [];
+    xRefList = (xRefList.isNotEmpty) ? [bcvList, ...xRefList] : [bcvList]; // include the original verse
+    var versesFound = this.bible1.openMultipleVerses(xRefList, "[${interfaceBibles[this.abbreviations][1]}]");
+    return versesFound;
   }
 
   Future getCrossReference(List bcvList) async {
     var filePath = FileIOHelper().getDataPath("xRef", "xRef");
     var jsonObject = await JsonHelper().getJsonObject(filePath);
     var bcvString = bcvList.join(".");
-    var fetchResults =
+    List fetchResults =
         jsonObject.where((i) => (i["bcv"] == bcvString)).toList();
+    if (fetchResults.isEmpty) return fetchResults;
     var referenceString = fetchResults.first["xref"];
     return BibleParser(this.abbreviations)
         .extractAllReferences(referenceString);

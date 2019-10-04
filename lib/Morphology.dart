@@ -503,9 +503,7 @@ class MorphologyViewState extends State<MorphologyView> {
     Widget word = Text(wordData["Word"], style: originalStyle);
     String lexemeText = wordData["Lexeme"];
     Widget lexeme = Text(lexemeText, style: originalStyle);
-    String lexicalEntry = "";
-    if (wordData["LexicalEntry"].isNotEmpty)
-      lexicalEntry = wordData["LexicalEntry"].split(",").toList()[0];
+    String lexicalEntry = (wordData["LexicalEntry"].isNotEmpty) ? wordData["LexicalEntry"].split(",").toList()[0] : "";
     return Center(
       child: Card(
         child: Column(
@@ -555,8 +553,7 @@ class MorphologyViewState extends State<MorphologyView> {
                   color: _config.myColors["black"],
                 ),
                 onPressed: () {
-                  searchMorphology(
-                      context, lexicalEntry, morphology.split(", "));
+                  searchMorphology(context, lexicalEntry, morphology.split(", "));
                 },
               ),
               title: lexeme,

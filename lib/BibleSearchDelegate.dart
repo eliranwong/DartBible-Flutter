@@ -6,10 +6,10 @@ import 'config.dart';
 import 'Helpers.dart';
 
 class BibleSearchDelegate extends SearchDelegate<List> {
-  final _bcvList;
   final _bible;
   final _interfaceDialog;
   final _pageSize = 20;
+  List _bcvList;
   String abbreviations;
   Map interfaceBibleSearch = {
     "ENG": [
@@ -34,8 +34,7 @@ class BibleSearchDelegate extends SearchDelegate<List> {
   String get searchFieldLabel => interfaceBibleSearch[this.abbreviations].last;
 
   BibleSearchDelegate(BuildContext context, this._bible, this._interfaceDialog,
-      Config config, this._data, this._bcvList,
-      [this._rawData]) {
+      Config config, this._data, [this._rawData]) {
     _verseNoFont = config.verseTextStyle["verseNoFont"];
     _verseFont = config.verseTextStyle["verseFont"];
     _verseFontHebrew = config.verseTextStyle["verseFontHebrew"];
@@ -44,6 +43,7 @@ class BibleSearchDelegate extends SearchDelegate<List> {
     _activeVerseFontHebrew = config.verseTextStyle["activeVerseFontHebrew"];
     _activeVerseFontGreek = config.verseTextStyle["activeVerseFontGreek"];
 
+    this._bcvList = config.historyActiveVerse.first;
     this.abbreviations = config.abbreviations;
     this.hebrewBibles = config.hebrewBibles;
     this.greekBibles = config.greekBibles;

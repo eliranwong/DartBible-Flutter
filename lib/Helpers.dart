@@ -256,9 +256,12 @@ class SqliteHelper {
 
   Future getTools(List bcvList, String module) async {
     final Database db = await this.initToolsDb();
-    var statement =
-        "SELECT * FROM $module WHERE Book = ? AND Chapter = ? AND Verse = ? ORDER BY Number";
+    var statement = "SELECT * FROM $module WHERE Book = ? AND Chapter = ? AND Verse = ? ORDER BY Number";
     List<Map> tools = await db.rawQuery(statement, bcvList);
+    if (tools.isEmpty) {
+      statement = "SELECT * FROM $module WHERE Book = ? AND Chapter = ? ORDER BY Number";
+      tools = await db.rawQuery(statement, bcvList.sublist(0, bcvList.length - 1));
+    }
     db.close();
 
     return tools;
