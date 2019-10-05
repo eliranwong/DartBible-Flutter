@@ -1552,14 +1552,14 @@ class UniqueBibleState extends State<UniqueBible> {
             },
           ),
           IconButton(
-            tooltip: this.interfaceBottom[this.abbreviations][0],
+            tooltip: this.interfaceDialog[this.abbreviations][5],
             icon: const Icon(Icons.link),
             onPressed: () {
               _loadXRef(context, _currentActiveVerse);
             },
           ),
           IconButton(
-            tooltip: this.interfaceBottom[this.abbreviations][0],
+            tooltip: this.interfaceDialog[this.abbreviations][6],
             icon: const Icon(Icons.compare_arrows),
             onPressed: () {
               _loadCompare(context, _currentActiveVerse);
