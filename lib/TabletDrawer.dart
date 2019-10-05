@@ -124,18 +124,6 @@ class TabletDrawerState extends State<TabletDrawer> {
           )
       ),
     );
-    /*return ListView(
-      // Important: Remove any padding from the ListView.
-      padding: EdgeInsets.zero,
-      children: <Widget>[
-        _buildTimelineList(context),
-        _buildFavouriteList(context),
-        _buildHistoryList(context),
-        _buildBookList(context),
-        _buildChapterList(context),
-        _buildHeadingList(context),
-      ],
-    );*/
   }
 
   Widget _buildTimelineList(BuildContext context) {

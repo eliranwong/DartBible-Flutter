@@ -9,13 +9,13 @@ class TopicSearchDelegate extends SearchDelegate<List> {
   String abbreviations;
 
   Map interface = {
-    "ENG": ["Clear", "Search", "Bible Topics"],
+    "ENG": ["Clear", "Search ", "Bible Topics"],
     "TC": ["清空", "搜索", "聖經主題"],
     "SC": ["清空", "搜索", "圣经主题"],
   };
 
   @override
-  String get searchFieldLabel => interface[this.abbreviations].last;
+  String get searchFieldLabel => "${interface[this.abbreviations][1]}${interface[this.abbreviations].last}";
 
   TopicSearchDelegate(BuildContext context, this._data, this._config) {
     this.abbreviations = _config.abbreviations;

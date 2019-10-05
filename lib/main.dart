@@ -25,6 +25,7 @@ import 'Helpers.dart';
 import 'Tools.dart';
 import 'MyDrawer.dart';
 import 'TabletDrawer.dart';
+import 'ToolsTablet.dart';
 
 void main() => runApp(MyApp());
 
@@ -812,6 +813,7 @@ class UniqueBibleState extends State<UniqueBible> {
     if (this.config.bigScreen) {
       setState(() {
         if (!_display) _display = true;
+        _rawData = [];
         _displayData = xRefData;
       });
     } else {
@@ -839,6 +841,7 @@ class UniqueBibleState extends State<UniqueBible> {
     if (this.config.bigScreen) {
       setState(() {
         if (!_display) _display = true;
+        _rawData = [];
         _displayData = compareData;
       });
     } else {
@@ -926,6 +929,7 @@ class UniqueBibleState extends State<UniqueBible> {
         } else {
           setState(() {
             if (!_display) _display = true;
+            _rawData = [];
             _displayData = selected.first;
           });
         }
@@ -940,12 +944,22 @@ class UniqueBibleState extends State<UniqueBible> {
       String table = module ?? "EXLBL";
       final List<Map> tools =
           await SqliteHelper(this.config).getTools(bcvList, table);
-      final List selected = await showSearch(
-        context: context,
-        delegate: LocationSearchDelegate(context, tools, this.config),
-      );
-      if ((selected != null) && (selected.isNotEmpty)) {
-        _loadLocationVerses(context, selected.first);
+      if (this.config.bigScreen) {
+        final List<Map> tools2 = await SqliteHelper(this.config).getBookTools(bcvList, table);
+
+        final selected = await Navigator.push(
+          context,
+          MaterialPageRoute(
+              builder: (context) => LocationTablet(tools, tools2, this.config)
+          ),
+        );
+        if ((selected != null) && (selected.isNotEmpty)) _loadLocationVerses(context, selected.first);
+      } else {
+        final List selected = await showSearch(
+          context: context,
+          delegate: LocationSearchDelegate(context, tools, this.config),
+        );
+        if ((selected != null) && (selected.isNotEmpty)) _loadLocationVerses(context, selected.first);
       }
     }
   }
@@ -983,15 +997,26 @@ class UniqueBibleState extends State<UniqueBible> {
       String table = module ?? "PEOPLE";
       final List<Map> tools =
           await SqliteHelper(this.config).getTools(bcvList, table);
-      final List selected = await showSearch(
-        context: context,
-        delegate: PeopleSearchDelegate(context, tools, this.config),
-      );
-      if ((selected != null) && (selected.isNotEmpty)) {
-        if (selected.first == 1) {
-          _loadPeopleVerses(context, selected[1]);
-        } else if (selected.first == 0) {
-          _loadRelationship(context, selected[1], selected[2]);
+
+      if (this.config.bigScreen) {
+        final selected = await Navigator.push(
+          context,
+          MaterialPageRoute(
+              builder: (context) => PeopleTablet(tools, this.config)
+          ),
+        );
+        if (selected != null) _loadPeopleVerses(context, selected);
+      } else {
+        final List selected = await showSearch(
+          context: context,
+          delegate: PeopleSearchDelegate(context, tools, this.config),
+        );
+        if ((selected != null) && (selected.isNotEmpty)) {
+          if (selected.first == 1) {
+            _loadPeopleVerses(context, selected[1]);
+          } else if (selected.first == 0) {
+            _loadRelationship(context, selected[1], selected[2]);
+          }
         }
       }
     }
@@ -1047,17 +1072,30 @@ class UniqueBibleState extends State<UniqueBible> {
     if (this.bibles?.bible1?.data != null) {
       _stopRunningActions();
       String table = module ?? "EXLBT";
-      final List<Map> tools =
-          await SqliteHelper(this.config).getTopics(bcvList, table);
-      final List selected = await showSearch(
-        context: context,
-        delegate: TopicSearchDelegate(context, tools, this.config),
-      );
-      if ((selected != null) && (selected.isNotEmpty)) {
-        String entry = selected.first;
-        (selected[1] == "open")
-            ? _loadTopicView(context, entry)
-            : _loadTopicVerses(context, entry);
+      final List<Map> tools = await SqliteHelper(this.config).getTopics(bcvList, table);
+
+      if (this.config.bigScreen) {
+        final selected = await Navigator.push(
+          context,
+          MaterialPageRoute(
+              builder: (context) => TopicTablet(tools, this.config, this.bibles)),
+        );
+        if ((selected != null) && (selected.isNotEmpty)) {
+          (selected[1] == "search")
+              ? _loadTopicVerses(context, selected.first)
+              : _newVerseSelected(selected);
+        }
+      } else {
+        final List selected = await showSearch(
+          context: context,
+          delegate: TopicSearchDelegate(context, tools, this.config),
+        );
+        if ((selected != null) && (selected.isNotEmpty)) {
+          String entry = selected.first;
+          (selected[1] == "open")
+              ? _loadTopicView(context, entry)
+              : _loadTopicVerses(context, entry);
+        }
       }
     }
   }
@@ -1393,12 +1431,13 @@ class UniqueBibleState extends State<UniqueBible> {
       color: Colors.white,
       child: TextField(
         decoration:
-            InputDecoration(border: InputBorder.none, hintText: 'Search'),
+            InputDecoration(border: InputBorder.none, hintText: interfaceApp[this.abbreviations][2]),
         onSubmitted: (String value) {
           if (value.isNotEmpty) {
             setState(() {
               query = value;
               if (!_display) _display = true;
+              _rawData = [];
               _displayData = _fetch(query);
             });
           }
@@ -1503,10 +1542,27 @@ class UniqueBibleState extends State<UniqueBible> {
             },
           ),
           IconButton(
-            tooltip: this.interfaceBottom[this.abbreviations][1],
-            icon: const Icon(Icons.title),
+            tooltip: this.interfaceBottom[this.abbreviations][7],
+            icon: _ttsIcon,
             onPressed: () {
-              _loadTopics(context, _currentActiveVerse);
+              (this.config.plus)
+                  ? _readVerse()
+                  : _nonPlusMessage(
+                  this.interfaceBottom[this.abbreviations][7]);
+            },
+          ),
+          IconButton(
+            tooltip: this.interfaceBottom[this.abbreviations][0],
+            icon: const Icon(Icons.link),
+            onPressed: () {
+              _loadXRef(context, _currentActiveVerse);
+            },
+          ),
+          IconButton(
+            tooltip: this.interfaceBottom[this.abbreviations][0],
+            icon: const Icon(Icons.compare_arrows),
+            onPressed: () {
+              _loadCompare(context, _currentActiveVerse);
             },
           ),
           IconButton(
@@ -1521,6 +1577,13 @@ class UniqueBibleState extends State<UniqueBible> {
             icon: const Icon(Icons.pin_drop),
             onPressed: () {
               _loadLocation(context, _currentActiveVerse);
+            },
+          ),
+          IconButton(
+            tooltip: this.interfaceBottom[this.abbreviations][1],
+            icon: const Icon(Icons.title),
+            onPressed: () {
+              _loadTopics(context, _currentActiveVerse);
             },
           ),
           IconButton(
@@ -1565,16 +1628,6 @@ class UniqueBibleState extends State<UniqueBible> {
             },
           ),
           IconButton(
-            tooltip: this.interfaceBottom[this.abbreviations][7],
-            icon: _ttsIcon,
-            onPressed: () {
-              (this.config.plus)
-                  ? _readVerse()
-                  : _nonPlusMessage(
-                      this.interfaceBottom[this.abbreviations][7]);
-            },
-          ),
-          IconButton(
             tooltip: this.interfaceBottom[this.abbreviations][6],
             icon: const Icon(Icons.share),
             onPressed: () {
@@ -1587,6 +1640,17 @@ class UniqueBibleState extends State<UniqueBible> {
               Share.share("$chapterReference\n$verses");
             },
           ),
+          (!this.config.bigScreen)
+              ? Container()
+              : IconButton(
+            tooltip: this.interfaceBottom[this.abbreviations][9],
+            icon: const Icon(Icons.add_to_home_screen),
+            onPressed: () {
+              setState(() {
+                _display = !_display;
+              });
+            },
+          ),
           IconButton(
             tooltip: this.interfaceBottom[this.abbreviations][8],
             icon: const Icon(Icons.help_outline),
@@ -1594,17 +1658,6 @@ class UniqueBibleState extends State<UniqueBible> {
               _launchUserManual();
             },
           ),
-          (!this.config.bigScreen)
-              ? Container()
-              : IconButton(
-                  tooltip: this.interfaceBottom[this.abbreviations][9],
-                  icon: const Icon(Icons.add_to_home_screen),
-                  onPressed: () {
-                    setState(() {
-                      _display = !_display;
-                    });
-                  },
-                ),
         ]),
       ),
     );

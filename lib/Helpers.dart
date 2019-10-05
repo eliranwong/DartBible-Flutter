@@ -193,6 +193,7 @@ class SqliteHelper {
   }
 
   Future getMorphology(List bcvList, String module) async {
+    if (bcvList.length > 3) bcvList = bcvList.sublist(0, 3);
     final Database db = await this.initMorphologyDb();
     var statement =
         "SELECT * FROM $module WHERE Book = ? AND Chapter = ? AND Verse = ?";
@@ -255,13 +256,23 @@ class SqliteHelper {
   }
 
   Future getTools(List bcvList, String module) async {
+    if (bcvList.length > 3) bcvList = bcvList.sublist(0, 3);
     final Database db = await this.initToolsDb();
     var statement = "SELECT * FROM $module WHERE Book = ? AND Chapter = ? AND Verse = ? ORDER BY Number";
     List<Map> tools = await db.rawQuery(statement, bcvList);
     if (tools.isEmpty) {
       statement = "SELECT * FROM $module WHERE Book = ? AND Chapter = ? ORDER BY Number";
-      tools = await db.rawQuery(statement, bcvList.sublist(0, bcvList.length - 1));
+      tools = await db.rawQuery(statement, bcvList.sublist(0, 2));
     }
+    db.close();
+
+    return tools;
+  }
+
+  Future getBookTools(List bcvList, String module) async {
+    final Database db = await this.initToolsDb();
+    var statement = "SELECT * FROM $module WHERE Book = ? ORDER BY Number";
+    List<Map> tools = await db.rawQuery(statement, [bcvList.first]);
     db.close();
 
     return tools;

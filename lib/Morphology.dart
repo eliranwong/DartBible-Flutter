@@ -736,7 +736,7 @@ class MorphologySearchViewState extends State<MorphologySearchView> {
       ListTile(
         title: Text(
           _lexeme,
-          style: TextStyle(color: _config.myColors["black"]),
+          style: (lexicalEntry.startsWith("E")) ? _config.verseTextStyle["verseFontHebrew"] : _config.verseTextStyle["verseFontGreek"],
         ),
         subtitle: Text(
           lexicalEntry,

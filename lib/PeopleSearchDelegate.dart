@@ -2,23 +2,26 @@ import 'package:flutter/material.dart';
 import 'package:sqflite/sqflite.dart';
 import 'config.dart';
 import 'Helpers.dart';
+import 'BibleParser.dart';
 
 class PeopleSearchDelegate extends SearchDelegate<List> {
   List _data;
   Config _config;
   String abbreviations;
+  BibleParser _parser;
 
   Map interface = {
-    "ENG": ["Clear", "Search", "Bible People"],
+    "ENG": ["Clear", "Search ", "Bible People"],
     "TC": ["清空", "搜索", "聖經人物"],
     "SC": ["清空", "搜索", "圣经人物"],
   };
 
   @override
-  String get searchFieldLabel => interface[this.abbreviations].last;
+  String get searchFieldLabel => "${interface[this.abbreviations][1]}${interface[this.abbreviations].last}";
 
   PeopleSearchDelegate(BuildContext context, this._data, this._config) {
     this.abbreviations = _config.abbreviations;
+    _parser = BibleParser(this.abbreviations);
   }
 
   Future _fetch(BuildContext context, String searchItem) async {
@@ -91,9 +94,13 @@ class PeopleSearchDelegate extends SearchDelegate<List> {
             color: _config.myColors["black"],
           );
 
+    List bcvList = [itemData["Book"], itemData["Chapter"], itemData["Verse"]];
+    String ref = _parser.bcvToVerseReference(bcvList);
+
     return ListTile(
       leading: icon,
       title: Text(itemData["Name"], style: _config.verseTextStyle["verseFont"]),
+      subtitle: (ref == "BOOK 0:0") ? null : Text(ref, style: TextStyle(color: _config.myColors["grey"])),
       trailing: IconButton(
         tooltip: interface[this.abbreviations][1],
         icon: Icon(

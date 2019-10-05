@@ -104,8 +104,8 @@ class ToolState extends State<Tool> {
       _wrap(_buildMenuItems(context), 1),
       _buildDivider(),
       _wrap(_buildItems(context), 1),
-      _buildDivider(),
-      (displayData.isEmpty) ? Container() : _wrap(_buildVerses(context), 1)
+      (displayData.isEmpty) ? Container() : _buildDivider(),
+      (displayData.isEmpty) ? Container() : _wrap(_buildVerses(context), 1),
     ];
   }
 

@@ -199,9 +199,9 @@ class OriginalWordState extends State<OriginalWord> {
   List<Widget> _buildLayoutWidgets(BuildContext context) {
     return <Widget>[
       _wrap(_buildInterlinearCardList(context), 1),
-      _buildDivider(),
+      (_module == "ABP") ? Container() : _buildDivider(),
       (_module == "ABP") ? Container() : _wrap(_buildMorphologyCardList(context), 1),
-      _buildDivider(),
+      (_wData == null) ? Container() : _buildDivider(),
       (_wData == null) ? Container() : _wrap(_buildWordList(context), 1),
     ];
   }
@@ -779,7 +779,7 @@ class MorphologySearchTabletState extends State<MorphologySearchTablet> {
       child: Scaffold(
         key: _scaffoldKey,
         appBar: AppBar(
-          title: Text(interface1[_config.abbreviations][1]),
+          title: Text("${interface1[_config.abbreviations][1]} (x ${_data.length})"),
           actions: <Widget>[
             IconButton(
               tooltip: interface1[_config.abbreviations][0],
@@ -809,8 +809,8 @@ class MorphologySearchTabletState extends State<MorphologySearchTablet> {
       _wrap(_buildMorphology(context), 1),
       _buildDivider(),
       _wrap(_buildCardList(context), 1),
-      _buildDivider(),
-      (_wData != null) ? _wrap(_buildWordList(context), 1) : Container(),
+      (_wData == null) ? Container() : _buildDivider(),
+      (_wData == null) ? Container() : _wrap(_buildWordList(context), 1),
     ];
   }
 
@@ -829,7 +829,7 @@ class MorphologySearchTabletState extends State<MorphologySearchTablet> {
       ListTile(
         title: Text(
           _lexeme,
-          style: TextStyle(color: _config.myColors["black"]),
+          style: (lexicalEntry.startsWith("E")) ? _config.verseTextStyle["verseFontHebrew"] : _config.verseTextStyle["verseFontGreek"],
         ),
         subtitle: Text(
           lexicalEntry,
