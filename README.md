@@ -20,6 +20,8 @@ Premium version: <a href='https://apps.apple.com/app/unique-bible-app-plus/id148
 
 # User Manual
 
+<a href='https://www.uniquebible.app/mobile/big-screen-mode'>Big Screen Mode</a><br>
+<a href='https://www.uniquebible.app/mobile/buttons'>Buttons</a><br>
 <a href='https://www.uniquebible.app/mobile/basic-navigation'>Basic Navigation</a><br>
 <a href='https://www.uniquebible.app/mobile/chapter-headings'>Chapter Headings</a><br>
 <a href='https://www.uniquebible.app/mobile/search'>Search</a><br>
