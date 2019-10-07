@@ -75,6 +75,8 @@ class UniqueBibleState extends State<UniqueBible> {
   bool _drawer = false;
   bool _typing = false;
   bool _display = false;
+  bool _selection = false;
+  List _selectionIndexes = [];
   Bibles bibles;
   var scrollController;
   int _scrollIndex = 0;
@@ -397,6 +399,57 @@ class UniqueBibleState extends State<UniqueBible> {
         _ttsIcon = Icon(Icons.volume_up);
         _scrollIndex = _activeIndex;
       });
+  }
+
+  void _startSelection() {
+    _stopRunningActions();
+    setState(() {
+      _selection = true;
+      _selectionIndexes = List<int>.generate(_data.length, (i) => i);
+    });
+  }
+
+  void _stopSelection() {
+    setState(() {
+      _selection = false;
+    });
+  }
+
+  void _allSelection() {
+    setState(() {
+      if (_selectionIndexes.isNotEmpty) {
+        _selectionIndexes = [];
+      } else {
+        _selectionIndexes = List<int>.generate(_data.length, (i) => i);
+      }
+    });
+  }
+
+  void _updateSelection(int i, bool value) {
+    setState(() {
+      if (value) {
+        _selectionIndexes.add(i);
+        _selectionIndexes.sort();
+      } else {
+        int index = _selectionIndexes.indexOf(i);
+        _selectionIndexes.removeAt(index);
+      }
+    });
+  }
+
+  void _runSelection([bool share = false]) {
+    String chapterReference = BibleParser(this.abbreviations)
+        .bcvToChapterReference(_data.first.first);
+    List copyList = _selectionIndexes
+        .map((i) => (_parallelBibles) ? "[${_data[i].first.last}] [${_data[i].last}] ${_data[i][1]}" : "[${_data[i].first.last}] ${_data[i][1]}")
+        .toList();
+    String content = "$chapterReference\n${copyList.join("\n")}";
+    if (share) {
+      Share.share(content);
+    } else {
+      Clipboard.setData(ClipboardData(text: content));
+    }
+    _stopSelection();
   }
 
   Future _setup() async {
@@ -919,9 +972,10 @@ class UniqueBibleState extends State<UniqueBible> {
         context,
         MaterialPageRoute(
             builder: (context) => (this.config.bigScreen)
-                ? Tool(title, table, menu, this.config, this.bibles.bible1, icon, this.interfaceDialog)
-                : ToolMenu(title, table, menu, this.config, this.bibles.bible1, icon, this.interfaceDialog)
-        ),
+                ? Tool(title, table, menu, this.config, this.bibles.bible1,
+                    icon, this.interfaceDialog)
+                : ToolMenu(title, table, menu, this.config, this.bibles.bible1,
+                    icon, this.interfaceDialog)),
       );
       if (selected != null) {
         if (selected.last == "open") {
@@ -945,21 +999,23 @@ class UniqueBibleState extends State<UniqueBible> {
       final List<Map> tools =
           await SqliteHelper(this.config).getTools(bcvList, table);
       if (this.config.bigScreen) {
-        final List<Map> tools2 = await SqliteHelper(this.config).getBookTools(bcvList, table);
+        final List<Map> tools2 =
+            await SqliteHelper(this.config).getBookTools(bcvList, table);
 
         final selected = await Navigator.push(
           context,
           MaterialPageRoute(
-              builder: (context) => LocationTablet(tools, tools2, this.config)
-          ),
+              builder: (context) => LocationTablet(tools, tools2, this.config)),
         );
-        if ((selected != null) && (selected.isNotEmpty)) _loadLocationVerses(context, selected.first);
+        if ((selected != null) && (selected.isNotEmpty))
+          _loadLocationVerses(context, selected.first);
       } else {
         final List selected = await showSearch(
           context: context,
           delegate: LocationSearchDelegate(context, tools, this.config),
         );
-        if ((selected != null) && (selected.isNotEmpty)) _loadLocationVerses(context, selected.first);
+        if ((selected != null) && (selected.isNotEmpty))
+          _loadLocationVerses(context, selected.first);
       }
     }
   }
@@ -1002,8 +1058,7 @@ class UniqueBibleState extends State<UniqueBible> {
         final selected = await Navigator.push(
           context,
           MaterialPageRoute(
-              builder: (context) => PeopleTablet(tools, this.config)
-          ),
+              builder: (context) => PeopleTablet(tools, this.config)),
         );
         if (selected != null) _loadPeopleVerses(context, selected);
       } else {
@@ -1072,13 +1127,15 @@ class UniqueBibleState extends State<UniqueBible> {
     if (this.bibles?.bible1?.data != null) {
       _stopRunningActions();
       String table = module ?? "EXLBT";
-      final List<Map> tools = await SqliteHelper(this.config).getTopics(bcvList, table);
+      final List<Map> tools =
+          await SqliteHelper(this.config).getTopics(bcvList, table);
 
       if (this.config.bigScreen) {
         final selected = await Navigator.push(
           context,
           MaterialPageRoute(
-              builder: (context) => TopicTablet(tools, this.config, this.bibles)),
+              builder: (context) =>
+                  TopicTablet(tools, this.config, this.bibles)),
         );
         if ((selected != null) && (selected.isNotEmpty)) {
           (selected[1] == "search")
@@ -1430,8 +1487,9 @@ class UniqueBibleState extends State<UniqueBible> {
       alignment: Alignment.centerLeft,
       color: Colors.white,
       child: TextField(
-        decoration:
-            InputDecoration(border: InputBorder.none, hintText: interfaceApp[this.abbreviations][2]),
+        decoration: InputDecoration(
+            border: InputBorder.none,
+            hintText: interfaceApp[this.abbreviations][2]),
         onSubmitted: (String value) {
           if (value.isNotEmpty) {
             setState(() {
@@ -1534,59 +1592,99 @@ class UniqueBibleState extends State<UniqueBible> {
         height: 48,
         color: _bottomAppBarColor,
         child: ListView(scrollDirection: Axis.horizontal, children: <Widget>[
-          IconButton(
+          (_selection)
+              ? IconButton(
+            //tooltip: this.interfaceBottom[this.abbreviations][9],
+            icon: const Icon(Icons.arrow_back),
+            onPressed: () => _stopSelection(),
+          )
+              : IconButton(
+            //tooltip: this.interfaceBottom[this.abbreviations][9],
+            icon: const Icon(Icons.select_all),
+            onPressed: () => _startSelection(),
+          ),
+          (_selection)
+              ? IconButton(
+            //tooltip: this.interfaceBottom[this.abbreviations][9],
+            icon: const Icon(Icons.select_all),
+            onPressed: () => _allSelection(),
+          )
+              : Container(),
+          (_selection)
+              ? IconButton(
+            //tooltip: this.interfaceBottom[this.abbreviations][9],
+            icon: const Icon(Icons.content_copy),
+            onPressed: () => _runSelection(),
+          )
+              : Container(),
+          (_selection)
+              ? IconButton(
+            //tooltip: this.interfaceBottom[this.abbreviations][9],
+            icon: const Icon(Icons.share),
+            onPressed: () => _runSelection(true),
+          )
+              : Container(),
+          (_selection)
+              ? Container() : IconButton(
             tooltip: this.interfaceBottom[this.abbreviations][0],
             icon: const Icon(Icons.layers),
             onPressed: () {
               showInterlinear(context, _currentActiveVerse);
             },
           ),
-          IconButton(
+          (_selection)
+              ? Container() : IconButton(
             tooltip: this.interfaceBottom[this.abbreviations][7],
             icon: _ttsIcon,
             onPressed: () {
               (this.config.plus)
                   ? _readVerse()
                   : _nonPlusMessage(
-                  this.interfaceBottom[this.abbreviations][7]);
+                      this.interfaceBottom[this.abbreviations][7]);
             },
           ),
-          IconButton(
+          (_selection)
+              ? Container() : IconButton(
             tooltip: this.interfaceDialog[this.abbreviations][5],
             icon: const Icon(Icons.link),
             onPressed: () {
               _loadXRef(context, _currentActiveVerse);
             },
           ),
-          IconButton(
+          (_selection)
+              ? Container() : IconButton(
             tooltip: this.interfaceDialog[this.abbreviations][6],
             icon: const Icon(Icons.compare_arrows),
             onPressed: () {
               _loadCompare(context, _currentActiveVerse);
             },
           ),
-          IconButton(
+          (_selection)
+              ? Container() : IconButton(
             tooltip: this.interfaceBottom[this.abbreviations][4],
             icon: const Icon(Icons.people),
             onPressed: () {
               _loadPeople(context, _currentActiveVerse);
             },
           ),
-          IconButton(
+          (_selection)
+              ? Container() : IconButton(
             tooltip: this.interfaceBottom[this.abbreviations][5],
             icon: const Icon(Icons.pin_drop),
             onPressed: () {
               _loadLocation(context, _currentActiveVerse);
             },
           ),
-          IconButton(
+          (_selection)
+              ? Container() : IconButton(
             tooltip: this.interfaceBottom[this.abbreviations][1],
             icon: const Icon(Icons.title),
             onPressed: () {
               _loadTopics(context, _currentActiveVerse);
             },
           ),
-          IconButton(
+          (_selection)
+              ? Container() : IconButton(
             tooltip: this.interfaceBottom[this.abbreviations][2],
             icon: const Icon(Icons.games),
             onPressed: () {
@@ -1617,7 +1715,8 @@ class UniqueBibleState extends State<UniqueBible> {
                   ));
             },
           ),
-          IconButton(
+          (_selection)
+              ? Container() : IconButton(
             tooltip: this.interfaceBottom[this.abbreviations][3],
             icon: const Icon(Icons.compare),
             onPressed: () {
@@ -1627,20 +1726,15 @@ class UniqueBibleState extends State<UniqueBible> {
                       this.interfaceBottom[this.abbreviations][3]);
             },
           ),
-          IconButton(
-            tooltip: this.interfaceBottom[this.abbreviations][6],
-            icon: const Icon(Icons.share),
+          (_selection)
+              ? Container() : IconButton(
+            tooltip: this.interfaceBottom[this.abbreviations][8],
+            icon: const Icon(Icons.help_outline),
             onPressed: () {
-              String chapterReference = BibleParser(this.abbreviations)
-                  .bcvToChapterReference(_data.first.first);
-              String verses = _data
-                  .map((i) => "${i.first.last.toString()} ${i[1]}")
-                  .toList()
-                  .join("\n");
-              Share.share("$chapterReference\n$verses");
+              _launchUserManual();
             },
           ),
-          (!this.config.bigScreen)
+          ((!this.config.bigScreen) || (_selection))
               ? Container()
               : IconButton(
             tooltip: this.interfaceBottom[this.abbreviations][9],
@@ -1649,13 +1743,6 @@ class UniqueBibleState extends State<UniqueBible> {
               setState(() {
                 _display = !_display;
               });
-            },
-          ),
-          IconButton(
-            tooltip: this.interfaceBottom[this.abbreviations][8],
-            icon: const Icon(Icons.help_outline),
-            onPressed: () {
-              _launchUserManual();
             },
           ),
         ]),
@@ -1762,6 +1849,7 @@ class UniqueBibleState extends State<UniqueBible> {
 
       // check if it is an active verse or not
       //if (i == _scrollIndex) {
+      RichText richText;
       if (bcvList[2] == _currentActiveVerse[2]) {
         if (this.config.interlinearBibles.contains(module)) {
           List<TextSpan> interlinearSpans =
@@ -1777,22 +1865,29 @@ class UniqueBibleState extends State<UniqueBible> {
             TextSpan(text: verseContent, style: verseActiveFont)
           ];
         }
-        return ListTile(
-          title: RichText(
-            text: TextSpan(
-              style: DefaultTextStyle.of(context).style,
-              children: wordSpans,
-            ),
-            textDirection: verseDirection,
+        richText = RichText(
+          text: TextSpan(
+            style: DefaultTextStyle.of(context).style,
+            children: wordSpans,
           ),
-          //subtitle: Text(interlinear),
-          onTap: () {
-            _tapActiveVerse(context, _data[i].first);
-          },
-          onLongPress: () {
-            _longPressedActiveVerse(context, _data[i]);
-          },
+          textDirection: verseDirection,
         );
+        return (_selection)
+            ? CheckboxListTile(
+                title: richText,
+                value: (_selectionIndexes.contains(i)),
+                onChanged: (bool value) => _updateSelection(i, value),
+              )
+            : ListTile(
+                title: richText,
+                //subtitle: Text(interlinear),
+                onTap: () {
+                  _tapActiveVerse(context, _data[i].first);
+                },
+                onLongPress: () {
+                  _longPressedActiveVerse(context, _data[i]);
+                },
+              );
       } else {
         if (this.config.interlinearBibles.contains(module)) {
           List<TextSpan> interlinearSpans =
@@ -1808,25 +1903,32 @@ class UniqueBibleState extends State<UniqueBible> {
             TextSpan(text: verseContent, style: verseFont)
           ];
         }
-        return ListTile(
-          title: RichText(
-            text: TextSpan(
-              style: DefaultTextStyle.of(context).style,
-              children: wordSpans,
-            ),
-            textDirection: verseDirection,
+        richText = RichText(
+          text: TextSpan(
+            style: DefaultTextStyle.of(context).style,
+            children: wordSpans,
           ),
-          onTap: () {
-            (module == this.bibles.bible1.module)
-                ? _scrollIndex = i
-                : _scrollIndex = (i - 1);
-            _activeIndex = _scrollIndex;
-            setActiveVerse(context, _data[i].first);
-          },
-          onLongPress: () {
-            _longPressedVerse(context, _data[i]);
-          },
+          textDirection: verseDirection,
         );
+        return (_selection)
+            ? CheckboxListTile(
+                title: richText,
+                value: (_selectionIndexes.contains(i)),
+                onChanged: (bool value) => _updateSelection(i, value),
+              )
+            : ListTile(
+                title: richText,
+                onTap: () {
+                  (module == this.bibles.bible1.module)
+                      ? _scrollIndex = i
+                      : _scrollIndex = (i - 1);
+                  _activeIndex = _scrollIndex;
+                  setActiveVerse(context, _data[i].first);
+                },
+                onLongPress: () {
+                  _longPressedVerse(context, _data[i]);
+                },
+              );
       }
     }
     return null;
@@ -1864,13 +1966,34 @@ class UniqueBibleState extends State<UniqueBible> {
 
   // reference: https://api.flutter.dev/flutter/material/SimpleDialog-class.html
   Future<void> _longPressedVerse(BuildContext context, List verseData) async {
-    _stopRunningActions();
-    var copiedText = await Clipboard.getData('text/plain');
-    switch (await showDialog<DialogAction>(
-        context: context,
-        builder: (BuildContext context) {
-          return SimpleDialog(
-            title: Text(this.interfaceDialog[this.abbreviations].first),
+    if (verseData.first.isNotEmpty) {
+      String ref =
+          BibleParser(this.abbreviations).bcvToVerseReference(verseData.first);
+      _stopRunningActions();
+      var copiedText = await Clipboard.getData('text/plain');
+      switch (await showDialog<DialogAction>(
+          context: context,
+          builder: (BuildContext context) {
+            return SimpleDialog(
+              title: Text(ref),
+              children: <Widget>[
+                ListTile(
+                  leading: Icon(Icons.share),
+                  title: Text(this.interfaceDialog[this.abbreviations][1]),
+                  onTap: () => Navigator.pop(context, DialogAction.share),
+                ),
+                ListTile(
+                  leading: Icon(Icons.content_copy),
+                  title: Text(this.interfaceDialog[this.abbreviations][2]),
+                  onTap: () => Navigator.pop(context, DialogAction.copy),
+                ),
+                ListTile(
+                  leading: Icon(Icons.playlist_add),
+                  title: Text(this.interfaceDialog[this.abbreviations][3]),
+                  onTap: () => Navigator.pop(context, DialogAction.addCopy),
+                ),
+              ],
+              /*title: Text(this.interfaceDialog[this.abbreviations].first),
             children: <Widget>[
               SimpleDialogOption(
                 onPressed: () {
@@ -1890,21 +2013,23 @@ class UniqueBibleState extends State<UniqueBible> {
                 },
                 child: Text(this.interfaceDialog[this.abbreviations][3]),
               ),
-            ],
-          );
-        })) {
-      case DialogAction.share:
-        Share.share(verseData[1]);
-        break;
-      case DialogAction.copy:
-        Clipboard.setData(ClipboardData(text: verseData[1]));
-        break;
-      case DialogAction.addCopy:
-        var combinedText = copiedText.text;
-        combinedText += "\n${verseData[1]}";
-        Clipboard.setData(ClipboardData(text: combinedText));
-        break;
-      default:
+            ],*/
+            );
+          })) {
+        case DialogAction.share:
+          Share.share("${verseData[1]} ($ref, ${verseData.last})");
+          break;
+        case DialogAction.copy:
+          Clipboard.setData(
+              ClipboardData(text: "${verseData[1]} ($ref, ${verseData.last})"));
+          break;
+        case DialogAction.addCopy:
+          var combinedText = copiedText.text;
+          combinedText += "\n${verseData[1]} ($ref, ${verseData.last})";
+          Clipboard.setData(ClipboardData(text: combinedText));
+          break;
+        default:
+      }
     }
   }
 
@@ -1913,7 +2038,52 @@ class UniqueBibleState extends State<UniqueBible> {
     _stopRunningActions();
     var copiedText = await Clipboard.getData('text/plain');
     List<Widget> dialogOptions = [
-      SimpleDialogOption(
+      ListTile(
+        leading: Icon(Icons.share),
+        title: Text(this.interfaceDialog[this.abbreviations][1]),
+        onTap: () => Navigator.pop(context, DialogAction.share),
+      ),
+      ListTile(
+        leading: Icon(Icons.content_copy),
+        title: Text(this.interfaceDialog[this.abbreviations][2]),
+        onTap: () => Navigator.pop(context, DialogAction.copy),
+      ),
+      ListTile(
+        leading: Icon(Icons.playlist_add),
+        title: Text(this.interfaceDialog[this.abbreviations][3]),
+        onTap: () => Navigator.pop(context, DialogAction.addCopy),
+      ),
+      ListTile(
+        leading: Icon(Icons.favorite_border),
+        title: Text(this.interfaceDialog[this.abbreviations][4]),
+        onTap: () => Navigator.pop(context, DialogAction.addFavourite),
+      ),
+      ListTile(
+        leading: Icon(Icons.link),
+        title: Text(this.interfaceDialog[this.abbreviations][5]),
+        onTap: () => Navigator.pop(context, DialogAction.crossReference),
+      ),
+      ListTile(
+        leading: Icon(Icons.compare_arrows),
+        title: Text(this.interfaceDialog[this.abbreviations][6]),
+        onTap: () => Navigator.pop(context, DialogAction.compareAll),
+      ),
+      ListTile(
+        leading: Icon(Icons.layers),
+        title: Text("OHGB ${this.interfaceDialog[this.abbreviations][7]}"),
+        onTap: () => Navigator.pop(context, DialogAction.interlinearOHGB),
+      ),
+      ListTile(
+        leading: Icon(Icons.art_track),
+        title: Text("OHGB ${this.interfaceDialog[this.abbreviations][8]}"),
+        onTap: () => Navigator.pop(context, DialogAction.morphologyOHGB),
+      ),
+      ListTile(
+        leading: Icon(Icons.layers),
+        title: Text("ABP ${this.interfaceDialog[this.abbreviations][7]}"),
+        onTap: () => Navigator.pop(context, DialogAction.interlinearABP),
+      ),
+      /*SimpleDialogOption(
         onPressed: () {
           Navigator.pop(context, DialogAction.share);
         },
@@ -1966,12 +2136,32 @@ class UniqueBibleState extends State<UniqueBible> {
           Navigator.pop(context, DialogAction.interlinearABP);
         },
         child: Text("ABP ${this.interfaceDialog[this.abbreviations][7]}"),
-      ),
+      ),*/
     ];
     int bookNo = verseData.first.first;
     if ((bookNo < 40) || (bookNo > 66)) {
       List<Widget> lxxDialogOptions = [
-        SimpleDialogOption(
+        ListTile(
+          leading: Icon(Icons.layers),
+          title: Text("LXX1 ${this.interfaceDialog[this.abbreviations][7]}"),
+          onTap: () => Navigator.pop(context, DialogAction.interlinearLXX1),
+        ),
+        ListTile(
+          leading: Icon(Icons.art_track),
+          title: Text("LXX1 ${this.interfaceDialog[this.abbreviations][8]}"),
+          onTap: () => Navigator.pop(context, DialogAction.morphologyLXX1),
+        ),
+        ListTile(
+          leading: Icon(Icons.layers),
+          title: Text("LXX2 ${this.interfaceDialog[this.abbreviations][7]}"),
+          onTap: () => Navigator.pop(context, DialogAction.interlinearLXX2),
+        ),
+        ListTile(
+          leading: Icon(Icons.art_track),
+          title: Text("LXX2 ${this.interfaceDialog[this.abbreviations][8]}"),
+          onTap: () => Navigator.pop(context, DialogAction.morphologyLXX2),
+        ),
+        /*SimpleDialogOption(
           onPressed: () {
             Navigator.pop(context, DialogAction.interlinearLXX1);
           },
@@ -1994,27 +2184,30 @@ class UniqueBibleState extends State<UniqueBible> {
             Navigator.pop(context, DialogAction.morphologyLXX2);
           },
           child: Text("LXX2 ${this.interfaceDialog[this.abbreviations][8]}"),
-        ),
+        ),*/
       ];
       dialogOptions = [...dialogOptions, ...lxxDialogOptions];
     }
+    String ref =
+        BibleParser(this.abbreviations).bcvToVerseReference(verseData.first);
     switch (await showDialog<DialogAction>(
         context: context,
         builder: (BuildContext context) {
           return SimpleDialog(
-            title: Text(this.interfaceDialog[this.abbreviations].first),
+            title: Text(ref),
             children: dialogOptions,
           );
         })) {
       case DialogAction.share:
-        Share.share(verseData[1]);
+        Share.share("${verseData[1]} ($ref, ${verseData.last})");
         break;
       case DialogAction.copy:
-        Clipboard.setData(ClipboardData(text: verseData[1]));
+        Clipboard.setData(
+            ClipboardData(text: "${verseData[1]} ($ref, ${verseData.last})"));
         break;
       case DialogAction.addCopy:
         var combinedText = copiedText.text;
-        combinedText += "\n${verseData[1]}";
+        combinedText += "\n${verseData[1]} ($ref, ${verseData.last})";
         Clipboard.setData(ClipboardData(text: combinedText));
         break;
       case DialogAction.addFavourite:

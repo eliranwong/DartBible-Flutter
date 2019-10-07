@@ -275,14 +275,31 @@ class BibleSearchDelegate extends SearchDelegate<List> {
   }
 
   Future<void> _longPressedVerse(BuildContext context, List verseData) async {
-    var copiedText = await Clipboard.getData('text/plain');
-    switch (await showDialog<DialogAction>(
-        context: context,
-        builder: (BuildContext context) {
-          return SimpleDialog(
-            title: Text(_interfaceDialog[this.abbreviations][0]),
-            children: <Widget>[
-              SimpleDialogOption(
+    if (verseData.first.isNotEmpty) {
+      String ref = BibleParser(this.abbreviations).bcvToVerseReference(verseData.first);
+      var copiedText = await Clipboard.getData('text/plain');
+      switch (await showDialog<DialogAction>(
+          context: context,
+          builder: (BuildContext context) {
+            return SimpleDialog(
+              title: Text(ref),
+              children: <Widget>[
+                ListTile(
+                  leading: Icon(Icons.share),
+                  title: Text(_interfaceDialog[this.abbreviations][1]),
+                  onTap: () => Navigator.pop(context, DialogAction.share),
+                ),
+                ListTile(
+                  leading: Icon(Icons.content_copy),
+                  title: Text(_interfaceDialog[this.abbreviations][2]),
+                  onTap: () => Navigator.pop(context, DialogAction.copy),
+                ),
+                ListTile(
+                  leading: Icon(Icons.playlist_add),
+                  title: Text(_interfaceDialog[this.abbreviations][3]),
+                  onTap: () => Navigator.pop(context, DialogAction.addCopy),
+                ),
+                /*SimpleDialogOption(
                 onPressed: () {
                   Navigator.pop(context, DialogAction.share);
                 },
@@ -299,22 +316,23 @@ class BibleSearchDelegate extends SearchDelegate<List> {
                   Navigator.pop(context, DialogAction.addCopy);
                 },
                 child: Text(_interfaceDialog[this.abbreviations][3]),
-              ),
-            ],
-          );
-        })) {
-      case DialogAction.share:
-        Share.share(verseData[1]);
-        break;
-      case DialogAction.copy:
-        Clipboard.setData(ClipboardData(text: verseData[1]));
-        break;
-      case DialogAction.addCopy:
-        var combinedText = copiedText.text;
-        combinedText += "\n${verseData[1]}";
-        Clipboard.setData(ClipboardData(text: combinedText));
-        break;
-      default:
+              ),*/
+              ],
+            );
+          })) {
+        case DialogAction.share:
+          Share.share("${verseData[1]} ($ref, ${verseData.last})");
+          break;
+        case DialogAction.copy:
+          Clipboard.setData(ClipboardData(text: "${verseData[1]} ($ref, ${verseData.last})"));
+          break;
+        case DialogAction.addCopy:
+          var combinedText = copiedText.text;
+          combinedText += "\n${verseData[1]} ($ref, ${verseData.last})";
+          Clipboard.setData(ClipboardData(text: combinedText));
+          break;
+        default:
+      }
     }
   }
 }

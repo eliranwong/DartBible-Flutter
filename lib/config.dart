@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class Config {
-  bool plus = false;
+  bool plus = true;
   String plusURL = (Platform.isAndroid)
       ? 'https://play.google.com/store/apps/details?id=app.bibletools.unique_bible_app_plus_paid'
       : 'https://apps.apple.com/app/unique-bible-app-plus/id1480768821?ls=1';
