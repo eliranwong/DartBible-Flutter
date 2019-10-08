@@ -151,6 +151,9 @@ class UniqueBibleState extends State<UniqueBible> {
       "Bible Audio",
       "User Manual",
       "Add / Remove Secondary View",
+      "Back",
+      "Select",
+      "Select / Clear All",
     ],
     "TC": [
       "即時原文逐字翻譯",
@@ -163,6 +166,9 @@ class UniqueBibleState extends State<UniqueBible> {
       "聖經語音",
       "使用手册",
       "加增／刪除輔助視窗",
+      "回去",
+      "選擇",
+      "選擇／清除所有",
     ],
     "SC": [
       "即时原文逐字翻译",
@@ -175,6 +181,9 @@ class UniqueBibleState extends State<UniqueBible> {
       "圣经语音",
       "使用手册",
       "加增／删除辅助视窗",
+      "回去",
+      "选择",
+      "选择／清除所有",
     ],
   };
 
@@ -209,7 +218,8 @@ class UniqueBibleState extends State<UniqueBible> {
       "Cross-references",
       "Version Comparison",
       "Interlinear",
-      "Morphology"
+      "Morphology",
+      "Text copied to clipboard.",
     ],
     "TC": [
       "功能選項：",
@@ -220,7 +230,8 @@ class UniqueBibleState extends State<UniqueBible> {
       "相關經文",
       "比較版本",
       "原文逐字翻譯",
-      "原文形態學"
+      "原文形態學",
+      "文字已複製",
     ],
     "SC": [
       "功能选项：",
@@ -231,7 +242,8 @@ class UniqueBibleState extends State<UniqueBible> {
       "相关经文",
       "比较版本",
       "原文逐字翻译",
-      "原文形态学"
+      "原文形态学",
+      "文字已拷贝",
     ],
   };
 
@@ -448,6 +460,12 @@ class UniqueBibleState extends State<UniqueBible> {
       Share.share(content);
     } else {
       Clipboard.setData(ClipboardData(text: content));
+      _scaffoldKey.currentState.removeCurrentSnackBar();
+      String message = this.interfaceDialog[this.abbreviations][9];
+      final snackBar = SnackBar(
+        content: Text(message),
+      );
+      _scaffoldKey.currentState.showSnackBar(snackBar);
     }
     _stopSelection();
   }
@@ -674,6 +692,7 @@ class UniqueBibleState extends State<UniqueBible> {
           this.config.save("bible1", selectedBible);
         }
         setState(() {
+          _selection = false;
           _currentActiveVerse = selectedBcvList;
           updateHistoryActiveVerse();
           (_parallelBibles) ? _parallelBibles = false : _parallelBibles = true;
@@ -1594,32 +1613,32 @@ class UniqueBibleState extends State<UniqueBible> {
         child: ListView(scrollDirection: Axis.horizontal, children: <Widget>[
           (_selection)
               ? IconButton(
-            //tooltip: this.interfaceBottom[this.abbreviations][9],
+            tooltip: this.interfaceBottom[this.abbreviations][10],
             icon: const Icon(Icons.arrow_back),
             onPressed: () => _stopSelection(),
           )
               : IconButton(
-            //tooltip: this.interfaceBottom[this.abbreviations][9],
-            icon: const Icon(Icons.select_all),
+            tooltip: this.interfaceBottom[this.abbreviations][11],
+            icon: const Icon(Icons.check_circle_outline),
             onPressed: () => _startSelection(),
           ),
           (_selection)
               ? IconButton(
-            //tooltip: this.interfaceBottom[this.abbreviations][9],
-            icon: const Icon(Icons.select_all),
+            tooltip: this.interfaceBottom[this.abbreviations][12],
+            icon: const Icon(Icons.check_circle_outline),
             onPressed: () => _allSelection(),
           )
               : Container(),
           (_selection)
               ? IconButton(
-            //tooltip: this.interfaceBottom[this.abbreviations][9],
+            tooltip: this.interfaceDialog[this.abbreviations][2],
             icon: const Icon(Icons.content_copy),
             onPressed: () => _runSelection(),
           )
               : Container(),
           (_selection)
               ? IconButton(
-            //tooltip: this.interfaceBottom[this.abbreviations][9],
+            tooltip: this.interfaceDialog[this.abbreviations][1],
             icon: const Icon(Icons.share),
             onPressed: () => _runSelection(true),
           )
