@@ -98,6 +98,7 @@ class Config {
     "LXXk",
     "NET",
     "OHGB",
+    "OHGBt",
     "WEB",
   ];
   // private versions

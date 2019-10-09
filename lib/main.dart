@@ -154,6 +154,8 @@ class UniqueBibleState extends State<UniqueBible> {
       "Back",
       "Select",
       "Select / Clear All",
+      "Text copied to clipboard.",
+      "You have to select at least a verse for this action.",
     ],
     "TC": [
       "即時原文逐字翻譯",
@@ -169,6 +171,8 @@ class UniqueBibleState extends State<UniqueBible> {
       "回去",
       "選擇",
       "選擇／清除所有",
+      "文字已複製",
+      "你必須選擇至少一節經文才能啟動此功能。",
     ],
     "SC": [
       "即时原文逐字翻译",
@@ -184,6 +188,8 @@ class UniqueBibleState extends State<UniqueBible> {
       "回去",
       "选择",
       "选择／清除所有",
+      "文字已拷贝",
+      "你必须选择至少一节经文才能启动此功能。",
     ],
   };
 
@@ -219,7 +225,6 @@ class UniqueBibleState extends State<UniqueBible> {
       "Version Comparison",
       "Interlinear",
       "Morphology",
-      "Text copied to clipboard.",
     ],
     "TC": [
       "功能選項：",
@@ -231,7 +236,6 @@ class UniqueBibleState extends State<UniqueBible> {
       "比較版本",
       "原文逐字翻譯",
       "原文形態學",
-      "文字已複製",
     ],
     "SC": [
       "功能选项：",
@@ -243,7 +247,6 @@ class UniqueBibleState extends State<UniqueBible> {
       "比较版本",
       "原文逐字翻译",
       "原文形态学",
-      "文字已拷贝",
     ],
   };
 
@@ -450,24 +453,33 @@ class UniqueBibleState extends State<UniqueBible> {
   }
 
   void _runSelection([bool share = false]) {
-    String chapterReference = BibleParser(this.abbreviations)
-        .bcvToChapterReference(_data.first.first);
-    List copyList = _selectionIndexes
-        .map((i) => (_parallelBibles) ? "[${_data[i].first.last}] [${_data[i].last}] ${_data[i][1]}" : "[${_data[i].first.last}] ${_data[i][1]}")
-        .toList();
-    String content = "$chapterReference\n${copyList.join("\n")}";
-    if (share) {
-      Share.share(content);
+    if (_selectionIndexes.isNotEmpty) {
+      String chapterReference = BibleParser(this.abbreviations)
+          .bcvToChapterReference(_data.first.first);
+      List copyList = _selectionIndexes
+          .map((i) => (_parallelBibles) ? "[${_data[i].first.last}] [${_data[i].last}] ${_data[i][1]}" : "[${_data[i].first.last}] ${_data[i][1]}")
+          .toList();
+      String content = "$chapterReference\n${copyList.join("\n")}";
+      if (share) {
+        Share.share(content);
+      } else {
+        Clipboard.setData(ClipboardData(text: content));
+        _scaffoldKey.currentState.removeCurrentSnackBar();
+        String message = this.interfaceBottom[this.abbreviations][13];
+        final snackBar = SnackBar(
+          content: Text(message),
+        );
+        _scaffoldKey.currentState.showSnackBar(snackBar);
+      }
+      _stopSelection();
     } else {
-      Clipboard.setData(ClipboardData(text: content));
       _scaffoldKey.currentState.removeCurrentSnackBar();
-      String message = this.interfaceDialog[this.abbreviations][9];
+      String message = this.interfaceBottom[this.abbreviations][14];
       final snackBar = SnackBar(
         content: Text(message),
       );
       _scaffoldKey.currentState.showSnackBar(snackBar);
     }
-    _stopSelection();
   }
 
   Future _setup() async {
@@ -997,14 +1009,20 @@ class UniqueBibleState extends State<UniqueBible> {
                     icon, this.interfaceDialog)),
       );
       if (selected != null) {
-        if (selected.last == "open") {
-          _newVerseSelected(selected.first);
+        if (this.config.bigScreen) {
+          if (selected.last == "open") {
+            _newVerseSelected(selected.first);
+          } else {
+            setState(() {
+              if (!_display) _display = true;
+              _rawData = [];
+              _displayData = selected.first;
+            });
+          }
         } else {
-          setState(() {
-            if (!_display) _display = true;
-            _rawData = [];
-            _displayData = selected.first;
-          });
+          _rawData = [];
+          _displayData = selected.first;
+          _newVerseSelected(selected.first[selected.last]);
         }
       }
     }
@@ -1619,7 +1637,7 @@ class UniqueBibleState extends State<UniqueBible> {
           )
               : IconButton(
             tooltip: this.interfaceBottom[this.abbreviations][11],
-            icon: const Icon(Icons.check_circle_outline),
+            icon: const Icon(Icons.check_circle),
             onPressed: () => _startSelection(),
           ),
           (_selection)
@@ -1645,14 +1663,6 @@ class UniqueBibleState extends State<UniqueBible> {
               : Container(),
           (_selection)
               ? Container() : IconButton(
-            tooltip: this.interfaceBottom[this.abbreviations][0],
-            icon: const Icon(Icons.layers),
-            onPressed: () {
-              showInterlinear(context, _currentActiveVerse);
-            },
-          ),
-          (_selection)
-              ? Container() : IconButton(
             tooltip: this.interfaceBottom[this.abbreviations][7],
             icon: _ttsIcon,
             onPressed: () {
@@ -1676,6 +1686,14 @@ class UniqueBibleState extends State<UniqueBible> {
             icon: const Icon(Icons.compare_arrows),
             onPressed: () {
               _loadCompare(context, _currentActiveVerse);
+            },
+          ),
+          (_selection)
+              ? Container() : IconButton(
+            tooltip: this.interfaceBottom[this.abbreviations][0],
+            icon: const Icon(Icons.layers),
+            onPressed: () {
+              showInterlinear(context, _currentActiveVerse);
             },
           ),
           (_selection)
