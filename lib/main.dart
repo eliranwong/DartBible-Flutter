@@ -10,6 +10,7 @@ import 'package:swipedetector/swipedetector.dart';
 import 'package:sqflite/sqflite.dart';
 import 'package:flutter_tts/flutter_tts.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:path/path.dart';
 //import 'package:provider/provider.dart';
 import 'config.dart';
 import 'Bibles.dart';
@@ -60,6 +61,10 @@ class UniqueBible extends StatefulWidget {
 
 class UniqueBibleState extends State<UniqueBible> {
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
+
+  Database noteDB;
+  bool _showNotes = true;
+  List _noteList = [];
 
   String query = '';
   bool _parallelBibles = false;
@@ -287,6 +292,7 @@ class UniqueBibleState extends State<UniqueBible> {
   void dispose() {
     super.dispose();
     flutterTts.stop();
+    noteDB.close();
   }
 
   initTts() {
@@ -457,7 +463,9 @@ class UniqueBibleState extends State<UniqueBible> {
       String chapterReference = BibleParser(this.abbreviations)
           .bcvToChapterReference(_data.first.first);
       List copyList = _selectionIndexes
-          .map((i) => (_parallelBibles) ? "[${_data[i].first.last}] [${_data[i].last}] ${_data[i][1]}" : "[${_data[i].first.last}] ${_data[i][1]}")
+          .map((i) => (_parallelBibles)
+              ? "[${_data[i].first.last}] [${_data[i].last}] ${_data[i][1]}"
+              : "[${_data[i].first.last}] ${_data[i][1]}")
           .toList();
       String content = "$chapterReference\n${copyList.join("\n")}";
       if (share) {
@@ -483,6 +491,17 @@ class UniqueBibleState extends State<UniqueBible> {
   }
 
   Future _setup() async {
+    // Get a location using getDatabasesPath
+    var databasesPath = await getDatabasesPath();
+    String path = join(databasesPath, "Notes.sqlite");
+
+    // open the database
+    noteDB = await openDatabase(path, version: 1,
+        onCreate: (Database db, int version) async {
+      await db.execute(
+          "CREATE TABLE Notes (id INTEGER PRIMARY KEY, book INTEGER, chapter INTEGER, verse INTEGER, content TEXT)");
+    });
+
     await this.config.setDefault();
     await flutterTts.setSpeechRate(this.config.speechRate);
 
@@ -508,9 +527,11 @@ class UniqueBibleState extends State<UniqueBible> {
     this.bibles.tBible = Bible("OHGBt", this.abbreviations);
     this.bibles.tBible.loadData();
 
+    _currentActiveVerse = List<int>.from(this.config.historyActiveVerse.first);
+    _noteList = await noteDB.rawQuery("SELECT verse FROM Notes WHERE book = ? AND chapter = ?", _currentActiveVerse.sublist(0, 2));
+    _noteList = _noteList.map((i) => i["verse"]).toList();
+
     setState(() {
-      _currentActiveVerse =
-          List<int>.from(this.config.historyActiveVerse.first);
       _data = this.bibles.bible1.openSingleChapter(_currentActiveVerse);
       _scrollIndex = getScrollIndex();
       _activeIndex = _scrollIndex;
@@ -996,6 +1017,90 @@ class UniqueBibleState extends State<UniqueBible> {
     }
   }
 
+  Future _launchNotePad(BuildContext context, List bcvList) async {
+    if (isAllBiblesReady()) {
+      _stopRunningActions();
+
+      if (bcvList.length > 3) bcvList = bcvList.sublist(0, 3);
+
+      List<Map> savedContent = await noteDB.rawQuery("SELECT * FROM Notes WHERE book = ? AND chapter = ? AND verse = ?", bcvList);
+      String content = (savedContent.isEmpty) ? "" : savedContent.first["content"];
+
+      final selected = await Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) =>
+              NotePad(this.config, this.bibles, bcvList, noteDB, content),
+        ),
+      );
+      //if (selected != null) _newVerseSelected(selected);
+    }
+  }
+
+  void _launchPromises(BuildContext context) {
+    Map title = {
+      "ENG": this.interfaceBottom["ENG"][2],
+      "TC": this.interfaceBottom["TC"][2],
+      "SC": this.interfaceBottom["SC"][2],
+    };
+    List menu = [
+      "Precious Bible Promises I",
+      "Precious Bible Promises II",
+      "Precious Bible Promises III",
+      "Precious Bible Promises IV",
+      "Take Words with You",
+      "Index",
+      "When you ...",
+      "當你 ……",
+      "当你 ……",
+    ];
+    _loadTools(
+        context,
+        title,
+        "PROMISES",
+        menu,
+        Icon(
+          Icons.games,
+          color: this.config.myColors["black"],
+        ));
+  }
+
+  void _launchHarmonies(BuildContext context) {
+    Map title = {
+      "ENG": this.interfaceBottom["ENG"][3],
+      "TC": this.interfaceBottom["TC"][3],
+      "SC": this.interfaceBottom["SC"][3],
+    };
+    List menu = [
+      "History of Israel I",
+      "History of Israel II",
+      "Gospels I",
+      "Gospels II",
+      "摩西五經",
+      "撒母耳記，列王紀，歷代志",
+      "詩篇",
+      "福音書（可，太，路〔順序〕，約） x 54",
+      "福音書（可，太，路〔不順序〕） x 14",
+      "福音書（可，太） x 11",
+      "福音書（可，太，約） x 4",
+      "福音書（可，路） x 7",
+      "福音書（太，路） x 32",
+      "福音書（可〔獨家記載〕） x 5",
+      "福音書（太〔獨家記載〕） x 30",
+      "福音書（路〔獨家記載〕） x 39",
+      "福音書（約〔獨家記載〕） x 61",
+    ];
+    _loadTools(
+        context,
+        title,
+        "PARALLEL",
+        menu,
+        Icon(
+          Icons.compare,
+          color: this.config.myColors["black"],
+        ));
+  }
+
   Future _loadTools(BuildContext context, Map title, String table, List menu,
       Icon icon) async {
     if (this.bibles?.bible1?.data != null) {
@@ -1400,11 +1505,15 @@ class UniqueBibleState extends State<UniqueBible> {
     _updateTextStyle();
     _updateAppBarTitle();
 
-    return Scaffold(
-      key: _scaffoldKey,
-      drawer: (this.config.bigScreen) ? null : _buildDrawer(),
-      //drawer: MyDrawer(this.config, this.bibles.bible1, _currentActiveVerse),
-      /*
+    return Theme(
+      data: ThemeData(
+        unselectedWidgetColor: this.config.myColors["blue"],
+      ),
+      child: Scaffold(
+        key: _scaffoldKey,
+        drawer: (this.config.bigScreen) ? null : _buildDrawer(),
+        //drawer: MyDrawer(this.config, this.bibles.bible1, _currentActiveVerse),
+        /*
       // trigger actions when drawer is opened or closed:
       // find a fix of drawerCallback at:
       // https://juejin.im/post/5be5356bf265da61602c6f68
@@ -1421,24 +1530,25 @@ class UniqueBibleState extends State<UniqueBible> {
         },
       ),
       */
-      appBar: _buildAppBar(context),
-      body: Container(
-        color: _backgroundColor,
-        child: _buildLayout(context),
-      ),
-      bottomNavigationBar: _buildBottomAppBar(context),
-      floatingActionButtonLocation: FloatingActionButtonLocation.endDocked,
-      floatingActionButton: FloatingActionButton(
-        backgroundColor: _appBarColor,
-        onPressed: () {
-          setState(() {
-            _parallelBibles = _toggleParallelBibles();
-            _scrollIndex = getScrollIndex();
-            _activeIndex = _scrollIndex;
-          });
-        },
-        tooltip: this.interfaceApp[this.abbreviations][5],
-        child: Icon(Icons.add),
+        appBar: _buildAppBar(context),
+        body: Container(
+          color: _backgroundColor,
+          child: _buildLayout(context),
+        ),
+        bottomNavigationBar: _buildBottomAppBar(context),
+        floatingActionButtonLocation: FloatingActionButtonLocation.endDocked,
+        floatingActionButton: FloatingActionButton(
+          backgroundColor: _appBarColor,
+          onPressed: () {
+            setState(() {
+              _parallelBibles = _toggleParallelBibles();
+              _scrollIndex = getScrollIndex();
+              _activeIndex = _scrollIndex;
+            });
+          },
+          tooltip: this.interfaceApp[this.abbreviations][5],
+          child: Icon(Icons.add),
+        ),
       ),
     );
   }
@@ -1631,196 +1741,144 @@ class UniqueBibleState extends State<UniqueBible> {
         child: ListView(scrollDirection: Axis.horizontal, children: <Widget>[
           (_selection)
               ? IconButton(
-            tooltip: this.interfaceBottom[this.abbreviations][10],
-            icon: const Icon(Icons.arrow_back),
-            onPressed: () => _stopSelection(),
-          )
+                  tooltip: this.interfaceBottom[this.abbreviations][10],
+                  icon: const Icon(Icons.arrow_back),
+                  onPressed: () => _stopSelection(),
+                )
               : IconButton(
-            tooltip: this.interfaceBottom[this.abbreviations][11],
-            icon: const Icon(Icons.check_circle),
-            onPressed: () => _startSelection(),
-          ),
+                  tooltip: this.interfaceBottom[this.abbreviations][11],
+                  icon: const Icon(Icons.check_circle),
+                  onPressed: () => _startSelection(),
+                ),
           (_selection)
               ? IconButton(
-            tooltip: this.interfaceBottom[this.abbreviations][12],
-            icon: const Icon(Icons.check_circle_outline),
-            onPressed: () => _allSelection(),
-          )
+                  tooltip: this.interfaceBottom[this.abbreviations][12],
+                  icon: const Icon(Icons.check_circle_outline),
+                  onPressed: () => _allSelection(),
+                )
               : Container(),
           (_selection)
               ? IconButton(
-            tooltip: this.interfaceDialog[this.abbreviations][2],
-            icon: const Icon(Icons.content_copy),
-            onPressed: () => _runSelection(),
-          )
+                  tooltip: this.interfaceDialog[this.abbreviations][2],
+                  icon: const Icon(Icons.content_copy),
+                  onPressed: () => _runSelection(),
+                )
               : Container(),
           (_selection)
               ? IconButton(
-            tooltip: this.interfaceDialog[this.abbreviations][1],
-            icon: const Icon(Icons.share),
-            onPressed: () => _runSelection(true),
-          )
+                  tooltip: this.interfaceDialog[this.abbreviations][1],
+                  icon: const Icon(Icons.share),
+                  onPressed: () => _runSelection(true),
+                )
               : Container(),
           (_selection)
-              ? Container() : IconButton(
-            tooltip: this.interfaceBottom[this.abbreviations][7],
-            icon: _ttsIcon,
-            onPressed: () {
-              (this.config.plus)
-                  ? _readVerse()
-                  : _nonPlusMessage(
-                      this.interfaceBottom[this.abbreviations][7]);
-            },
-          ),
+              ? Container()
+              : IconButton(
+                  tooltip: this.interfaceBottom[this.abbreviations][7],
+                  icon: _ttsIcon,
+                  onPressed: () {
+                    (this.config.plus)
+                        ? _readVerse()
+                        : _nonPlusMessage(
+                            this.interfaceBottom[this.abbreviations][7]);
+                  },
+                ),
           (_selection)
-              ? Container() : IconButton(
-            tooltip: this.interfaceDialog[this.abbreviations][5],
-            icon: const Icon(Icons.link),
-            onPressed: () {
-              _loadXRef(context, _currentActiveVerse);
-            },
-          ),
+              ? Container()
+              : IconButton(
+                  tooltip: this.interfaceBottom[this.abbreviations][0],
+                  icon: const Icon(Icons.layers),
+                  onPressed: () {
+                    showInterlinear(context, _currentActiveVerse);
+                  },
+                ),
           (_selection)
-              ? Container() : IconButton(
-            tooltip: this.interfaceDialog[this.abbreviations][6],
-            icon: const Icon(Icons.compare_arrows),
-            onPressed: () {
-              _loadCompare(context, _currentActiveVerse);
-            },
-          ),
+              ? Container()
+              : IconButton(
+                  tooltip: this.interfaceDialog[this.abbreviations][5],
+                  icon: const Icon(Icons.link),
+                  onPressed: () {
+                    _loadXRef(context, _currentActiveVerse);
+                  },
+                ),
           (_selection)
-              ? Container() : IconButton(
-            tooltip: this.interfaceBottom[this.abbreviations][0],
-            icon: const Icon(Icons.layers),
-            onPressed: () {
-              showInterlinear(context, _currentActiveVerse);
-            },
-          ),
+              ? Container()
+              : IconButton(
+                  tooltip: this.interfaceDialog[this.abbreviations][6],
+                  icon: const Icon(Icons.compare_arrows),
+                  onPressed: () {
+                    _loadCompare(context, _currentActiveVerse);
+                  },
+                ),
           (_selection)
-              ? Container() : IconButton(
-            tooltip: this.interfaceBottom[this.abbreviations][4],
-            icon: const Icon(Icons.people),
-            onPressed: () {
-              _loadPeople(context, _currentActiveVerse);
-            },
-          ),
+              ? Container()
+              : IconButton(
+                  tooltip: this.interfaceBottom[this.abbreviations][4],
+                  icon: const Icon(Icons.people),
+                  onPressed: () {
+                    _loadPeople(context, _currentActiveVerse);
+                  },
+                ),
           (_selection)
-              ? Container() : IconButton(
-            tooltip: this.interfaceBottom[this.abbreviations][5],
-            icon: const Icon(Icons.pin_drop),
-            onPressed: () {
-              _loadLocation(context, _currentActiveVerse);
-            },
-          ),
+              ? Container()
+              : IconButton(
+                  tooltip: this.interfaceBottom[this.abbreviations][5],
+                  icon: const Icon(Icons.pin_drop),
+                  onPressed: () {
+                    _loadLocation(context, _currentActiveVerse);
+                  },
+                ),
           (_selection)
-              ? Container() : IconButton(
-            tooltip: this.interfaceBottom[this.abbreviations][1],
-            icon: const Icon(Icons.title),
-            onPressed: () {
-              _loadTopics(context, _currentActiveVerse);
-            },
-          ),
+              ? Container()
+              : IconButton(
+                  tooltip: this.interfaceBottom[this.abbreviations][1],
+                  icon: const Icon(Icons.title),
+                  onPressed: () {
+                    _loadTopics(context, _currentActiveVerse);
+                  },
+                ),
           (_selection)
-              ? Container() : IconButton(
-            tooltip: this.interfaceBottom[this.abbreviations][2],
-            icon: const Icon(Icons.games),
-            onPressed: () {
-              Map title = {
-                "ENG": this.interfaceBottom["ENG"][2],
-                "TC": this.interfaceBottom["TC"][2],
-                "SC": this.interfaceBottom["SC"][2],
-              };
-              List menu = [
-                "Precious Bible Promises I",
-                "Precious Bible Promises II",
-                "Precious Bible Promises III",
-                "Precious Bible Promises IV",
-                "Take Words with You",
-                "Index",
-                "When you ...",
-                "當你 ……",
-                "当你 ……",
-              ];
-              _loadTools(
-                  context,
-                  title,
-                  "PROMISES",
-                  menu,
-                  Icon(
-                    Icons.games,
-                    color: this.config.myColors["black"],
-                  ));
-            },
-          ),
+              ? Container()
+              : IconButton(
+                  tooltip: this.interfaceBottom[this.abbreviations][2],
+                  icon: const Icon(Icons.games),
+                  onPressed: () => _launchPromises(context),
+                ),
           (_selection)
-              ? Container() : IconButton(
-            tooltip: this.interfaceBottom[this.abbreviations][3],
-            icon: const Icon(Icons.compare),
-            onPressed: () {
-              (this.config.plus)
-                  ? _launchHarmonies(context)
-                  : _nonPlusMessage(
-                      this.interfaceBottom[this.abbreviations][3]);
-            },
-          ),
+              ? Container()
+              : IconButton(
+                  tooltip: this.interfaceBottom[this.abbreviations][3],
+                  icon: const Icon(Icons.compare),
+                  onPressed: () {
+                    (this.config.plus)
+                        ? _launchHarmonies(context)
+                        : _nonPlusMessage(
+                            this.interfaceBottom[this.abbreviations][3]);
+                  },
+                ),
           (_selection)
-              ? Container() : IconButton(
-            tooltip: this.interfaceBottom[this.abbreviations][8],
-            icon: const Icon(Icons.help_outline),
-            onPressed: () {
-              _launchUserManual();
-            },
-          ),
+              ? Container()
+              : IconButton(
+                  tooltip: this.interfaceBottom[this.abbreviations][8],
+                  icon: const Icon(Icons.help_outline),
+                  onPressed: () {
+                    _launchUserManual();
+                  },
+                ),
           ((!this.config.bigScreen) || (_selection))
               ? Container()
               : IconButton(
-            tooltip: this.interfaceBottom[this.abbreviations][9],
-            icon: const Icon(Icons.add_to_home_screen),
-            onPressed: () {
-              setState(() {
-                _display = !_display;
-              });
-            },
-          ),
+                  tooltip: this.interfaceBottom[this.abbreviations][9],
+                  icon: const Icon(Icons.add_to_home_screen),
+                  onPressed: () {
+                    setState(() {
+                      _display = !_display;
+                    });
+                  },
+                ),
         ]),
       ),
     );
-  }
-
-  void _launchHarmonies(BuildContext context) {
-    Map title = {
-      "ENG": this.interfaceBottom["ENG"][3],
-      "TC": this.interfaceBottom["TC"][3],
-      "SC": this.interfaceBottom["SC"][3],
-    };
-    List menu = [
-      "History of Israel I",
-      "History of Israel II",
-      "Gospels I",
-      "Gospels II",
-      "摩西五經",
-      "撒母耳記，列王紀，歷代志",
-      "詩篇",
-      "福音書（可，太，路〔順序〕，約） x 54",
-      "福音書（可，太，路〔不順序〕） x 14",
-      "福音書（可，太） x 11",
-      "福音書（可，太，約） x 4",
-      "福音書（可，路） x 7",
-      "福音書（太，路） x 32",
-      "福音書（可〔獨家記載〕） x 5",
-      "福音書（太〔獨家記載〕） x 30",
-      "福音書（路〔獨家記載〕） x 39",
-      "福音書（約〔獨家記載〕） x 61",
-    ];
-    _loadTools(
-        context,
-        title,
-        "PARALLEL",
-        menu,
-        Icon(
-          Icons.compare,
-          color: this.config.myColors["black"],
-        ));
   }
 
   Future _launchUserManual() async {
@@ -1917,13 +1975,23 @@ class UniqueBibleState extends State<UniqueBible> {
               )
             : ListTile(
                 title: richText,
-                //subtitle: Text(interlinear),
                 onTap: () {
                   _tapActiveVerse(context, _data[i].first);
                 },
                 onLongPress: () {
                   _longPressedActiveVerse(context, _data[i]);
                 },
+                trailing: (!_showNotes)
+                    ? null
+                    : IconButton(
+                        //tooltip: "",
+                        icon: Icon(
+                          (_noteList.contains(bcvList[2])) ? Icons.edit : Icons.note_add,
+                          color: this.config.myColors["blue"],
+                        ),
+                        onPressed: () {
+                          _launchNotePad(context, bcvList);
+                        }),
               );
       } else {
         if (this.config.interlinearBibles.contains(module)) {
@@ -1955,6 +2023,17 @@ class UniqueBibleState extends State<UniqueBible> {
               )
             : ListTile(
                 title: richText,
+                trailing: (!_showNotes)
+                    ? null
+                    : IconButton(
+                        //tooltip: "",
+                        icon: Icon(
+                          (_noteList.contains(bcvList[2])) ? Icons.edit : Icons.note_add,
+                          color: this.config.myColors["blueAccent"],
+                        ),
+                        onPressed: () {
+                          _launchNotePad(context, bcvList);
+                        }),
                 onTap: () {
                   (module == this.bibles.bible1.module)
                       ? _scrollIndex = i

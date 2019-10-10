@@ -8,6 +8,182 @@ import 'BibleSearchDelegate.dart';
 import 'BibleParser.dart';
 import 'HtmlWrapper.dart';
 
+class NotePad extends StatefulWidget {
+  final Config _config;
+  final Bibles _bibles;
+  final List _bcvList;
+  final Database _noteDB;
+  final String _content;
+
+  NotePad(this._config, this._bibles, this._bcvList, this._noteDB, this._content);
+
+  @override
+  NotePadState createState() => NotePadState(this._config, this._bibles, this._bcvList, this._noteDB, this._content);
+}
+
+
+class NotePadState extends State<NotePad> {
+  final Config _config;
+  final Bibles _bibles;
+  final List _bcvList;
+  final Database _noteDB;
+  String _content;
+  bool _isNew;
+
+  //final myController = TextEditingController();
+  final Map interface = {
+    "ENG": ["Note", "Type here ..."],
+    "TC": ["筆記", "在這裡輸入文字 ..."],
+    "SC": ["笔记", "在这里输入文字 ..."],
+  };
+
+  NotePadState(this._config, this._bibles, this._bcvList, this._noteDB, this._content) {
+    _isNew = _content.isEmpty;
+  }
+
+  /*@override
+  void dispose() {
+    // Clean up the controller when the widget is disposed.
+    myController.dispose();
+    super.dispose();
+  }*/
+
+  Future _saveNote(BuildContext context) async {
+    //print(myController.text);
+    if ((_content.isEmpty) && (!_isNew)) {
+      _deleteNote(context);
+    } else {
+      if (_isNew) {
+        // save new record
+        await _noteDB.transaction((txn) async {
+          int id1 = await txn.rawInsert(
+              "INSERT INTO Notes(book, chapter, verse, content) VALUES(?, ?, ?, ?)", [..._bcvList, _content]
+          );
+          if (id1 != null) _isNew = !_isNew;
+        });
+      } else {
+        // update current record
+        await _noteDB.rawUpdate(
+            "UPDATE Notes SET content = ? WHERE book = ? AND chapter = ? AND verse = ?",
+            [_content, ..._bcvList]);
+      }
+    }
+  }
+
+  Future _deleteNote(BuildContext context) async {
+    int count = await _noteDB.rawDelete("DELETE FROM Notes WHERE book = ? AND chapter = ? AND verse = ?", _bcvList);
+    if (count == 1) Navigator.pop(context);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    List<Bible> bibleList = [_bibles.bible1, _bibles.bible2, _bibles.iBible];
+    List<Widget> verseList = bibleList.map((bible) => _buildVerseRow(context, bible.openSingleVerse(_bcvList), bible.module)).toList();
+
+    //myController.text = _content;
+
+    return Theme(
+      data: _config.mainTheme,
+      child: Scaffold(
+        appBar: AppBar(
+          title: Text(interface[_config.abbreviations].first),
+          actions: <Widget>[
+            IconButton(icon: Icon(Icons.save), onPressed: () => _saveNote(context)),
+            IconButton(icon: Icon(Icons.delete_forever), onPressed: () => _deleteNote(context)),
+          ],
+        ),
+        body: Center(
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: <Widget>[
+                ExpansionTile(
+                  title: Text(
+                    BibleParser(_config.abbreviations).bcvToVerseReference(_bcvList),
+                    style: TextStyle(
+                      color: _config.myColors["black"],
+                    ),
+                  ),
+                  initiallyExpanded: false,
+                  backgroundColor: Theme.of(context).accentColor.withOpacity(0.025),
+                  children: verseList,
+                ),
+                Row(
+                  children: <Widget>[
+                    SizedBox(width: 20),
+                    Expanded(
+                      child: TextFormField(
+                        //controller: myController,
+                        style: _config.verseTextStyle["verseFont"],
+                        decoration: InputDecoration(
+                          //border: OutlineInputBorder(),
+                          hintText: interface[_config.abbreviations][1],
+                          //labelText: "label",
+                          //labelStyle: _config.verseTextStyle["verseFont"],
+                          //helperText: "helper",
+                          //helperStyle:  _config.verseTextStyle["verseFont"],
+                        ),
+                        initialValue: _content,
+                        //readOnly: false,
+                        scrollPadding: EdgeInsets.all(20.0),
+                        keyboardType: TextInputType.multiline,
+                        maxLines: 99999,
+                        autofocus: true,
+                        onChanged: (String content) {
+                          _content = content;
+                        },
+                      ),
+                    ),
+                    SizedBox(width: 20),
+                  ],
+                )
+              ],
+            ),
+          ),
+        ),
+        resizeToAvoidBottomInset: true,
+      ),
+    );
+  }
+
+  Widget _buildVerseRow(
+      BuildContext context, String text, String module) {
+    int book = _bcvList[0];
+    TextDirection verseDirection = ((_config.hebrewBibles.contains(module)) && (_bcvList.first < 40)) ? TextDirection.rtl : TextDirection.ltr;
+    TextStyle verseFont;
+    if ((_config.hebrewBibles.contains(module)) && (_bcvList.first < 40)) {
+      verseFont = _config.verseTextStyle["verseFontHebrew"];
+    } else if (_config.greekBibles.contains(module)) {
+      verseFont = _config.verseTextStyle["verseFontGreek"];
+    } else {
+      verseFont = _config.verseTextStyle["verseFont"];
+    }
+    List<TextSpan> wordSpans = (_config.interlinearBibles.contains(module))
+        ? InterlinearHelper(_config.verseTextStyle)
+        .getInterlinearSpan(text, book)
+        : <TextSpan>[TextSpan(text: text, style: verseFont)];
+    return ListTile(
+      title: RichText(
+        text: TextSpan(
+          //style: DefaultTextStyle.of(context).style,
+          children: wordSpans,
+        ),
+        textDirection: verseDirection,
+      ),
+      subtitle: Text(
+        "[$module]",
+        style: TextStyle(
+          color: _config.myColors["blue"],
+        ),
+      ),
+      onTap: () {
+        Navigator.pop(context, [_bcvList, "", module]);
+      },
+    );
+  }
+
+}
+
 class ToolMenu extends StatelessWidget {
   final Map _title;
   final String _module;
