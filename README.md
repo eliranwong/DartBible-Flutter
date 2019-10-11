@@ -4,7 +4,7 @@ Flutter version of the <a href="https://github.com/eliranwong/DartBible">DartBib
 Materials in this repository is for building cross-platform apps, 'Unique Bible App' & 'Unique Bible App Plus'.
 For command-line version, please visit https://github.com/eliranwong/DartBible.
 
-# 'Unique Bible App' & 'Unique Bible App Plus' are now published in both Google Play Store and Apple App Store, public notes:
+# 'Unique Bible App' & 'Unique Bible App Plus' are published:
 
 <a href='https://biblebento.com/UniqueBibleApp.html'>https://biblebento.com/UniqueBibleApp.html</a>
 
