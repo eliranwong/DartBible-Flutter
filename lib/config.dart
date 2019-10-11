@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class Config {
-  bool plus = true;
+  bool plus = false;
   String plusURL = (Platform.isAndroid)
       ? 'https://play.google.com/store/apps/details?id=app.bibletools.unique_bible_app_plus_paid'
       : 'https://apps.apple.com/app/unique-bible-app-plus/id1480768821?ls=1';
@@ -58,7 +58,7 @@ class Config {
   List<String> chineseBibles = ["CCB", "CUV", "CUVs"];
 
   // public versions
-  /*List<String> allBibleList = [
+  List<String> allBibleList = [
     "ABG",
     "ASV",
     "BBE",
@@ -81,14 +81,14 @@ class Config {
     "ULT",
     "UST",
     "WEB"
-  ];*/
+  ];
   // private versions
-  List<String> allBibleList = ["ABG", "ASV", "BBE", "BSB", "CCB", "CEB", "CEV", "CSB", "CUV", "CUVs", "ERV", "ESV", "EXP", "ISV", "KJV", "LEB", "LXX1", "LXX2", "LXXE", "LXXk", "NASB", "NET", "NIV", "NLT", "NRSV", "OHGB", "OHGBi", "OHGBt", "T4T", "ULT", "UST", "WEB"];
+  //List<String> allBibleList = ["ABG", "ASV", "BBE", "BSB", "CCB", "CEB", "CEV", "CSB", "CUV", "CUVs", "ERV", "ESV", "EXP", "ISV", "KJV", "LEB", "LXX1", "LXX2", "LXXE", "LXXk", "NASB", "NET", "NIV", "NLT", "NRSV", "OHGB", "OHGBi", "OHGBt", "T4T", "ULT", "UST", "WEB"];
 
   // variables linked with shared preferences
 
   // public versions
-  /*List<String> compareBibleList = [
+  List<String> compareBibleList = [
     "ASV",
     "BSB",
     "ERV",
@@ -100,11 +100,12 @@ class Config {
     "OHGB",
     "OHGBt",
     "WEB",
-  ];*/
+  ];
   // private versions
-  List<String> compareBibleList = ["CEV", "CSB", "CUV", "ESV", "EXP", "ISV", "KJV", "LEB", "LXXE", "LXXk", "NASB", "NET", "NIV", "OHGB"];
+  //List<String> compareBibleList = ["CEV", "CSB", "CUV", "ESV", "EXP", "ISV", "KJV", "LEB", "LXXE", "LXXk", "NASB", "NET", "NIV", "OHGB"];
 
   bool bigScreen = false;
+  bool showNotes = false;
   double fontSize = 20.0;
   String abbreviations = "ENG";
   String bible1 = "KJV";
@@ -153,6 +154,11 @@ class Config {
       prefs.setBool("bigScreen", this.bigScreen);
     } else {
       this.bigScreen = prefs.getBool("bigScreen");
+    }
+    if (prefs.getBool("showNotes") == null) {
+      prefs.setBool("showNotes", this.showNotes);
+    } else {
+      this.showNotes = prefs.getBool("showNotes");
     }
     if (prefs.getDouble("fontSize") == null) {
       prefs.setDouble("fontSize", this.fontSize);
@@ -262,6 +268,8 @@ class Config {
 
     if (prefs.getBool("bigScreen") == null)
       this.bigScreen = prefs.getBool("bigScreen");
+    if (prefs.getBool("showNotes") == null)
+      this.showNotes = prefs.getBool("showNotes");
     if (prefs.getDouble("fontSize") != null)
       this.fontSize = prefs.getDouble("fontSize");
     if (prefs.getString("abbreviations") != null)
@@ -319,6 +327,9 @@ class Config {
   Future save(String feature, dynamic newSetting) async {
     switch (feature) {
       case "bigScreen":
+        await prefs.setBool(feature, newSetting as bool);
+        break;
+      case "showNotes":
         await prefs.setBool(feature, newSetting as bool);
         break;
       case "fontSize":

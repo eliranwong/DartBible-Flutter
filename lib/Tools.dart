@@ -15,29 +15,70 @@ class NotePad extends StatefulWidget {
   final Database _noteDB;
   final String _content;
 
-  NotePad(this._config, this._bibles, this._bcvList, this._noteDB, this._content);
+  NotePad(
+      this._config, this._bibles, this._bcvList, this._noteDB, this._content);
 
   @override
-  NotePadState createState() => NotePadState(this._config, this._bibles, this._bcvList, this._noteDB, this._content);
+  NotePadState createState() => NotePadState(
+      this._config, this._bibles, this._bcvList, this._noteDB, this._content);
 }
 
-
 class NotePadState extends State<NotePad> {
+  final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
+
   final Config _config;
   final Bibles _bibles;
   final List _bcvList;
   final Database _noteDB;
   String _content;
   bool _isNew;
+  bool _isEditable = true;
 
   //final myController = TextEditingController();
   final Map interface = {
-    "ENG": ["Note", "Type here ..."],
-    "TC": ["筆記", "在這裡輸入文字 ..."],
-    "SC": ["笔记", "在这里输入文字 ..."],
+    "ENG": [
+      "Note",
+      "Type here ...",
+      "Saved.",
+      "Note is empty! File saving was not proceeded! Use 'Delete' function instead if you want to remove this note.",
+      "Delete this note?",
+      "Delete",
+      "Cancel",
+      "Reader Mode",
+      "Edit",
+      "Save",
+      "There is no saved note on this verse: ",
+    ],
+    "TC": [
+      "筆記",
+      "在這裡輸入文字 ...",
+      "已存檔。",
+      "記筆全空，沒有存檔！如要移除此記筆，請使用'刪除'功能。",
+      "刪除此記筆？",
+      "刪除",
+      "取消",
+      "閱讀模式",
+      "修改",
+      "存檔",
+      "檔案中沒有此節的筆記：",
+    ],
+    "SC": [
+      "笔记",
+      "在这里输入文字 ...",
+      "已存档。",
+      "记笔全空，没有存档！如要移除此记笔，请使用'删除'功能。",
+      "删除此记笔？",
+      "删除",
+      "取消",
+      "阅读模式",
+      "修改",
+      "存档",
+      "档案中没有此节的笔记：",
+    ],
   };
 
-  NotePadState(this._config, this._bibles, this._bcvList, this._noteDB, this._content) {
+  NotePadState(
+      this._config, this._bibles, this._bcvList, this._noteDB, this._content) {
     _isNew = _content.isEmpty;
   }
 
@@ -48,17 +89,25 @@ class NotePadState extends State<NotePad> {
     super.dispose();
   }*/
 
-  Future _saveNote(BuildContext context) async {
+  void _editNote() {
+    setState(() {
+      _isEditable = !_isEditable;
+    });
+  }
+
+  Future _saveNote() async {
     //print(myController.text);
-    if ((_content.isEmpty) && (!_isNew)) {
-      _deleteNote(context);
+    _scaffoldKey.currentState.removeCurrentSnackBar();
+    String message;
+    if (_content.isEmpty) {
+      message = interface[_config.abbreviations][3];
     } else {
       if (_isNew) {
         // save new record
         await _noteDB.transaction((txn) async {
           int id1 = await txn.rawInsert(
-              "INSERT INTO Notes(book, chapter, verse, content) VALUES(?, ?, ?, ?)", [..._bcvList, _content]
-          );
+              "INSERT INTO Notes(book, chapter, verse, content) VALUES(?, ?, ?, ?)",
+              [..._bcvList, _content]);
           if (id1 != null) _isNew = !_isNew;
         });
       } else {
@@ -67,89 +116,212 @@ class NotePadState extends State<NotePad> {
             "UPDATE Notes SET content = ? WHERE book = ? AND chapter = ? AND verse = ?",
             [_content, ..._bcvList]);
       }
+      message = interface[_config.abbreviations][2];
+    }
+    final snackBar = SnackBar(
+      content: Text(message),
+    );
+    _scaffoldKey.currentState.showSnackBar(snackBar);
+  }
+
+  Future _confirmDeleteNote(BuildContext context) async {
+    int count = await _noteDB.rawDelete(
+        "DELETE FROM Notes WHERE book = ? AND chapter = ? AND verse = ?",
+        _bcvList);
+    if (count == 1) {
+      Navigator.pop(context);
+    } else {
+      _scaffoldKey.currentState.removeCurrentSnackBar();
+      String message = "${interface[_config.abbreviations][10]}${BibleParser(_config.abbreviations).bcvToVerseReference(_bcvList)}";
+      final snackBar = SnackBar(
+        content: Text(message),
+      );
+      _scaffoldKey.currentState.showSnackBar(snackBar);
     }
   }
 
-  Future _deleteNote(BuildContext context) async {
-    int count = await _noteDB.rawDelete("DELETE FROM Notes WHERE book = ? AND chapter = ? AND verse = ?", _bcvList);
-    if (count == 1) Navigator.pop(context);
+  void _deleteNote(BuildContext context) {
+    final ThemeData theme = Theme.of(context);
+    final TextStyle dialogTextStyle =
+        theme.textTheme.subhead.copyWith(color: theme.textTheme.caption.color);
+    showMyDialog<DialogAction>(
+      context: context,
+      child: AlertDialog(
+        content: Text(
+          interface[_config.abbreviations][4],
+          style: dialogTextStyle,
+        ),
+        actions: <Widget>[
+          FlatButton(
+            child: Text(interface[_config.abbreviations][6]),
+            onPressed: () {
+              Navigator.pop(context, DialogAction.cancel);
+            },
+          ),
+          FlatButton(
+            child: Text(interface[_config.abbreviations][5]),
+            onPressed: () {
+              Navigator.pop(context, DialogAction.removeFavourite);
+            },
+          ),
+        ],
+      ),
+    );
+  }
+
+  void showMyDialog<T>({BuildContext context, Widget child}) {
+    showDialog<T>(
+      context: context,
+      builder: (BuildContext context) => child,
+    ).then<void>((T value) {
+      // The value passed to Navigator.pop() or null.
+      if (value == DialogAction.removeFavourite) _confirmDeleteNote(context);
+    });
   }
 
   @override
   Widget build(BuildContext context) {
     List<Bible> bibleList = [_bibles.bible1, _bibles.bible2, _bibles.iBible];
-    List<Widget> verseList = bibleList.map((bible) => _buildVerseRow(context, bible.openSingleVerse(_bcvList), bible.module)).toList();
+    List<Widget> verseList = bibleList
+        .map((bible) => _buildVerseRow(
+            context, bible.openSingleVerse(_bcvList), bible.module))
+        .toList();
 
     //myController.text = _content;
 
     return Theme(
       data: _config.mainTheme,
       child: Scaffold(
+        key: _scaffoldKey,
         appBar: AppBar(
           title: Text(interface[_config.abbreviations].first),
           actions: <Widget>[
-            IconButton(icon: Icon(Icons.save), onPressed: () => _saveNote(context)),
-            IconButton(icon: Icon(Icons.delete_forever), onPressed: () => _deleteNote(context)),
+            IconButton(
+                tooltip: (_isEditable) ? interface[_config.abbreviations][7] : interface[_config.abbreviations][8],
+                icon:
+                    Icon((_isEditable) ? Icons.chrome_reader_mode : Icons.edit),
+                onPressed: () => _editNote()
+            ),
+            IconButton(
+                tooltip: interface[_config.abbreviations][9],
+                icon: Icon(Icons.save),
+                onPressed: () => _saveNote()
+            ),
+            IconButton(
+                tooltip: interface[_config.abbreviations][5],
+                icon: Icon(Icons.delete_forever),
+                onPressed: () => _deleteNote(context)
+            ),
           ],
         ),
-        body: Center(
-          child: SingleChildScrollView(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: <Widget>[
-                ExpansionTile(
-                  title: Text(
-                    BibleParser(_config.abbreviations).bcvToVerseReference(_bcvList),
-                    style: TextStyle(
-                      color: _config.myColors["black"],
-                    ),
-                  ),
-                  initiallyExpanded: false,
-                  backgroundColor: Theme.of(context).accentColor.withOpacity(0.025),
-                  children: verseList,
-                ),
-                Row(
-                  children: <Widget>[
-                    SizedBox(width: 20),
-                    Expanded(
-                      child: TextFormField(
-                        //controller: myController,
-                        style: _config.verseTextStyle["verseFont"],
-                        decoration: InputDecoration(
-                          //border: OutlineInputBorder(),
-                          hintText: interface[_config.abbreviations][1],
-                          //labelText: "label",
-                          //labelStyle: _config.verseTextStyle["verseFont"],
-                          //helperText: "helper",
-                          //helperStyle:  _config.verseTextStyle["verseFont"],
-                        ),
-                        initialValue: _content,
-                        //readOnly: false,
-                        scrollPadding: EdgeInsets.all(20.0),
-                        keyboardType: TextInputType.multiline,
-                        maxLines: 99999,
-                        autofocus: true,
-                        onChanged: (String content) {
-                          _content = content;
-                        },
-                      ),
-                    ),
-                    SizedBox(width: 20),
-                  ],
-                )
-              ],
-            ),
-          ),
-        ),
+        body: (_isEditable)
+            ? OrientationBuilder(
+          builder: (context, orientation) {
+            return ((orientation == Orientation.landscape) && (_config.bigScreen))
+                ? _bigScreenLayout(context, verseList)
+                : _smallScreenLayout(context, verseList);
+          },
+        )
+            : _buildCardList(context),
         resizeToAvoidBottomInset: true,
       ),
     );
   }
 
-  Widget _buildVerseRow(
-      BuildContext context, String text, String module) {
+  Widget _buildDivider() {
+    return Container(
+      decoration: BoxDecoration(
+          border: Border.all(color: _config.myColors["grey"])
+      ),
+    );
+  }
+
+  Widget _bigScreenLayout(BuildContext context, List verseList) {
+    return Row(
+      children: <Widget>[
+        Expanded(
+          child: ListView(
+            children: <Widget>[
+              _buildVerseContent(context, verseList, true),
+            ],
+          ),
+          flex: 1,
+        ),
+        _buildDivider(),
+        Expanded(child: _buildNoteField(context), flex: 2,),
+      ],
+    );
+  }
+
+  Widget _smallScreenLayout(BuildContext context, List verseList) {
+    return Center(
+      child: SingleChildScrollView(
+        child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: <Widget>[
+              _buildVerseContent(context, verseList),
+              _buildNoteField(context),
+            ]
+        ),
+      ),
+    );
+  }
+
+  Widget _buildNoteField(BuildContext context) {
+    return Row(
+      children: <Widget>[
+        SizedBox(width: 20),
+        Expanded(
+          child: TextFormField(
+            //controller: myController,
+            style: _config.verseTextStyle["verseFont"],
+            decoration: InputDecoration(
+              //border: OutlineInputBorder(),
+              hintText: interface[_config.abbreviations][1],
+              hintStyle: TextStyle(color: _config.myColors["grey"]),
+              //labelText: "label",
+              //labelStyle: _config.verseTextStyle["verseFont"],
+              //helperText: "helper",
+              //helperStyle:  _config.verseTextStyle["verseFont"],
+            ),
+            initialValue: _content,
+            //readOnly: false,
+            scrollPadding: EdgeInsets.all(20.0),
+            keyboardType: TextInputType.multiline,
+            maxLines: 99999,
+            autofocus: true,
+            onChanged: (String content) {
+              _content = content;
+            },
+          ),
+        ),
+        SizedBox(width: 20),
+      ],
+    );
+  }
+
+  Widget _buildVerseContent(BuildContext context, List verseList, [bool expand = false]) {
+    return ExpansionTile(
+      title: Text(
+        BibleParser(_config.abbreviations)
+            .bcvToVerseReference(_bcvList),
+        style: TextStyle(
+          color: _config.myColors["black"],
+        ),
+      ),
+      initiallyExpanded: expand,
+      backgroundColor:
+      Theme.of(context).accentColor.withOpacity(0.025),
+      children: verseList,
+    );
+  }
+
+  Widget _buildVerseRow(BuildContext context, String text, String module) {
     int book = _bcvList[0];
-    TextDirection verseDirection = ((_config.hebrewBibles.contains(module)) && (_bcvList.first < 40)) ? TextDirection.rtl : TextDirection.ltr;
+    TextDirection verseDirection =
+        ((_config.hebrewBibles.contains(module)) && (_bcvList.first < 40))
+            ? TextDirection.rtl
+            : TextDirection.ltr;
     TextStyle verseFont;
     if ((_config.hebrewBibles.contains(module)) && (_bcvList.first < 40)) {
       verseFont = _config.verseTextStyle["verseFontHebrew"];
@@ -160,7 +332,7 @@ class NotePadState extends State<NotePad> {
     }
     List<TextSpan> wordSpans = (_config.interlinearBibles.contains(module))
         ? InterlinearHelper(_config.verseTextStyle)
-        .getInterlinearSpan(text, book)
+            .getInterlinearSpan(text, book)
         : <TextSpan>[TextSpan(text: text, style: verseFont)];
     return ListTile(
       title: RichText(
@@ -182,6 +354,51 @@ class NotePadState extends State<NotePad> {
     );
   }
 
+  Widget formatItem(BuildContext context) {
+    String ref =
+        BibleParser(_config.abbreviations).bcvToVerseReference(_bcvList);
+    HtmlWrapper _wrapper = HtmlWrapper(_bibles, _config);
+    String content = _content.replaceAll("\n", "<br>");
+    return _wrapper.buildRichText(context, "<h1>$ref</h1>$content");
+  }
+
+  /*@override
+  Widget build(BuildContext context) {
+    return Theme(
+      data: _config.mainTheme,
+      child: Scaffold(
+        appBar: AppBar(
+          title: Text(interface[_config.abbreviations][0]),
+        ),
+        body: _buildCardList(context),
+      ),
+    );
+  }*/
+
+  Widget _buildCardList(BuildContext context) {
+    return ListView(
+      padding: const EdgeInsets.all(10.0),
+      children: <Widget>[
+        _buildCard(context),
+      ],
+    );
+  }
+
+  Widget _buildCard(BuildContext context) {
+    final wordData = formatItem(context);
+    return Center(
+      child: Card(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: <Widget>[
+            ListTile(
+              title: wordData,
+            )
+          ],
+        ),
+      ),
+    );
+  }
 }
 
 class ToolMenu extends StatelessWidget {
@@ -239,8 +456,8 @@ class ToolMenu extends StatelessWidget {
     final selected = await Navigator.push(
       context,
       MaterialPageRoute(
-          builder: (context) => ToolView(_data[tool], tools, _config, _bible,
-              _interfaceDialog, _icon)),
+          builder: (context) => ToolView(
+              _data[tool], tools, _config, _bible, _interfaceDialog, _icon)),
     );
     if (selected != null) Navigator.pop(context, selected);
   }
@@ -404,7 +621,6 @@ class RelationshipState extends State<Relationship> {
       _data = tools;
     });
   }
-
 }
 
 class Timeline extends StatefulWidget {

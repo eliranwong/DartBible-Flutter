@@ -63,7 +63,6 @@ class UniqueBibleState extends State<UniqueBible> {
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
 
   Database noteDB;
-  bool _showNotes = true;
   List _noteList = [];
 
   String query = '';
@@ -114,7 +113,13 @@ class UniqueBibleState extends State<UniqueBible> {
       "History",
       "Books",
       "Chapters",
-      "Timelines"
+      "Timelines",
+      "Big Screen Layout",
+      "Small Screen Layout",
+      "Notes",
+      "Contact",
+      "New Note",
+      "Edit Note",
     ],
     "TC": [
       "跨平台聖經工具",
@@ -127,7 +132,13 @@ class UniqueBibleState extends State<UniqueBible> {
       "歷史",
       "書卷",
       "章",
-      "時序圖"
+      "時序圖",
+      "大屏幕模式",
+      "小屏幕模式",
+      "筆記",
+      "聯絡",
+      "新增筆記",
+      "修改筆記",
     ],
     "SC": [
       "跨平台圣经工具",
@@ -140,7 +151,13 @@ class UniqueBibleState extends State<UniqueBible> {
       "历史",
       "书卷",
       "章",
-      "时序图"
+      "时序图",
+      "大屏幕模式",
+      "小屏幕模式",
+      "笔记",
+      "联络",
+      "新增笔记",
+      "修改笔记",
     ],
   };
 
@@ -157,7 +174,7 @@ class UniqueBibleState extends State<UniqueBible> {
       "User Manual",
       "Add / Remove Secondary View",
       "Back",
-      "Select",
+      "Multiple Selection",
       "Select / Clear All",
       "Text copied to clipboard.",
       "You have to select at least a verse for this action.",
@@ -174,7 +191,7 @@ class UniqueBibleState extends State<UniqueBible> {
       "使用手册",
       "加增／刪除輔助視窗",
       "回去",
-      "選擇",
+      "選擇經文",
       "選擇／清除所有",
       "文字已複製",
       "你必須選擇至少一節經文才能啟動此功能。",
@@ -191,7 +208,7 @@ class UniqueBibleState extends State<UniqueBible> {
       "使用手册",
       "加增／删除辅助视窗",
       "回去",
-      "选择",
+      "选择经文",
       "选择／清除所有",
       "文字已拷贝",
       "你必须选择至少一节经文才能启动此功能。",
@@ -718,6 +735,8 @@ class UniqueBibleState extends State<UniqueBible> {
           (selectedBcvList.join(".") == _currentActiveVerse.join("."));
       if ((!sameVerse) ||
           ((sameVerse) && (selectedBible != this.bibles.bible1.module))) {
+        _noteList = await noteDB.rawQuery("SELECT verse FROM Notes WHERE book = ? AND chapter = ?", _currentActiveVerse.sublist(0, 2));
+        _noteList = _noteList.map((i) => i["verse"]).toList();
         if (selectedBible != this.bibles.bible1.module) {
           this.bibles.bible1 = Bible(selectedBible, this.abbreviations);
           await this.bibles.bible1.loadData();
@@ -847,9 +866,9 @@ class UniqueBibleState extends State<UniqueBible> {
     );
     if (newBibleSettings != null) {
       // Big Screen Mode
-      this.config.bigScreen = newBibleSettings.bigScreen;
-      this.config.save("bigScreen", newBibleSettings.bigScreen);
-      if ((_typing) && (!newBibleSettings.bigScreen)) _typing = !_typing;
+      //this.config.bigScreen = newBibleSettings.bigScreen;
+      //this.config.save("bigScreen", newBibleSettings.bigScreen);
+      //if ((_typing) && (!newBibleSettings.bigScreen)) _typing = !_typing;
       // Font size
       this.config.fontSize = newBibleSettings.fontSize;
       this.config.save("fontSize", newBibleSettings.fontSize);
@@ -1033,7 +1052,11 @@ class UniqueBibleState extends State<UniqueBible> {
               NotePad(this.config, this.bibles, bcvList, noteDB, content),
         ),
       );
-      //if (selected != null) _newVerseSelected(selected);
+      if (selected != null) _newVerseSelected(selected);
+      _noteList = await noteDB.rawQuery("SELECT verse FROM Notes WHERE book = ? AND chapter = ?", _currentActiveVerse.sublist(0, 2));
+      setState(() {
+        _noteList = _noteList.map((i) => i["verse"]).toList();
+      });
     }
   }
 
@@ -1702,12 +1725,79 @@ class UniqueBibleState extends State<UniqueBible> {
             });
           },
         ),
-        IconButton(
-          tooltip: this.interfaceApp[this.abbreviations][4],
-          icon: const Icon(Icons.more_vert),
-          onPressed: () {
-            _openBibleSettings(context);
+        PopupMenuButton<String>(
+          padding: EdgeInsets.zero,
+          onSelected: (String value) {
+            switch (value) {
+              case "Big":
+                if (this.config.plus) {
+                  setState(() {
+                    this.config.bigScreen = !this.config.bigScreen;
+                    this.config.save("bigScreen", this.config.bigScreen);
+                    if ((_typing) && (!this.config.bigScreen)) _typing = !_typing;
+                  });
+                } else {
+                  _nonPlusMessage(this.interfaceApp[this.abbreviations][11]);
+                }
+                break;
+              case "Notes":
+                setState(() {
+                  this.config.showNotes = !this.config.showNotes;
+                  this.config.save("showNotes", this.config.showNotes);
+                });
+                break;
+              case "Settings":
+                _openBibleSettings(context);
+                break;
+              case "Manual":
+                _launchUserManual();
+                break;
+              case "Contact":
+                _launchContact();
+                break;
+              default:
+            }
           },
+          itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>[
+            PopupMenuItem<String>(
+              value: "Big",
+              child: ListTile(
+                leading: Icon((this.config.bigScreen) ? Icons.phone_android : Icons.laptop),
+                title: Text((this.config.bigScreen) ? this.interfaceApp[this.abbreviations][12] : this.interfaceApp[this.abbreviations][11]),
+              ),
+            ),
+            PopupMenuItem<String>(
+              value: "Notes",
+              child: ListTile(
+                leading: Icon((this.config.showNotes) ? Icons.visibility_off : Icons.visibility),
+                title: Text("${(this.config.showNotes) ? "Hide" : "Show"} ${this.interfaceApp[this.abbreviations][13]}"),
+              ),
+            ),
+            const PopupMenuDivider(),
+            PopupMenuItem<String>(
+              value: "Settings",
+              child: ListTile(
+                leading: Icon(Icons.settings),
+                title: Text(this.interfaceApp[this.abbreviations][4]),
+              ),
+            ),
+            const PopupMenuDivider(),
+            PopupMenuItem<String>(
+              value: "Manual",
+              child: ListTile(
+                leading: Icon(Icons.help_outline),
+                title: Text(this.interfaceBottom[this.abbreviations][8]),
+              ),
+            ),
+            //const PopupMenuDivider(),
+            PopupMenuItem<String>(
+              value: "Contact",
+              child: ListTile(
+                leading: Icon(Icons.alternate_email),
+                title: Text(this.interfaceApp[this.abbreviations][14]),
+              ),
+            ),
+          ],
         ),
       ],
     );
@@ -1741,36 +1831,17 @@ class UniqueBibleState extends State<UniqueBible> {
         child: ListView(scrollDirection: Axis.horizontal, children: <Widget>[
           (_selection)
               ? IconButton(
-                  tooltip: this.interfaceBottom[this.abbreviations][10],
-                  icon: const Icon(Icons.arrow_back),
-                  onPressed: () => _stopSelection(),
-                )
+            tooltip: this.interfaceBottom[this.abbreviations][10],
+            icon: const Icon(Icons.arrow_back),
+            onPressed: () => _stopSelection(),
+          )
               : IconButton(
-                  tooltip: this.interfaceBottom[this.abbreviations][11],
-                  icon: const Icon(Icons.check_circle),
-                  onPressed: () => _startSelection(),
-                ),
-          (_selection)
-              ? IconButton(
-                  tooltip: this.interfaceBottom[this.abbreviations][12],
-                  icon: const Icon(Icons.check_circle_outline),
-                  onPressed: () => _allSelection(),
-                )
-              : Container(),
-          (_selection)
-              ? IconButton(
-                  tooltip: this.interfaceDialog[this.abbreviations][2],
-                  icon: const Icon(Icons.content_copy),
-                  onPressed: () => _runSelection(),
-                )
-              : Container(),
-          (_selection)
-              ? IconButton(
-                  tooltip: this.interfaceDialog[this.abbreviations][1],
-                  icon: const Icon(Icons.share),
-                  onPressed: () => _runSelection(true),
-                )
-              : Container(),
+            tooltip: this.interfaceBottom[this.abbreviations][0],
+            icon: const Icon(Icons.layers),
+            onPressed: () {
+              showInterlinear(context, _currentActiveVerse);
+            },
+          ),
           (_selection)
               ? Container()
               : IconButton(
@@ -1781,15 +1852,6 @@ class UniqueBibleState extends State<UniqueBible> {
                         ? _readVerse()
                         : _nonPlusMessage(
                             this.interfaceBottom[this.abbreviations][7]);
-                  },
-                ),
-          (_selection)
-              ? Container()
-              : IconButton(
-                  tooltip: this.interfaceBottom[this.abbreviations][0],
-                  icon: const Icon(Icons.layers),
-                  onPressed: () {
-                    showInterlinear(context, _currentActiveVerse);
                   },
                 ),
           (_selection)
@@ -1859,12 +1921,31 @@ class UniqueBibleState extends State<UniqueBible> {
           (_selection)
               ? Container()
               : IconButton(
-                  tooltip: this.interfaceBottom[this.abbreviations][8],
-                  icon: const Icon(Icons.help_outline),
-                  onPressed: () {
-                    _launchUserManual();
-                  },
-                ),
+            tooltip: this.interfaceBottom[this.abbreviations][11],
+            icon: const Icon(Icons.check_circle),
+            onPressed: () => _startSelection(),
+          ),
+          (_selection)
+              ? IconButton(
+            tooltip: this.interfaceBottom[this.abbreviations][12],
+            icon: const Icon(Icons.check_circle_outline),
+            onPressed: () => _allSelection(),
+          )
+              : Container(),
+          (_selection)
+              ? IconButton(
+            tooltip: this.interfaceDialog[this.abbreviations][2],
+            icon: const Icon(Icons.content_copy),
+            onPressed: () => _runSelection(),
+          )
+              : Container(),
+          (_selection)
+              ? IconButton(
+            tooltip: this.interfaceDialog[this.abbreviations][1],
+            icon: const Icon(Icons.share),
+            onPressed: () => _runSelection(true),
+          )
+              : Container(),
           ((!this.config.bigScreen) || (_selection))
               ? Container()
               : IconButton(
@@ -1883,6 +1964,15 @@ class UniqueBibleState extends State<UniqueBible> {
 
   Future _launchUserManual() async {
     String url = 'https://www.uniquebible.app/mobile';
+    if (await canLaunch(url)) {
+      await launch(url);
+    } else {
+      throw 'Could not launch $url';
+    }
+  }
+
+  Future _launchContact() async {
+    String url = 'https://marvel.bible/contact/contactform.php';
     if (await canLaunch(url)) {
       await launch(url);
     } else {
@@ -1981,10 +2071,10 @@ class UniqueBibleState extends State<UniqueBible> {
                 onLongPress: () {
                   _longPressedActiveVerse(context, _data[i]);
                 },
-                trailing: (!_showNotes)
+                trailing: (!this.config.showNotes)
                     ? null
                     : IconButton(
-                        //tooltip: "",
+                        tooltip: (_noteList.contains(bcvList[2])) ? interfaceApp[this.abbreviations][16] : interfaceApp[this.abbreviations][15],
                         icon: Icon(
                           (_noteList.contains(bcvList[2])) ? Icons.edit : Icons.note_add,
                           color: this.config.myColors["blue"],
@@ -2023,10 +2113,10 @@ class UniqueBibleState extends State<UniqueBible> {
               )
             : ListTile(
                 title: richText,
-                trailing: (!_showNotes)
+                trailing: (!this.config.showNotes)
                     ? null
                     : IconButton(
-                        //tooltip: "",
+                        tooltip: (_noteList.contains(bcvList[2])) ? interfaceApp[this.abbreviations][16] : interfaceApp[this.abbreviations][15],
                         icon: Icon(
                           (_noteList.contains(bcvList[2])) ? Icons.edit : Icons.note_add,
                           color: this.config.myColors["blueAccent"],

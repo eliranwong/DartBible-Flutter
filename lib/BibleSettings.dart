@@ -152,7 +152,7 @@ class BibleSettingsState extends State<BibleSettings> {
     "900"
   ];
 
-  bool _bigScreenValue;
+  //bool _bigScreenValue;
   double _speechRateValue;
 
   Map interfaceMap = {"English": "ENG", "繁體中文": "TC", "简体中文": "SC"};
@@ -174,7 +174,7 @@ class BibleSettingsState extends State<BibleSettings> {
     // This allows users to cancel the changes made by pressing the "back" button
     _compareBibleList = List<String>.from(_config.compareBibleList);
 
-    _bigScreenValue = _config.bigScreen;
+    //_bigScreenValue = _config.bigScreen;
     _fontSizeValue = _config.fontSize
         .toString()
         .substring(0, (_config.fontSize.toString().length - 2));
@@ -316,7 +316,7 @@ class BibleSettingsState extends State<BibleSettings> {
                       _ttsChineseValue,
                       _speechRateValue,
                       _ttsGreekValue,
-                      _bigScreenValue,
+                      //_bigScreenValue,
                     ));
               },
             ),
@@ -361,7 +361,7 @@ class BibleSettingsState extends State<BibleSettings> {
         padding: const EdgeInsets.all(24.0),
         child: ListView(
           children: <Widget>[
-            ListTile(
+            /*ListTile(
               title: Text(_interface[17], style: style),
               trailing: Switch(
                   value: _bigScreenValue,
@@ -373,7 +373,7 @@ class BibleSettingsState extends State<BibleSettings> {
                     });
                   }
                   ),
-            ),
+            ),*/
             ListTile(
               title: Text(_interface[1], style: style),
               trailing: DropdownButton<String>(
@@ -769,7 +769,6 @@ class BibleSettingsParser {
       ttsEnglish,
       ttsChinese,
       ttsGreek;
-  final bool bigScreen;
   final double speechRate;
   final List<String> _compareBibleList;
   final int _instantAction, _quickAction;
@@ -791,8 +790,7 @@ class BibleSettingsParser {
       this.ttsEnglish,
       this.ttsChinese,
       this.speechRate,
-      this.ttsGreek,
-      this.bigScreen) {
+      this.ttsGreek) {
     this.book = int.parse(_book);
     this.chapter = int.parse(_chapter);
     this.verse = int.parse(_verse);
