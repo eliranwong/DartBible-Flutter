@@ -123,6 +123,7 @@ class UniqueBibleState extends State<UniqueBible> {
       "Small Screen",
       "Show ",
       "Hide ",
+      "Menu",
     ],
     "TC": [
       "跨平台聖經工具",
@@ -146,6 +147,7 @@ class UniqueBibleState extends State<UniqueBible> {
       "小屏幕設定",
       "顯示",
       "隱藏",
+      "菜單",
     ],
     "SC": [
       "跨平台圣经工具",
@@ -169,6 +171,7 @@ class UniqueBibleState extends State<UniqueBible> {
       "小屏幕设定",
       "显示",
       "隐藏",
+      "菜单",
     ],
   };
 
@@ -1750,6 +1753,8 @@ class UniqueBibleState extends State<UniqueBible> {
           },
         ),
         PopupMenuButton<String>(
+          icon: Icon(Icons.more_vert),
+          tooltip: interfaceApp[this.abbreviations][21],
           padding: EdgeInsets.zero,
           onSelected: (String value) {
             switch (value) {
