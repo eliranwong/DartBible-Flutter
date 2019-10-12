@@ -58,7 +58,7 @@ class Config {
   List<String> chineseBibles = ["CCB", "CUV", "CUVs"];
 
   // public versions
-  List<String> allBibleList = [
+  /*List<String> allBibleList = [
     "ABG",
     "ASV",
     "BBE",
@@ -81,14 +81,14 @@ class Config {
     "ULT",
     "UST",
     "WEB"
-  ];
+  ];*/
   // private versions
-  //List<String> allBibleList = ["ABG", "ASV", "BBE", "BSB", "CCB", "CEB", "CEV", "CSB", "CUV", "CUVs", "ERV", "ESV", "EXP", "ISV", "KJV", "LEB", "LXX1", "LXX2", "LXXE", "LXXk", "NASB", "NET", "NIV", "NLT", "NRSV", "OHGB", "OHGBi", "OHGBt", "T4T", "ULT", "UST", "WEB"];
+  List<String> allBibleList = ["ABG", "ASV", "BBE", "BSB", "CCB", "CEB", "CEV", "CSB", "CUV", "CUVs", "ERV", "ESV", "EXP", "ISV", "KJV", "LEB", "LXX1", "LXX2", "LXXE", "LXXk", "NASB", "NET", "NIV", "NLT", "NRSV", "OHGB", "OHGBi", "OHGBt", "T4T", "ULT", "UST", "WEB"];
 
   // variables linked with shared preferences
 
   // public versions
-  List<String> compareBibleList = [
+  /*List<String> compareBibleList = [
     "ASV",
     "BSB",
     "ERV",
@@ -100,9 +100,9 @@ class Config {
     "OHGB",
     "OHGBt",
     "WEB",
-  ];
+  ];*/
   // private versions
-  //List<String> compareBibleList = ["CEV", "CSB", "CUV", "ESV", "EXP", "ISV", "KJV", "LEB", "LXXE", "LXXk", "NASB", "NET", "NIV", "OHGB"];
+  List<String> compareBibleList = ["CEV", "CSB", "CUV", "ESV", "EXP", "ISV", "KJV", "LEB", "LXXE", "LXXk", "NASB", "NET", "NIV", "OHGB"];
 
   bool bigScreen = false;
   bool showNotes = false;

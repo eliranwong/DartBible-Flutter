@@ -30,7 +30,7 @@ class NotePadState extends State<NotePad> {
   final Bibles _bibles;
   final List _bcvList;
   final Database _noteDB;
-  String _content;
+  String _content, _savedContent;
   bool _isNew;
   bool _isEditable = true;
 
@@ -48,6 +48,9 @@ class NotePadState extends State<NotePad> {
       "Edit",
       "Save",
       "There is no saved note on this verse: ",
+      "Save changes first?",
+      "Yes",
+      "No",
     ],
     "TC": [
       "筆記",
@@ -61,6 +64,9 @@ class NotePadState extends State<NotePad> {
       "修改",
       "存檔",
       "檔案中沒有此節的筆記：",
+      "先把已改動的筆記存檔嗎？",
+      "是",
+      "否",
     ],
     "SC": [
       "笔记",
@@ -74,12 +80,16 @@ class NotePadState extends State<NotePad> {
       "修改",
       "存档",
       "档案中没有此节的笔记：",
+      "先把已改动的笔记存档吗？",
+      "是",
+      "否",
     ],
   };
 
   NotePadState(
       this._config, this._bibles, this._bcvList, this._noteDB, this._content) {
     _isNew = _content.isEmpty;
+    _savedContent = _content;
   }
 
   /*@override
@@ -90,9 +100,13 @@ class NotePadState extends State<NotePad> {
   }*/
 
   void _editNote() {
-    setState(() {
-      _isEditable = !_isEditable;
-    });
+    if ((_isEditable) && (_savedContent != _content)) {
+      _confirmSave(context);
+    } else {
+      setState(() {
+        _isEditable = !_isEditable;
+      });
+    }
   }
 
   Future _saveNote() async {
@@ -116,6 +130,7 @@ class NotePadState extends State<NotePad> {
             "UPDATE Notes SET content = ? WHERE book = ? AND chapter = ? AND verse = ?",
             [_content, ..._bcvList]);
       }
+      _savedContent = _content;
       message = interface[_config.abbreviations][2];
     }
     final snackBar = SnackBar(
@@ -161,7 +176,7 @@ class NotePadState extends State<NotePad> {
           FlatButton(
             child: Text(interface[_config.abbreviations][5]),
             onPressed: () {
-              Navigator.pop(context, DialogAction.removeFavourite);
+              Navigator.pop(context, DialogAction.delete);
             },
           ),
         ],
@@ -169,13 +184,122 @@ class NotePadState extends State<NotePad> {
     );
   }
 
-  void showMyDialog<T>({BuildContext context, Widget child}) {
+  void _confirmSaveClose(BuildContext context) {
+    final ThemeData theme = Theme.of(context);
+    final TextStyle dialogTextStyle =
+    theme.textTheme.subhead.copyWith(color: theme.textTheme.caption.color);
+    showMyDialog<DialogAction>(
+      context: context,
+      child: AlertDialog(
+        content: Text(
+          interface[_config.abbreviations][11],
+          style: dialogTextStyle,
+        ),
+        actions: <Widget>[
+          FlatButton(
+            child: Text(interface[_config.abbreviations][13]),
+            onPressed: () {
+              Navigator.pop(context, DialogAction.confirmClose);
+            },
+          ),
+          FlatButton(
+            child: Text(interface[_config.abbreviations][12]),
+            onPressed: () {
+              Navigator.pop(context, DialogAction.confirmSaveClose);
+            },
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _confirmSave(BuildContext context) {
+    final ThemeData theme = Theme.of(context);
+    final TextStyle dialogTextStyle =
+    theme.textTheme.subhead.copyWith(color: theme.textTheme.caption.color);
+    showMyDialog<DialogAction>(
+      context: context,
+      child: AlertDialog(
+        content: Text(
+          interface[_config.abbreviations][11],
+          style: dialogTextStyle,
+        ),
+        actions: <Widget>[
+          FlatButton(
+            child: Text(interface[_config.abbreviations][13]),
+            onPressed: () {
+              Navigator.pop(context, DialogAction.confirmRead);
+            },
+          ),
+          FlatButton(
+            child: Text(interface[_config.abbreviations][12]),
+            onPressed: () {
+              Navigator.pop(context, DialogAction.confirmSaveRead);
+            },
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _confirmSaveOpen(BuildContext context, String module) {
+    final ThemeData theme = Theme.of(context);
+    final TextStyle dialogTextStyle =
+    theme.textTheme.subhead.copyWith(color: theme.textTheme.caption.color);
+    showMyDialog<DialogAction>(
+      module: module,
+      context: context,
+      child: AlertDialog(
+        content: Text(
+          interface[_config.abbreviations][11],
+          style: dialogTextStyle,
+        ),
+        actions: <Widget>[
+          FlatButton(
+            child: Text(interface[_config.abbreviations][13]),
+            onPressed: () {
+              Navigator.pop(context, DialogAction.confirmOpen);
+            },
+          ),
+          FlatButton(
+            child: Text(interface[_config.abbreviations][12]),
+            onPressed: () {
+              Navigator.pop(context, DialogAction.confirmSaveOpen);
+            },
+          ),
+        ],
+      ),
+    );
+  }
+
+  void showMyDialog<T>({BuildContext context, Widget child, String module}) {
     showDialog<T>(
       context: context,
       builder: (BuildContext context) => child,
     ).then<void>((T value) {
       // The value passed to Navigator.pop() or null.
-      if (value == DialogAction.removeFavourite) _confirmDeleteNote(context);
+      if (value == DialogAction.delete) {
+        _confirmDeleteNote(context);
+      } else if (value == DialogAction.confirmSaveRead) {
+        _saveNote();
+        setState(() {
+          _isEditable = !_isEditable;
+        });
+      } else if (value == DialogAction.confirmRead) {
+        setState(() {
+          _isEditable = !_isEditable;
+        });
+      } else if (value == DialogAction.confirmSaveClose) {
+        _saveNote();
+        Navigator.pop(context);
+      } else if (value == DialogAction.confirmClose) {
+        Navigator.pop(context);
+      } else if (value == DialogAction.confirmSaveOpen) {
+        _saveNote();
+        Navigator.pop(context, [_bcvList, "", module]);
+      } else if (value == DialogAction.confirmOpen) {
+        Navigator.pop(context, [_bcvList, "", module]);
+      }
     });
   }
 
@@ -194,6 +318,14 @@ class NotePadState extends State<NotePad> {
       child: Scaffold(
         key: _scaffoldKey,
         appBar: AppBar(
+          leading: IconButton(
+              tooltip: "Back",
+              icon:
+              Icon(Icons.arrow_back),
+              onPressed: () {
+                (_savedContent != _content) ? _confirmSaveClose(context) : Navigator.pop(context);
+              }
+          ),
           title: Text(interface[_config.abbreviations].first),
           actions: <Widget>[
             IconButton(
@@ -349,7 +481,11 @@ class NotePadState extends State<NotePad> {
         ),
       ),
       onTap: () {
-        Navigator.pop(context, [_bcvList, "", module]);
+        if (_savedContent != _content) {
+          _confirmSaveOpen(context, module);
+        } else {
+          Navigator.pop(context, [_bcvList, "", module]);
+        }
       },
     );
   }

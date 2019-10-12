@@ -11,7 +11,6 @@ import 'package:sqflite/sqflite.dart';
 import 'package:flutter_tts/flutter_tts.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:path/path.dart';
-//import 'package:provider/provider.dart';
 import 'config.dart';
 import 'Bibles.dart';
 import 'BibleSearchDelegate.dart';
@@ -120,6 +119,10 @@ class UniqueBibleState extends State<UniqueBible> {
       "Contact",
       "New Note",
       "Edit Note",
+      "Big Screen",
+      "Small Screen",
+      "Show ",
+      "Hide ",
     ],
     "TC": [
       "跨平台聖經工具",
@@ -133,12 +136,16 @@ class UniqueBibleState extends State<UniqueBible> {
       "書卷",
       "章",
       "時序圖",
-      "大屏幕模式",
-      "小屏幕模式",
+      "大屏幕設定",
+      "小屏幕設定",
       "筆記",
       "聯絡",
       "新增筆記",
       "修改筆記",
+      "大屏幕設定",
+      "小屏幕設定",
+      "顯示",
+      "隱藏",
     ],
     "SC": [
       "跨平台圣经工具",
@@ -152,12 +159,16 @@ class UniqueBibleState extends State<UniqueBible> {
       "书卷",
       "章",
       "时序图",
-      "大屏幕模式",
-      "小屏幕模式",
+      "大屏幕设定",
+      "小屏幕设定",
       "笔记",
       "联络",
       "新增笔记",
       "修改笔记",
+      "大屏幕设定",
+      "小屏幕设定",
+      "显示",
+      "隐藏",
     ],
   };
 
@@ -756,6 +767,17 @@ class UniqueBibleState extends State<UniqueBible> {
     }
   }
 
+  Future reloadSecondaryBible(String module) async {
+    // reload bible2 in memory
+    this.bibles.bible2 = Bible(module, this.abbreviations);
+    await this.bibles.bible2.loadData();
+    // save config
+    this.config.save("bible2", module);
+    this.config.bible2 = module;
+    // reload parallel bibles
+    if (_parallelBibles) _reLoadBibles();
+  }
+
   void updateHistoryActiveVerse() {
     List bcvList = List<int>.from(_currentActiveVerse);
     if (this.config.historyActiveVerse.first.join(".") != bcvList.join(".")) {
@@ -865,6 +887,8 @@ class UniqueBibleState extends State<UniqueBible> {
               )),
     );
     if (newBibleSettings != null) {
+      // secondary bible
+      if (newBibleSettings.module2 != this.bibles.bible2.module) await reloadSecondaryBible(newBibleSettings.module2);
       // Big Screen Mode
       //this.config.bigScreen = newBibleSettings.bigScreen;
       //this.config.save("bigScreen", newBibleSettings.bigScreen);
@@ -1418,10 +1442,10 @@ class UniqueBibleState extends State<UniqueBible> {
       _appBarColor = Colors.blueGrey[this.config.backgroundColor - 200];
       _bottomAppBarColor = Colors.grey[500];
     } else {
-      blueAccent = Colors.blueAccent[700];
-      indigo = Colors.indigo[800];
+      blueAccent = Colors.blue[700];
+      indigo = Colors.indigo[700];
       black = Colors.black;
-      blue = Colors.blue[700];
+      blue = Colors.blueAccent[700];
       deepOrange = Colors.deepOrange[700];
       grey = Colors.grey[700];
       //_appBarColor = Theme.of(context).appBarTheme.color;
@@ -1606,7 +1630,7 @@ class UniqueBibleState extends State<UniqueBible> {
     }
     return SizedBox(
       width: 250,
-      child: TabletDrawer(this.config, this.bibles.bible1, this.bibles.headings,
+      child: TabletDrawer(this.config, this.bibles,
           (List data) {
         Map actions = {
           "open": _newVerseSelected,
@@ -1763,14 +1787,14 @@ class UniqueBibleState extends State<UniqueBible> {
               value: "Big",
               child: ListTile(
                 leading: Icon((this.config.bigScreen) ? Icons.phone_android : Icons.laptop),
-                title: Text((this.config.bigScreen) ? this.interfaceApp[this.abbreviations][12] : this.interfaceApp[this.abbreviations][11]),
+                title: Text((this.config.bigScreen) ? this.interfaceApp[this.abbreviations][18] : this.interfaceApp[this.abbreviations][17]),
               ),
             ),
             PopupMenuItem<String>(
               value: "Notes",
               child: ListTile(
                 leading: Icon((this.config.showNotes) ? Icons.visibility_off : Icons.visibility),
-                title: Text("${(this.config.showNotes) ? "Hide" : "Show"} ${this.interfaceApp[this.abbreviations][13]}"),
+                title: Text("${(this.config.showNotes) ? this.interfaceApp[this.abbreviations][20] : this.interfaceApp[this.abbreviations][19]}${this.interfaceApp[this.abbreviations][13]}"),
               ),
             ),
             const PopupMenuDivider(),
@@ -1802,6 +1826,10 @@ class UniqueBibleState extends State<UniqueBible> {
       ],
     );
   }
+
+  /*Future _backupNotes() async {
+
+  }*/
 
   Future _launchBibleSearch(BuildContext context) async {
     _stopRunningActions();

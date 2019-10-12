@@ -7,19 +7,19 @@ import 'Tools.dart';
 
 class TabletDrawer extends StatefulWidget {
   final Config config;
-  final Bible bible, headings;
+  final Bibles bibles;
   final Function onTap;
 
-  TabletDrawer(this.config, this.bible, this.headings, this.onTap);
+  TabletDrawer(this.config, this.bibles, this.onTap);
 
   @override
-  TabletDrawerState createState() => TabletDrawerState(this.config, this.bible,
-      this.headings, this.onTap);
+  TabletDrawerState createState() => TabletDrawerState(this.config, this.bibles, this.onTap);
 }
 
 class TabletDrawerState extends State<TabletDrawer> {
   final Config config;
-  final Bible bible, headings;
+  final Bibles bibles;
+  Bible bible, headings;
 
   Function onTap;
 
@@ -43,7 +43,8 @@ class TabletDrawerState extends State<TabletDrawer> {
       "Books",
       "Chapters",
       "Timelines",
-      "Headings"
+      "Headings",
+      "Bibles",
     ],
     "TC": [
       "跨平台聖經工具",
@@ -57,7 +58,8 @@ class TabletDrawerState extends State<TabletDrawer> {
       "書卷",
       "章",
       "時序圖",
-      "標題"
+      "標題",
+      "聖經版本",
     ],
     "SC": [
       "跨平台圣经工具",
@@ -71,7 +73,8 @@ class TabletDrawerState extends State<TabletDrawer> {
       "书卷",
       "章",
       "时序图",
-      "标题"
+      "标题",
+      "圣经版本",
     ],
   };
 
@@ -87,9 +90,12 @@ class TabletDrawerState extends State<TabletDrawer> {
     "SC": ["取消", "收藏", "删除", "收藏？", "删除？"],
   };
 
-  TabletDrawerState(this.config, this.bible, this.headings, this.onTap);
+  TabletDrawerState(this.config, this.bibles, this.onTap);
 
   void updateInterface() {
+    bible = bibles.bible1;
+    headings = bibles.headings;
+
     this.abbreviations = this.config.abbreviations;
     if (_updateCurrentActiveVerse) {
       this._currentActiveVerse = this.config.historyActiveVerse.first;
@@ -117,6 +123,7 @@ class TabletDrawerState extends State<TabletDrawer> {
               _buildTimelineList(context),
               _buildFavouriteList(context),
               _buildHistoryList(context),
+              _buildVersionList(context),
               _buildBookList(context),
               _buildChapterList(context),
               _buildHeadingList(context),
@@ -311,6 +318,55 @@ class TabletDrawerState extends State<TabletDrawer> {
     );
   }
 
+  Widget _buildVersionList(BuildContext context) {
+    List<Widget> versionRowList;
+    if ((_currentActiveVerse.join(".") == "0.0.0") ||
+        (bible?.bookList == null)) {
+      versionRowList = [_emptyRow(context)];
+    } else {
+      versionRowList = [
+        Container(
+          margin: const EdgeInsets.symmetric(horizontal: 5.0),
+          child: Wrap(
+            spacing: 3.0,
+            children: _buildVersionChips(),
+          ),
+        ),
+      ];
+    }
+    return ExpansionTile(
+      title: Text(this.interfaceApp[this.abbreviations][12],
+          style: _generalTextStyle),
+      initiallyExpanded: false,
+      backgroundColor: Theme.of(context).accentColor.withOpacity(0.025),
+      children: versionRowList,
+      //onExpansionChanged: ,
+    );
+  }
+
+  List<Widget> _buildVersionChips() {
+    List moduleList = this.bibles.getALLBibleList();
+    return List<Widget>.generate(
+      moduleList.length,
+          (int index) {
+        String abb = moduleList[index];
+        return ChoiceChip(
+          tooltip: config.allBibleMap[abb],
+          label: Text(abb),
+          selected: (abb == bible.module),
+          onSelected: (bool selected) {
+            if ((selected) && (abb != bible.module)) {
+              onTap([
+                "open",
+                [this.config.historyActiveVerse.first, "", abb]
+              ]);
+            }
+          },
+        );
+      },
+    ).toList();
+  }
+
   Widget _buildBookList(BuildContext context) {
     List<Widget> bookRowList;
     if ((_currentActiveVerse.join(".") == "0.0.0") ||
@@ -343,13 +399,16 @@ class TabletDrawerState extends State<TabletDrawer> {
     BibleParser parser = BibleParser(this.abbreviations);
     int currentBook = _currentActiveVerse[0];
     String abb;
+    String fullName;
     if (_displayAllBooks) {
       bookChips = List<Widget>.generate(
         bookList.length,
             (int index) {
           int book = bookList[index];
           abb = parser.standardAbbreviation[book.toString()];
+          fullName = parser.standardBookname[book.toString()];
           return ChoiceChip(
+            tooltip: fullName,
             label: Text(abb),
             selected: (book == currentBook),
             onSelected: (bool selected) {
@@ -366,8 +425,10 @@ class TabletDrawerState extends State<TabletDrawer> {
     } else {
       int book = _selectedBook ?? currentBook;
       abb = parser.standardAbbreviation[book.toString()];
+      fullName = parser.standardBookname[book.toString()];
       bookChips = [
         ChoiceChip(
+          tooltip: fullName,
           label: Text(abb),
           selected: true,
           onSelected: (bool selected) {

@@ -10,6 +10,13 @@ import 'package:large_file_copy/large_file_copy.dart';
 import 'package:path_provider/path_provider.dart';
 
 enum DialogAction {
+  confirmRead,
+  confirmSaveRead,
+  confirmOpen,
+  confirmSaveOpen,
+  confirmSaveClose,
+  confirmClose,
+  delete,
   cancel,
   share,
   addFavourite,

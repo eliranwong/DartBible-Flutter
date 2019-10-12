@@ -26,7 +26,7 @@ class BibleSettingsState extends State<BibleSettings> {
     "ENG": [
       "Settings",
       "Interface",
-      "Bible",
+      "Primary Bible",
       "Book",
       "Chapter",
       "Verse",
@@ -42,11 +42,12 @@ class BibleSettingsState extends State<BibleSettings> {
       "Normal",
       "Greek Speech",
       "Big Screen Mode",
+      "Secondary Bible",
     ],
     "TC": [
       "設定",
       "介面語言",
-      "聖經",
+      "首選聖經",
       "書卷",
       "章",
       "節",
@@ -62,11 +63,12 @@ class BibleSettingsState extends State<BibleSettings> {
       "正常",
       "希臘語發聲",
       "大屏幕模式",
+      "次選聖經",
     ],
     "SC": [
       "设定",
       "接口语言",
-      "圣经",
+      "首选圣经",
       "书卷",
       "章",
       "节",
@@ -82,6 +84,7 @@ class BibleSettingsState extends State<BibleSettings> {
       "正常",
       "希腊语发声",
       "大屏幕模式",
+      "次选圣经",
     ],
   };
 
@@ -92,6 +95,7 @@ class BibleSettingsState extends State<BibleSettings> {
   List _bookList, _chapterList, _verseList;
   List<String> _compareBibleList;
   String _moduleValue,
+      _moduleValue2,
       _bookValue,
       _chapterValue,
       _verseValue,
@@ -189,6 +193,7 @@ class BibleSettingsState extends State<BibleSettings> {
 
     _bible = bible;
     _moduleValue = _bible.module;
+    _moduleValue2 = _config.bible2;
 
     _bookValue = _abbreviations[bcvList[0].toString()];
     _chapterValue = bcvList[1].toString();
@@ -303,6 +308,7 @@ class BibleSettingsState extends State<BibleSettings> {
                     context,
                     BibleSettingsParser(
                       _moduleValue,
+                      _moduleValue2,
                       getBookNo(),
                       _chapterValue,
                       _verseValue,
@@ -469,6 +475,30 @@ class BibleSettingsState extends State<BibleSettings> {
               ),
             ),
             ListTile(
+              title: Text(_interface[18], style: style),
+              trailing: DropdownButton<String>(
+                style: style,
+                underline: dropdownUnderline,
+                iconDisabledColor: dropdownDisabled,
+                iconEnabledColor: dropdownEnabled,
+                value: _moduleValue2,
+                onChanged: (String newValue) {
+                  if (_moduleValue2 != newValue) {
+                    setState(() {
+                      _moduleValue2 = newValue;
+                    });
+                  }
+                },
+                items: <String>[...moduleList]
+                    .map<DropdownMenuItem<String>>((String value) {
+                  return DropdownMenuItem<String>(
+                    value: value,
+                    child: Text(value),
+                  );
+                }).toList(),
+              ),
+            ),
+            /*ListTile(
               title: Text(_interface[3], style: style),
               trailing: DropdownButton<String>(
                 style: style,
@@ -554,6 +584,11 @@ class BibleSettingsState extends State<BibleSettings> {
                   );
                 }).toList(),
               ),
+            ),*/
+            ExpansionTile(
+              title: Text(_interface[7], style: style),
+              backgroundColor: Theme.of(context).accentColor.withOpacity(0.025),
+              children: versionRowList,
             ),
             ListTile(
               title: Text(_interface[9], style: style),
@@ -605,11 +640,6 @@ class BibleSettingsState extends State<BibleSettings> {
                   );
                 }).toList(),
               ),
-            ),
-            ExpansionTile(
-              title: Text(_interface[7], style: style),
-              backgroundColor: Theme.of(context).accentColor.withOpacity(0.025),
-              children: versionRowList,
             ),
             ListTile(
               title: Text(
@@ -760,6 +790,7 @@ class BibleSettingsState extends State<BibleSettings> {
 
 class BibleSettingsParser {
   final String module,
+      module2,
       _book,
       _chapter,
       _verse,
@@ -778,6 +809,7 @@ class BibleSettingsParser {
 
   BibleSettingsParser(
       this.module,
+      this.module2,
       this._book,
       this._chapter,
       this._verse,

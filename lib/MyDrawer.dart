@@ -44,7 +44,8 @@ class _MyDrawerState extends State<MyDrawer> {
       "Books",
       "Chapters",
       "Timelines",
-      "Headings"
+      "Headings",
+      "Bibles",
     ],
     "TC": [
       "跨平台聖經工具",
@@ -58,7 +59,8 @@ class _MyDrawerState extends State<MyDrawer> {
       "書卷",
       "章",
       "時序圖",
-      "標題"
+      "標題",
+      "聖經版本",
     ],
     "SC": [
       "跨平台圣经工具",
@@ -72,7 +74,8 @@ class _MyDrawerState extends State<MyDrawer> {
       "书卷",
       "章",
       "时序图",
-      "标题"
+      "标题",
+      "圣经版本",
     ],
   };
 
@@ -139,6 +142,7 @@ class _MyDrawerState extends State<MyDrawer> {
               _buildTimelineList(context),
               _buildFavouriteList(context),
               _buildHistoryList(context),
+              _buildVersionList(context),
               _buildBookList(context),
               _buildChapterList(context),
               _buildHeadingList(context),
@@ -334,6 +338,56 @@ class _MyDrawerState extends State<MyDrawer> {
     );
   }
 
+  Widget _buildVersionList(BuildContext context) {
+    List<Widget> versionRowList;
+    if ((_currentActiveVerse.join(".") == "0.0.0") ||
+        (_bible?.bookList == null)) {
+      versionRowList = [_emptyRow(context)];
+    } else {
+      versionRowList = [
+        Container(
+          margin: const EdgeInsets.symmetric(horizontal: 5.0),
+          child: Wrap(
+            spacing: 3.0,
+            children: _buildVersionChips(),
+          ),
+        ),
+      ];
+    }
+    return ExpansionTile(
+      title: Text(this.interfaceApp[this.abbreviations][12],
+          style: _generalTextStyle),
+      initiallyExpanded: false,
+      backgroundColor: Theme.of(context).accentColor.withOpacity(0.025),
+      children: versionRowList,
+      //onExpansionChanged: ,
+    );
+  }
+
+  List<Widget> _buildVersionChips() {
+    List moduleList = config.allBibleList..sort();
+    return List<Widget>.generate(
+      moduleList.length,
+          (int index) {
+        String abb = moduleList[index];
+        return ChoiceChip(
+          tooltip: config.allBibleMap[abb],
+          label: Text(abb),
+          selected: (abb == _bible.module),
+          onSelected: (bool selected) {
+            if ((selected) && (abb != _bible.module)) {
+              Navigator.pop(context);
+              onTap([
+                "open",
+                [this.config.historyActiveVerse.first, "", abb]
+              ]);
+            }
+          },
+        );
+      },
+    ).toList();
+  }
+
   Widget _buildBookList(BuildContext context) {
     List<Widget> bookRowList;
     if ((_currentActiveVerse.join(".") == "0.0.0") ||
@@ -366,13 +420,16 @@ class _MyDrawerState extends State<MyDrawer> {
     BibleParser parser = BibleParser(this.abbreviations);
     int currentBook = _currentActiveVerse[0];
     String abb;
+    String fullName;
     if (_displayAllBooks) {
       bookChips = List<Widget>.generate(
         bookList.length,
         (int index) {
           int book = bookList[index];
           abb = parser.standardAbbreviation[book.toString()];
+          fullName = parser.standardBookname[book.toString()];
           return ChoiceChip(
+            tooltip: fullName,
             label: Text(abb),
             selected: (book == currentBook),
             onSelected: (bool selected) {
@@ -388,8 +445,10 @@ class _MyDrawerState extends State<MyDrawer> {
     } else {
       int book = _selectedBook ?? currentBook;
       abb = parser.standardAbbreviation[book.toString()];
+      fullName = parser.standardBookname[book.toString()];
       bookChips = [
         ChoiceChip(
+          tooltip: fullName,
           label: Text(abb),
           selected: true,
           onSelected: (bool selected) {
