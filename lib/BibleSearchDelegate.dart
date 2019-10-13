@@ -319,6 +319,13 @@ class BibleSearchDelegate extends SearchDelegate<List> {
               title: Text(ref),
               children: <Widget>[
                 ListTile(
+                  leading: Icon(Icons.open_in_browser),
+                  title:
+                  Text("${interfaceBibleSearch[this.abbreviations][4]}$refCh${interfaceBibleSearch[this.abbreviations][5]}"),
+                  onTap: () =>
+                      Navigator.pop(context, DialogAction.openHere),
+                ),
+                ListTile(
                   leading: Icon(Icons.share),
                   title: Text(_interfaceDialog[this.abbreviations][1]),
                   onTap: () => Navigator.pop(context, DialogAction.share),
@@ -332,13 +339,6 @@ class BibleSearchDelegate extends SearchDelegate<List> {
                   leading: Icon(Icons.playlist_add),
                   title: Text(_interfaceDialog[this.abbreviations][3]),
                   onTap: () => Navigator.pop(context, DialogAction.addCopy),
-                ),
-                ListTile(
-                  leading: Icon(Icons.open_in_browser),
-                  title:
-                  Text("${interfaceBibleSearch[this.abbreviations][4]}$refCh${interfaceBibleSearch[this.abbreviations][5]}"),
-                  onTap: () =>
-                      Navigator.pop(context, DialogAction.openHere),
                 ),
                 /*SimpleDialogOption(
                 onPressed: () {

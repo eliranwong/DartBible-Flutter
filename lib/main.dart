@@ -17,6 +17,7 @@ import 'BibleSearchDelegate.dart';
 import 'TopicSearchDelegate.dart';
 import 'PeopleSearchDelegate.dart';
 import 'LocationSearchDelegate.dart';
+import 'VerseSelector.dart';
 import 'BibleSettings.dart';
 import 'BibleParser.dart';
 import 'Morphology.dart';
@@ -126,6 +127,7 @@ class UniqueBibleState extends State<UniqueBible> {
       "Menu",
       "Open '",
       "' Here",
+      "New Verse",
     ],
     "TC": [
       "跨平台聖經工具",
@@ -152,6 +154,7 @@ class UniqueBibleState extends State<UniqueBible> {
       "菜單",
       "在這裡打開【",
       "】",
+      "新章節",
     ],
     "SC": [
       "跨平台圣经工具",
@@ -178,6 +181,7 @@ class UniqueBibleState extends State<UniqueBible> {
       "菜单",
       "在这里打开【",
       "】",
+      "新章节",
     ],
   };
 
@@ -885,6 +889,76 @@ class UniqueBibleState extends State<UniqueBible> {
       if (check != -1) this.config.favouriteVerse.removeAt(check);
       this.config.remove("favouriteVerse", bcvList);
     });
+  }
+
+  Future _openVerseSelector(BuildContext context) async {
+    _stopRunningActions();
+    final BibleSettingsParser newBibleSettings = await Navigator.push(
+      context,
+      MaterialPageRoute(
+          builder: (context) => VerseSelector(
+                this.bibles.bible1,
+                _currentActiveVerse,
+                this.interfaceDialog,
+                this.config,
+              )),
+    );
+    if (newBibleSettings != null) {
+      // secondary bible
+      if (newBibleSettings.module2 != this.bibles.bible2.module)
+        await reloadSecondaryBible(newBibleSettings.module2);
+      // Big Screen Mode
+      //this.config.bigScreen = newBibleSettings.bigScreen;
+      //this.config.save("bigScreen", newBibleSettings.bigScreen);
+      //if ((_typing) && (!newBibleSettings.bigScreen)) _typing = !_typing;
+      // Font size
+      this.config.fontSize = newBibleSettings.fontSize;
+      this.config.save("fontSize", newBibleSettings.fontSize);
+      // Abbreviations
+      this.abbreviations = newBibleSettings.abbreviations;
+      this.config.abbreviations = newBibleSettings.abbreviations;
+      updateBibleAbbreviations(newBibleSettings.abbreviations);
+      this.config.save("abbreviations", newBibleSettings.abbreviations);
+      // Bible comparison list
+      this.config.compareBibleList = newBibleSettings.compareBibleList;
+      this.config.save("compareBibleList", newBibleSettings.compareBibleList);
+      // Instant action
+      this.config.instantAction = newBibleSettings.instantAction;
+      this.config.save("instantAction", newBibleSettings.instantAction);
+      // Quick action
+      this.config.favouriteAction = newBibleSettings.favouriteAction;
+      this.config.save("favouriteAction", newBibleSettings.favouriteAction);
+      // Background color
+      this.config.backgroundColor = newBibleSettings.backgroundColor;
+      this.config.save("backgroundColor", newBibleSettings.backgroundColor);
+      // TTS English
+      this.config.ttsEnglish = newBibleSettings.ttsEnglish;
+      this.config.save("ttsEnglish", newBibleSettings.ttsEnglish);
+      // TTS Chinese
+      this.config.ttsChinese = newBibleSettings.ttsChinese;
+      this.config.save("ttsChinese", newBibleSettings.ttsChinese);
+      // TTS Greek
+      this.config.ttsGreek = newBibleSettings.ttsGreek;
+      this.config.save("ttsGreek", newBibleSettings.ttsGreek);
+      // TTS speech rate
+      this.config.speechRate = newBibleSettings.speechRate;
+      this.config.save("speechRate", newBibleSettings.speechRate);
+      await flutterTts.setSpeechRate(newBibleSettings.speechRate);
+      // update UpdateCenter
+      //final state = Provider.of<UpdateCenter>(context);
+      //state.config = this.config;
+      // Newly selected verse
+      var newVerse = [
+        [
+          newBibleSettings.book,
+          newBibleSettings.chapter,
+          newBibleSettings.verse,
+        ],
+        "",
+        newBibleSettings.module
+      ];
+      _newVerseSelected(newVerse);
+    }
   }
 
   Future _openBibleSettings(BuildContext context) async {
@@ -1791,6 +1865,9 @@ class UniqueBibleState extends State<UniqueBible> {
                   this.config.save("showNotes", this.config.showNotes);
                 });
                 break;
+              case "Verse":
+                _openVerseSelector(context);
+                break;
               case "Settings":
                 _openBibleSettings(context);
                 break;
@@ -1804,6 +1881,14 @@ class UniqueBibleState extends State<UniqueBible> {
             }
           },
           itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>[
+            PopupMenuItem<String>(
+              value: "Verse",
+              child: ListTile(
+                leading: Icon(Icons.directions),
+                title: Text(this.interfaceApp[this.abbreviations][24]),
+              ),
+            ),
+            const PopupMenuDivider(),
             PopupMenuItem<String>(
               value: "Big",
               child: ListTile(
@@ -2196,7 +2281,7 @@ class UniqueBibleState extends State<UniqueBible> {
                   setActiveVerse(context, _data[i].first);
                 },
                 onLongPress: () {
-                  _longPressedVerse(context, _data[i]);
+                  _longPressedActiveVerse(context, _data[i]);
                 },
               );
       }
@@ -2239,10 +2324,9 @@ class UniqueBibleState extends State<UniqueBible> {
       [bool openHere = false]) async {
     if (verseData.first.isNotEmpty) {
       List bcvList = verseData.first;
-      String ref =
-          BibleParser(this.abbreviations).bcvToVerseReference(bcvList);
+      String ref = BibleParser(this.abbreviations).bcvToVerseReference(bcvList);
       String refCh =
-      BibleParser(this.abbreviations).bcvToChapterReference(bcvList);
+          BibleParser(this.abbreviations).bcvToChapterReference(bcvList);
       _stopRunningActions();
       var copiedText = await Clipboard.getData('text/plain');
       switch (await showDialog<DialogAction>(
@@ -2251,6 +2335,15 @@ class UniqueBibleState extends State<UniqueBible> {
             return SimpleDialog(
               title: Text(ref),
               children: <Widget>[
+                (openHere)
+                    ? ListTile(
+                        leading: Icon(Icons.open_in_browser),
+                        title: Text(
+                            "${interfaceApp[this.abbreviations][22]}$refCh${interfaceApp[this.abbreviations][23]}"),
+                        onTap: () =>
+                            Navigator.pop(context, DialogAction.openHere),
+                      )
+                    : Container(),
                 ListTile(
                   leading: Icon(Icons.share),
                   title: Text(this.interfaceDialog[this.abbreviations][1]),
@@ -2266,15 +2359,6 @@ class UniqueBibleState extends State<UniqueBible> {
                   title: Text(this.interfaceDialog[this.abbreviations][3]),
                   onTap: () => Navigator.pop(context, DialogAction.addCopy),
                 ),
-                (openHere)
-                    ? ListTile(
-                        leading: Icon(Icons.open_in_browser),
-                        title:
-                            Text("${interfaceApp[this.abbreviations][22]}$refCh${interfaceApp[this.abbreviations][23]}"),
-                        onTap: () =>
-                            Navigator.pop(context, DialogAction.openHere),
-                      )
-                    : Container(),
               ],
               /*title: Text(this.interfaceDialog[this.abbreviations].first),
             children: <Widget>[
@@ -2336,11 +2420,25 @@ class UniqueBibleState extends State<UniqueBible> {
     });
   }
 
-  Future<void> _longPressedActiveVerse(
-      BuildContext context, List verseData) async {
+  Future<void> _longPressedActiveVerse(BuildContext context, List verseData,
+      [bool openHere = false]) async {
     _stopRunningActions();
+
+    List bcvList = verseData.first;
+    String ref = BibleParser(this.abbreviations).bcvToVerseReference(bcvList);
+    String refCh =
+        BibleParser(this.abbreviations).bcvToChapterReference(bcvList);
+
     var copiedText = await Clipboard.getData('text/plain');
     List<Widget> dialogOptions = [
+      (openHere)
+          ? ListTile(
+              leading: Icon(Icons.open_in_browser),
+              title: Text(
+                  "${interfaceApp[this.abbreviations][22]}$refCh${interfaceApp[this.abbreviations][23]}"),
+              onTap: () => Navigator.pop(context, DialogAction.openHere),
+            )
+          : Container(),
       ListTile(
         leading: Icon(Icons.share),
         title: Text(this.interfaceDialog[this.abbreviations][1]),
@@ -2370,6 +2468,21 @@ class UniqueBibleState extends State<UniqueBible> {
         leading: Icon(Icons.compare_arrows),
         title: Text(this.interfaceDialog[this.abbreviations][6]),
         onTap: () => Navigator.pop(context, DialogAction.compareAll),
+      ),
+      ListTile(
+        leading: Icon(Icons.people),
+        title: Text(this.interfaceBottom[this.abbreviations][4]),
+        onTap: () => Navigator.pop(context, DialogAction.people),
+      ),
+      ListTile(
+        leading: Icon(Icons.pin_drop),
+        title: Text(this.interfaceBottom[this.abbreviations][5]),
+        onTap: () => Navigator.pop(context, DialogAction.locations),
+      ),
+      ListTile(
+        leading: Icon(Icons.title),
+        title: Text(this.interfaceBottom[this.abbreviations][1]),
+        onTap: () => Navigator.pop(context, DialogAction.topics),
       ),
       ListTile(
         leading: Icon(Icons.layers),
@@ -2441,7 +2554,7 @@ class UniqueBibleState extends State<UniqueBible> {
         child: Text("ABP ${this.interfaceDialog[this.abbreviations][7]}"),
       ),*/
     ];
-    int bookNo = verseData.first.first;
+    int bookNo = bcvList.first;
     if ((bookNo < 40) || (bookNo > 66)) {
       List<Widget> lxxDialogOptions = [
         ListTile(
@@ -2491,8 +2604,6 @@ class UniqueBibleState extends State<UniqueBible> {
       ];
       dialogOptions = [...dialogOptions, ...lxxDialogOptions];
     }
-    String ref =
-        BibleParser(this.abbreviations).bcvToVerseReference(verseData.first);
     switch (await showDialog<DialogAction>(
         context: context,
         builder: (BuildContext context) {
@@ -2514,48 +2625,60 @@ class UniqueBibleState extends State<UniqueBible> {
         Clipboard.setData(ClipboardData(text: combinedText));
         break;
       case DialogAction.addFavourite:
-        addToFavourite(verseData.first);
+        addToFavourite(bcvList);
         break;
       case DialogAction.crossReference:
-        _loadXRef(context, verseData.first);
+        _loadXRef(context, bcvList);
         break;
       case DialogAction.compareAll:
-        _loadCompare(context, verseData.first);
+        _loadCompare(context, bcvList);
+        break;
+      case DialogAction.people:
+        _loadPeople(context, bcvList);
+        break;
+      case DialogAction.locations:
+        _loadLocation(context, bcvList);
+        break;
+      case DialogAction.topics:
+        _loadTopics(context, bcvList);
         break;
       case DialogAction.interlinearOHGB:
         (this.config.bigScreen)
-            ? _loadOriginalWord(context, verseData.first, "OHGB")
-            : _loadInterlinearView(context, verseData.first, "OHGB");
+            ? _loadOriginalWord(context, bcvList, "OHGB")
+            : _loadInterlinearView(context, bcvList, "OHGB");
         break;
       case DialogAction.morphologyOHGB:
         (this.config.bigScreen)
-            ? _loadOriginalWord(context, verseData.first, "OHGB")
-            : _loadMorphologyView(context, verseData.first, "OHGB");
+            ? _loadOriginalWord(context, bcvList, "OHGB")
+            : _loadMorphologyView(context, bcvList, "OHGB");
         break;
       case DialogAction.interlinearLXX1:
         (this.config.bigScreen)
-            ? _loadOriginalWord(context, verseData.first, "LXX1")
-            : _loadInterlinearView(context, verseData.first, "LXX1");
+            ? _loadOriginalWord(context, bcvList, "LXX1")
+            : _loadInterlinearView(context, bcvList, "LXX1");
         break;
       case DialogAction.morphologyLXX1:
         (this.config.bigScreen)
-            ? _loadOriginalWord(context, verseData.first, "LXX1")
-            : _loadMorphologyView(context, verseData.first, "LXX1");
+            ? _loadOriginalWord(context, bcvList, "LXX1")
+            : _loadMorphologyView(context, bcvList, "LXX1");
         break;
       case DialogAction.interlinearLXX2:
         (this.config.bigScreen)
-            ? _loadOriginalWord(context, verseData.first, "LXX2")
-            : _loadInterlinearView(context, verseData.first, "LXX2");
+            ? _loadOriginalWord(context, bcvList, "LXX2")
+            : _loadInterlinearView(context, bcvList, "LXX2");
         break;
       case DialogAction.morphologyLXX2:
         (this.config.bigScreen)
-            ? _loadOriginalWord(context, verseData.first, "LXX2")
-            : _loadMorphologyView(context, verseData.first, "LXX2");
+            ? _loadOriginalWord(context, bcvList, "LXX2")
+            : _loadMorphologyView(context, bcvList, "LXX2");
         break;
       case DialogAction.interlinearABP:
         (this.config.bigScreen)
-            ? _loadOriginalWord(context, verseData.first, "ABP")
-            : _loadInterlinearView(context, verseData.first, "ABP");
+            ? _loadOriginalWord(context, bcvList, "ABP")
+            : _loadInterlinearView(context, bcvList, "ABP");
+        break;
+      case DialogAction.openHere:
+        _openHere(bcvList, verseData.last);
         break;
       default:
     }
@@ -2674,7 +2797,7 @@ class UniqueBibleState extends State<UniqueBible> {
         _newVerseSelected(verseData);
       },
       onLongPress: () {
-        _longPressedVerse(context, _displayData[i], true);
+        _longPressedActiveVerse(context, _displayData[i], true);
       },
     );
   }

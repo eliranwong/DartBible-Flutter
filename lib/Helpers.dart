@@ -10,6 +10,9 @@ import 'package:large_file_copy/large_file_copy.dart';
 import 'package:path_provider/path_provider.dart';
 
 enum DialogAction {
+  people,
+  locations,
+  topics,
   openHere,
   confirmRead,
   confirmSaveRead,
