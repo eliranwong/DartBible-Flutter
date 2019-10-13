@@ -25,7 +25,7 @@ class VerseSelectorState extends State<VerseSelector> {
   String abbreviations;
   Map interfaceBibleSettings = {
     "ENG": [
-      "Settings",
+      "Bible Verse",
       "Interface",
       "Primary Bible",
       "Book",
@@ -46,7 +46,7 @@ class VerseSelectorState extends State<VerseSelector> {
       "Secondary Bible",
     ],
     "TC": [
-      "設定",
+      "聖經章節",
       "介面語言",
       "首選聖經",
       "書卷",
@@ -67,7 +67,7 @@ class VerseSelectorState extends State<VerseSelector> {
       "次選聖經",
     ],
     "SC": [
-      "设定",
+      "圣经章节",
       "接口语言",
       "首选圣经",
       "书卷",
