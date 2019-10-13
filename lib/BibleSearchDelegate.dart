@@ -2,6 +2,7 @@ import 'package:flutter/services.dart' show Clipboard, ClipboardData;
 import 'package:flutter/material.dart';
 import 'package:share/share.dart';
 import 'BibleParser.dart';
+import 'Bibles.dart';
 import 'config.dart';
 import 'Helpers.dart';
 
@@ -16,10 +17,26 @@ class BibleSearchDelegate extends SearchDelegate<List> {
       "is not properly formatted for search. Please correct and try again.",
       "Clear",
       "More ...",
-      "Search"
+      "Search",
+      "Open '",
+      "' Here",
     ],
-    "TC": ["組成的格式不正確，請更正然後再嘗試", "清空", "更多 …", "搜索"],
-    "SC": ["组成的格式不正确，请更正然后再尝试", "清空", "更多 …", "搜索"],
+    "TC": [
+      "組成的格式不正確，請更正然後再嘗試",
+      "清空",
+      "更多 …",
+      "搜索",
+      "在這裡打開【",
+      "】",
+    ],
+    "SC": [
+      "组成的格式不正确，请更正然后再尝试",
+      "清空",
+      "更多 …",
+      "搜索",
+      "在这里打开【",
+      "】",
+    ],
   };
 
   var _verseNoFont, _verseFont, _verseFontHebrew, _verseFontGreek;
@@ -31,7 +48,7 @@ class BibleSearchDelegate extends SearchDelegate<List> {
   int _backgroundColor;
 
   @override
-  String get searchFieldLabel => interfaceBibleSearch[this.abbreviations].last;
+  String get searchFieldLabel => interfaceBibleSearch[this.abbreviations][3];
 
   BibleSearchDelegate(BuildContext context, this._bible, this._interfaceDialog,
       Config config, this._data, [this._rawData]) {
@@ -52,6 +69,21 @@ class BibleSearchDelegate extends SearchDelegate<List> {
 
     this._backgroundColor = config.backgroundColor;
     (_rawData == null) ? _rawData = [] : _loadData();
+  }
+
+  Future _openHere(List bcvList, String module) async {
+    if (module == _bible.module) {
+      _data = _bible.openSingleChapter(bcvList, true);
+    } else {
+      Bible bible = Bible(module, this.abbreviations);
+      await bible.loadData();
+      _data = bible.openSingleChapter(bcvList, true);
+    }
+    _rawData = [];
+    // workaround for visual update:
+    String tempString = query;
+    query = "...";
+    query = tempString;
   }
 
   // The option of lazy loading is achieved with "_loadData" & "_loadMoreData"
@@ -276,7 +308,9 @@ class BibleSearchDelegate extends SearchDelegate<List> {
 
   Future<void> _longPressedVerse(BuildContext context, List verseData) async {
     if (verseData.first.isNotEmpty) {
-      String ref = BibleParser(this.abbreviations).bcvToVerseReference(verseData.first);
+      List bcvList = verseData.first;
+      String ref = BibleParser(this.abbreviations).bcvToVerseReference(bcvList);
+      String refCh = BibleParser(this.abbreviations).bcvToChapterReference(bcvList);
       var copiedText = await Clipboard.getData('text/plain');
       switch (await showDialog<DialogAction>(
           context: context,
@@ -298,6 +332,13 @@ class BibleSearchDelegate extends SearchDelegate<List> {
                   leading: Icon(Icons.playlist_add),
                   title: Text(_interfaceDialog[this.abbreviations][3]),
                   onTap: () => Navigator.pop(context, DialogAction.addCopy),
+                ),
+                ListTile(
+                  leading: Icon(Icons.open_in_browser),
+                  title:
+                  Text("${interfaceBibleSearch[this.abbreviations][4]}$refCh${interfaceBibleSearch[this.abbreviations][5]}"),
+                  onTap: () =>
+                      Navigator.pop(context, DialogAction.openHere),
                 ),
                 /*SimpleDialogOption(
                 onPressed: () {
@@ -330,6 +371,9 @@ class BibleSearchDelegate extends SearchDelegate<List> {
           var combinedText = copiedText.text;
           combinedText += "\n${verseData[1]} ($ref, ${verseData.last})";
           Clipboard.setData(ClipboardData(text: combinedText));
+          break;
+        case DialogAction.openHere:
+          _openHere(bcvList, verseData.last);
           break;
         default:
       }

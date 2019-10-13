@@ -124,6 +124,8 @@ class UniqueBibleState extends State<UniqueBible> {
       "Show ",
       "Hide ",
       "Menu",
+      "Open '",
+      "' Here",
     ],
     "TC": [
       "跨平台聖經工具",
@@ -148,6 +150,8 @@ class UniqueBibleState extends State<UniqueBible> {
       "顯示",
       "隱藏",
       "菜單",
+      "在這裡打開【",
+      "】",
     ],
     "SC": [
       "跨平台圣经工具",
@@ -172,6 +176,8 @@ class UniqueBibleState extends State<UniqueBible> {
       "显示",
       "隐藏",
       "菜单",
+      "在这里打开【",
+      "】",
     ],
   };
 
@@ -559,7 +565,9 @@ class UniqueBibleState extends State<UniqueBible> {
     this.bibles.tBible.loadData();
 
     _currentActiveVerse = List<int>.from(this.config.historyActiveVerse.first);
-    _noteList = await noteDB.rawQuery("SELECT verse FROM Notes WHERE book = ? AND chapter = ?", _currentActiveVerse.sublist(0, 2));
+    _noteList = await noteDB.rawQuery(
+        "SELECT verse FROM Notes WHERE book = ? AND chapter = ?",
+        _currentActiveVerse.sublist(0, 2));
     _noteList = _noteList.map((i) => i["verse"]).toList();
 
     setState(() {
@@ -749,7 +757,9 @@ class UniqueBibleState extends State<UniqueBible> {
           (selectedBcvList.join(".") == _currentActiveVerse.join("."));
       if ((!sameVerse) ||
           ((sameVerse) && (selectedBible != this.bibles.bible1.module))) {
-        _noteList = await noteDB.rawQuery("SELECT verse FROM Notes WHERE book = ? AND chapter = ?", _currentActiveVerse.sublist(0, 2));
+        _noteList = await noteDB.rawQuery(
+            "SELECT verse FROM Notes WHERE book = ? AND chapter = ?",
+            _currentActiveVerse.sublist(0, 2));
         _noteList = _noteList.map((i) => i["verse"]).toList();
         if (selectedBible != this.bibles.bible1.module) {
           this.bibles.bible1 = Bible(selectedBible, this.abbreviations);
@@ -891,7 +901,8 @@ class UniqueBibleState extends State<UniqueBible> {
     );
     if (newBibleSettings != null) {
       // secondary bible
-      if (newBibleSettings.module2 != this.bibles.bible2.module) await reloadSecondaryBible(newBibleSettings.module2);
+      if (newBibleSettings.module2 != this.bibles.bible2.module)
+        await reloadSecondaryBible(newBibleSettings.module2);
       // Big Screen Mode
       //this.config.bigScreen = newBibleSettings.bigScreen;
       //this.config.save("bigScreen", newBibleSettings.bigScreen);
@@ -1069,8 +1080,11 @@ class UniqueBibleState extends State<UniqueBible> {
 
       if (bcvList.length > 3) bcvList = bcvList.sublist(0, 3);
 
-      List<Map> savedContent = await noteDB.rawQuery("SELECT * FROM Notes WHERE book = ? AND chapter = ? AND verse = ?", bcvList);
-      String content = (savedContent.isEmpty) ? "" : savedContent.first["content"];
+      List<Map> savedContent = await noteDB.rawQuery(
+          "SELECT * FROM Notes WHERE book = ? AND chapter = ? AND verse = ?",
+          bcvList);
+      String content =
+          (savedContent.isEmpty) ? "" : savedContent.first["content"];
 
       final selected = await Navigator.push(
         context,
@@ -1080,7 +1094,9 @@ class UniqueBibleState extends State<UniqueBible> {
         ),
       );
       if (selected != null) _newVerseSelected(selected);
-      _noteList = await noteDB.rawQuery("SELECT verse FROM Notes WHERE book = ? AND chapter = ?", _currentActiveVerse.sublist(0, 2));
+      _noteList = await noteDB.rawQuery(
+          "SELECT verse FROM Notes WHERE book = ? AND chapter = ?",
+          _currentActiveVerse.sublist(0, 2));
       setState(() {
         _noteList = _noteList.map((i) => i["verse"]).toList();
       });
@@ -1633,8 +1649,7 @@ class UniqueBibleState extends State<UniqueBible> {
     }
     return SizedBox(
       width: 250,
-      child: TabletDrawer(this.config, this.bibles,
-          (List data) {
+      child: TabletDrawer(this.config, this.bibles, (List data) {
         Map actions = {
           "open": _newVerseSelected,
           "addFavourite": addToFavourite,
@@ -1763,7 +1778,8 @@ class UniqueBibleState extends State<UniqueBible> {
                   setState(() {
                     this.config.bigScreen = !this.config.bigScreen;
                     this.config.save("bigScreen", this.config.bigScreen);
-                    if ((_typing) && (!this.config.bigScreen)) _typing = !_typing;
+                    if ((_typing) && (!this.config.bigScreen))
+                      _typing = !_typing;
                   });
                 } else {
                   _nonPlusMessage(this.interfaceApp[this.abbreviations][11]);
@@ -1791,15 +1807,22 @@ class UniqueBibleState extends State<UniqueBible> {
             PopupMenuItem<String>(
               value: "Big",
               child: ListTile(
-                leading: Icon((this.config.bigScreen) ? Icons.phone_android : Icons.laptop),
-                title: Text((this.config.bigScreen) ? this.interfaceApp[this.abbreviations][18] : this.interfaceApp[this.abbreviations][17]),
+                leading: Icon((this.config.bigScreen)
+                    ? Icons.phone_android
+                    : Icons.laptop),
+                title: Text((this.config.bigScreen)
+                    ? this.interfaceApp[this.abbreviations][18]
+                    : this.interfaceApp[this.abbreviations][17]),
               ),
             ),
             PopupMenuItem<String>(
               value: "Notes",
               child: ListTile(
-                leading: Icon((this.config.showNotes) ? Icons.visibility_off : Icons.visibility),
-                title: Text("${(this.config.showNotes) ? this.interfaceApp[this.abbreviations][20] : this.interfaceApp[this.abbreviations][19]}${this.interfaceApp[this.abbreviations][13]}"),
+                leading: Icon((this.config.showNotes)
+                    ? Icons.visibility_off
+                    : Icons.visibility),
+                title: Text(
+                    "${(this.config.showNotes) ? this.interfaceApp[this.abbreviations][20] : this.interfaceApp[this.abbreviations][19]}${this.interfaceApp[this.abbreviations][13]}"),
               ),
             ),
             const PopupMenuDivider(),
@@ -1864,17 +1887,17 @@ class UniqueBibleState extends State<UniqueBible> {
         child: ListView(scrollDirection: Axis.horizontal, children: <Widget>[
           (_selection)
               ? IconButton(
-            tooltip: this.interfaceBottom[this.abbreviations][10],
-            icon: const Icon(Icons.arrow_back),
-            onPressed: () => _stopSelection(),
-          )
+                  tooltip: this.interfaceBottom[this.abbreviations][10],
+                  icon: const Icon(Icons.arrow_back),
+                  onPressed: () => _stopSelection(),
+                )
               : IconButton(
-            tooltip: this.interfaceBottom[this.abbreviations][0],
-            icon: const Icon(Icons.layers),
-            onPressed: () {
-              showInterlinear(context, _currentActiveVerse);
-            },
-          ),
+                  tooltip: this.interfaceBottom[this.abbreviations][0],
+                  icon: const Icon(Icons.layers),
+                  onPressed: () {
+                    showInterlinear(context, _currentActiveVerse);
+                  },
+                ),
           (_selection)
               ? Container()
               : IconButton(
@@ -1954,30 +1977,30 @@ class UniqueBibleState extends State<UniqueBible> {
           (_selection)
               ? Container()
               : IconButton(
-            tooltip: this.interfaceBottom[this.abbreviations][11],
-            icon: const Icon(Icons.check_circle),
-            onPressed: () => _startSelection(),
-          ),
+                  tooltip: this.interfaceBottom[this.abbreviations][11],
+                  icon: const Icon(Icons.check_circle),
+                  onPressed: () => _startSelection(),
+                ),
           (_selection)
               ? IconButton(
-            tooltip: this.interfaceBottom[this.abbreviations][12],
-            icon: const Icon(Icons.check_circle_outline),
-            onPressed: () => _allSelection(),
-          )
+                  tooltip: this.interfaceBottom[this.abbreviations][12],
+                  icon: const Icon(Icons.check_circle_outline),
+                  onPressed: () => _allSelection(),
+                )
               : Container(),
           (_selection)
               ? IconButton(
-            tooltip: this.interfaceDialog[this.abbreviations][2],
-            icon: const Icon(Icons.content_copy),
-            onPressed: () => _runSelection(),
-          )
+                  tooltip: this.interfaceDialog[this.abbreviations][2],
+                  icon: const Icon(Icons.content_copy),
+                  onPressed: () => _runSelection(),
+                )
               : Container(),
           (_selection)
               ? IconButton(
-            tooltip: this.interfaceDialog[this.abbreviations][1],
-            icon: const Icon(Icons.share),
-            onPressed: () => _runSelection(true),
-          )
+                  tooltip: this.interfaceDialog[this.abbreviations][1],
+                  icon: const Icon(Icons.share),
+                  onPressed: () => _runSelection(true),
+                )
               : Container(),
           ((!this.config.bigScreen) || (_selection))
               ? Container()
@@ -2107,9 +2130,13 @@ class UniqueBibleState extends State<UniqueBible> {
                 trailing: (!this.config.showNotes)
                     ? null
                     : IconButton(
-                        tooltip: (_noteList.contains(bcvList[2])) ? interfaceApp[this.abbreviations][16] : interfaceApp[this.abbreviations][15],
+                        tooltip: (_noteList.contains(bcvList[2]))
+                            ? interfaceApp[this.abbreviations][16]
+                            : interfaceApp[this.abbreviations][15],
                         icon: Icon(
-                          (_noteList.contains(bcvList[2])) ? Icons.edit : Icons.note_add,
+                          (_noteList.contains(bcvList[2]))
+                              ? Icons.edit
+                              : Icons.note_add,
                           color: this.config.myColors["blue"],
                         ),
                         onPressed: () {
@@ -2149,9 +2176,13 @@ class UniqueBibleState extends State<UniqueBible> {
                 trailing: (!this.config.showNotes)
                     ? null
                     : IconButton(
-                        tooltip: (_noteList.contains(bcvList[2])) ? interfaceApp[this.abbreviations][16] : interfaceApp[this.abbreviations][15],
+                        tooltip: (_noteList.contains(bcvList[2]))
+                            ? interfaceApp[this.abbreviations][16]
+                            : interfaceApp[this.abbreviations][15],
                         icon: Icon(
-                          (_noteList.contains(bcvList[2])) ? Icons.edit : Icons.note_add,
+                          (_noteList.contains(bcvList[2]))
+                              ? Icons.edit
+                              : Icons.note_add,
                           color: this.config.myColors["blueAccent"],
                         ),
                         onPressed: () {
@@ -2204,10 +2235,14 @@ class UniqueBibleState extends State<UniqueBible> {
   }
 
   // reference: https://api.flutter.dev/flutter/material/SimpleDialog-class.html
-  Future<void> _longPressedVerse(BuildContext context, List verseData) async {
+  Future<void> _longPressedVerse(BuildContext context, List verseData,
+      [bool openHere = false]) async {
     if (verseData.first.isNotEmpty) {
+      List bcvList = verseData.first;
       String ref =
-          BibleParser(this.abbreviations).bcvToVerseReference(verseData.first);
+          BibleParser(this.abbreviations).bcvToVerseReference(bcvList);
+      String refCh =
+      BibleParser(this.abbreviations).bcvToChapterReference(bcvList);
       _stopRunningActions();
       var copiedText = await Clipboard.getData('text/plain');
       switch (await showDialog<DialogAction>(
@@ -2231,6 +2266,15 @@ class UniqueBibleState extends State<UniqueBible> {
                   title: Text(this.interfaceDialog[this.abbreviations][3]),
                   onTap: () => Navigator.pop(context, DialogAction.addCopy),
                 ),
+                (openHere)
+                    ? ListTile(
+                        leading: Icon(Icons.open_in_browser),
+                        title:
+                            Text("${interfaceApp[this.abbreviations][22]}$refCh${interfaceApp[this.abbreviations][23]}"),
+                        onTap: () =>
+                            Navigator.pop(context, DialogAction.openHere),
+                      )
+                    : Container(),
               ],
               /*title: Text(this.interfaceDialog[this.abbreviations].first),
             children: <Widget>[
@@ -2267,9 +2311,29 @@ class UniqueBibleState extends State<UniqueBible> {
           combinedText += "\n${verseData[1]} ($ref, ${verseData.last})";
           Clipboard.setData(ClipboardData(text: combinedText));
           break;
+        case DialogAction.openHere:
+          _openHere(bcvList, verseData.last);
+          break;
         default:
       }
     }
+  }
+
+  Future _openHere(List bcvList, String module) async {
+    if (module == this.bibles.bible1.module) {
+      _displayData = this.bibles.bible1.openSingleChapter(bcvList, true);
+    } else if (module == this.bibles.bible2.module) {
+      _displayData = this.bibles.bible2.openSingleChapter(bcvList, true);
+    } else if (module == this.bibles.iBible.module) {
+      _displayData = this.bibles.iBible.openSingleChapter(bcvList, true);
+    } else {
+      Bible bible = Bible(module, this.abbreviations);
+      await bible.loadData();
+      _displayData = bible.openSingleChapter(bcvList, true);
+    }
+    setState(() {
+      _rawData = [];
+    });
   }
 
   Future<void> _longPressedActiveVerse(
@@ -2610,7 +2674,7 @@ class UniqueBibleState extends State<UniqueBible> {
         _newVerseSelected(verseData);
       },
       onLongPress: () {
-        _longPressedVerse(context, _displayData[i]);
+        _longPressedVerse(context, _displayData[i], true);
       },
     );
   }

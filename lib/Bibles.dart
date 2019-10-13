@@ -255,16 +255,23 @@ class Bible {
     return versesFound.join(" ");
   }
 
-  List openSingleChapter(List bcvList) {
+  List openSingleChapter(List bcvList, [bool verseNo = false]) {
     //versesFound.add([[], "[${BibleParser(this.abbreviations).bcvToChapterReference(bcvList)}, ${this.module}]", this.module]);
     var fetchResults = this
         .data
         .where((i) => ((i["bNo"] == bcvList[0]) && (i["cNo"] == bcvList[1])))
         .toList();
     List<dynamic> versesFound = fetchResults.map((i) {
+      if ((verseNo) && (i["vNo"] == bcvList[2])) {
+        return [
+          [i["bNo"], i["cNo"], i["vNo"]],
+          "${(verseNo) ? "*** [" : ""}${(verseNo) ? i["vNo"] : ""}${(verseNo) ? "] " : ""}${i["vText"]}".trim(),
+          this.module
+        ];
+      }
       return [
         [i["bNo"], i["cNo"], i["vNo"]],
-        i["vText"].trim(),
+        "${(verseNo) ? "[" : ""}${(verseNo) ? i["vNo"] : ""}${(verseNo) ? "] " : ""}${i["vText"]}".trim(),
         this.module
       ];
     }).toList();
