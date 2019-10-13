@@ -905,45 +905,44 @@ class UniqueBibleState extends State<UniqueBible> {
     );
     if (newBibleSettings != null) {
       // secondary bible
-      if (newBibleSettings.module2 != this.bibles.bible2.module)
-        await reloadSecondaryBible(newBibleSettings.module2);
+      //if (newBibleSettings.module2 != this.bibles.bible2.module) await reloadSecondaryBible(newBibleSettings.module2);
       // Big Screen Mode
       //this.config.bigScreen = newBibleSettings.bigScreen;
       //this.config.save("bigScreen", newBibleSettings.bigScreen);
       //if ((_typing) && (!newBibleSettings.bigScreen)) _typing = !_typing;
       // Font size
-      this.config.fontSize = newBibleSettings.fontSize;
-      this.config.save("fontSize", newBibleSettings.fontSize);
+      //this.config.fontSize = newBibleSettings.fontSize;
+      //this.config.save("fontSize", newBibleSettings.fontSize);
       // Abbreviations
-      this.abbreviations = newBibleSettings.abbreviations;
-      this.config.abbreviations = newBibleSettings.abbreviations;
-      updateBibleAbbreviations(newBibleSettings.abbreviations);
-      this.config.save("abbreviations", newBibleSettings.abbreviations);
+      //this.abbreviations = newBibleSettings.abbreviations;
+      //this.config.abbreviations = newBibleSettings.abbreviations;
+      //updateBibleAbbreviations(newBibleSettings.abbreviations);
+      //this.config.save("abbreviations", newBibleSettings.abbreviations);
       // Bible comparison list
-      this.config.compareBibleList = newBibleSettings.compareBibleList;
-      this.config.save("compareBibleList", newBibleSettings.compareBibleList);
+      //this.config.compareBibleList = newBibleSettings.compareBibleList;
+      //this.config.save("compareBibleList", newBibleSettings.compareBibleList);
       // Instant action
-      this.config.instantAction = newBibleSettings.instantAction;
-      this.config.save("instantAction", newBibleSettings.instantAction);
+      //this.config.instantAction = newBibleSettings.instantAction;
+      //this.config.save("instantAction", newBibleSettings.instantAction);
       // Quick action
-      this.config.favouriteAction = newBibleSettings.favouriteAction;
-      this.config.save("favouriteAction", newBibleSettings.favouriteAction);
+      //this.config.favouriteAction = newBibleSettings.favouriteAction;
+      //this.config.save("favouriteAction", newBibleSettings.favouriteAction);
       // Background color
-      this.config.backgroundColor = newBibleSettings.backgroundColor;
-      this.config.save("backgroundColor", newBibleSettings.backgroundColor);
+      //this.config.backgroundColor = newBibleSettings.backgroundColor;
+      //this.config.save("backgroundColor", newBibleSettings.backgroundColor);
       // TTS English
-      this.config.ttsEnglish = newBibleSettings.ttsEnglish;
-      this.config.save("ttsEnglish", newBibleSettings.ttsEnglish);
+      //this.config.ttsEnglish = newBibleSettings.ttsEnglish;
+      //this.config.save("ttsEnglish", newBibleSettings.ttsEnglish);
       // TTS Chinese
-      this.config.ttsChinese = newBibleSettings.ttsChinese;
-      this.config.save("ttsChinese", newBibleSettings.ttsChinese);
+      //this.config.ttsChinese = newBibleSettings.ttsChinese;
+      //this.config.save("ttsChinese", newBibleSettings.ttsChinese);
       // TTS Greek
-      this.config.ttsGreek = newBibleSettings.ttsGreek;
-      this.config.save("ttsGreek", newBibleSettings.ttsGreek);
+      //this.config.ttsGreek = newBibleSettings.ttsGreek;
+      //this.config.save("ttsGreek", newBibleSettings.ttsGreek);
       // TTS speech rate
-      this.config.speechRate = newBibleSettings.speechRate;
-      this.config.save("speechRate", newBibleSettings.speechRate);
-      await flutterTts.setSpeechRate(newBibleSettings.speechRate);
+      //this.config.speechRate = newBibleSettings.speechRate;
+      //this.config.save("speechRate", newBibleSettings.speechRate);
+      //await flutterTts.setSpeechRate(newBibleSettings.speechRate);
       // update UpdateCenter
       //final state = Provider.of<UpdateCenter>(context);
       //state.config = this.config;
@@ -2320,7 +2319,7 @@ class UniqueBibleState extends State<UniqueBible> {
   }
 
   // reference: https://api.flutter.dev/flutter/material/SimpleDialog-class.html
-  Future<void> _longPressedVerse(BuildContext context, List verseData,
+  /*Future<void> _longPressedVerse(BuildContext context, List verseData,
       [bool openHere = false]) async {
     if (verseData.first.isNotEmpty) {
       List bcvList = verseData.first;
@@ -2401,7 +2400,7 @@ class UniqueBibleState extends State<UniqueBible> {
         default:
       }
     }
-  }
+  }*/
 
   Future _openHere(List bcvList, String module) async {
     if (module == this.bibles.bible1.module) {
