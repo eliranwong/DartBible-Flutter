@@ -40,9 +40,9 @@ class ToolState extends State<Tool> {
   String abbreviations;
 
   final Map interface = {
-    "ENG": ["Add to Home Screen"],
-    "TC": ["加增到主頁"],
-    "SC": ["加增到主页"],
+    "ENG": ["Open in Workspace"],
+    "TC": ["在工作間顯示"],
+    "SC": ["在工作间显示"],
   };
 
   ToolState(this._title, this._module, this._menuData, this._config, this._bible, this._icon, this._interfaceDialog) {

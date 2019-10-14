@@ -76,7 +76,6 @@ class UniqueBibleState extends State<UniqueBible> {
   ];
   List<int> _currentActiveVerse = [0, 0, 0];
 
-  bool _drawer = false;
   bool _typing = false;
   bool _display = false;
   bool _selection = false;
@@ -196,7 +195,7 @@ class UniqueBibleState extends State<UniqueBible> {
       "Share",
       "Bible Audio",
       "User Manual",
-      "Add / Remove Secondary View",
+      "Workspace",
       "Back",
       "Multiple Selection",
       "Select / Clear All",
@@ -213,7 +212,7 @@ class UniqueBibleState extends State<UniqueBible> {
       "分享",
       "聖經語音",
       "使用手册",
-      "加增／刪除輔助視窗",
+      "工作間",
       "回去",
       "選擇經文",
       "選擇／清除所有",
@@ -230,7 +229,7 @@ class UniqueBibleState extends State<UniqueBible> {
       "分享",
       "圣经语音",
       "使用手册",
-      "加增／删除辅助视窗",
+      "工作间",
       "回去",
       "选择经文",
       "选择／清除所有",
@@ -1696,8 +1695,8 @@ class UniqueBibleState extends State<UniqueBible> {
     if (this.config.bigScreen) {
       return Row(
         children: <Widget>[
-          (_drawer) ? _buildTabletDrawer() : Container(),
-          (_drawer) ? _buildDivider() : Container(),
+          (this.config.showDrawer) ? _buildTabletDrawer() : Container(),
+          (this.config.showDrawer) ? _buildDivider() : Container(),
           _wrap(
             OrientationBuilder(
               builder: (context, orientation) {
@@ -1794,6 +1793,72 @@ class UniqueBibleState extends State<UniqueBible> {
 
   Widget _buildAppBar(BuildContext context) {
     //original color: Theme.of(context).appBarTheme.color
+    List<PopupMenuEntry<String>> popupMenu = <PopupMenuEntry<String>>[
+      PopupMenuItem<String>(
+        value: "Verse",
+        child: ListTile(
+          leading: Icon(Icons.directions),
+          title: Text(this.interfaceApp[this.abbreviations][24]),
+        ),
+      ),
+      const PopupMenuDivider(),
+      PopupMenuItem<String>(
+        value: "Big",
+        child: ListTile(
+          leading: Icon((this.config.bigScreen)
+              ? Icons.phone_android
+              : Icons.laptop),
+          title: Text((this.config.bigScreen)
+              ? this.interfaceApp[this.abbreviations][18]
+              : this.interfaceApp[this.abbreviations][17]),
+        ),
+      ),
+      PopupMenuItem<String>(
+        value: "Workspace",
+        child: ListTile(
+          leading: Icon((_display)
+              ? Icons.visibility_off
+              : Icons.visibility),
+          title: Text(
+              "${(_display) ? this.interfaceApp[this.abbreviations][20] : this.interfaceApp[this.abbreviations][19]}${this.interfaceBottom[this.abbreviations][9]}"),
+        ),
+      ),
+      PopupMenuItem<String>(
+        value: "Notes",
+        child: ListTile(
+          leading: Icon((this.config.showNotes)
+              ? Icons.visibility_off
+              : Icons.visibility),
+          title: Text(
+              "${(this.config.showNotes) ? this.interfaceApp[this.abbreviations][20] : this.interfaceApp[this.abbreviations][19]}${this.interfaceApp[this.abbreviations][13]}"),
+        ),
+      ),
+      const PopupMenuDivider(),
+      PopupMenuItem<String>(
+        value: "Settings",
+        child: ListTile(
+          leading: Icon(Icons.settings),
+          title: Text(this.interfaceApp[this.abbreviations][4]),
+        ),
+      ),
+      const PopupMenuDivider(),
+      PopupMenuItem<String>(
+        value: "Manual",
+        child: ListTile(
+          leading: Icon(Icons.help_outline),
+          title: Text(this.interfaceBottom[this.abbreviations][8]),
+        ),
+      ),
+      //const PopupMenuDivider(),
+      PopupMenuItem<String>(
+        value: "Contact",
+        child: ListTile(
+          leading: Icon(Icons.alternate_email),
+          title: Text(this.interfaceApp[this.abbreviations][14]),
+        ),
+      ),
+    ];
+    if (!this.config.bigScreen) popupMenu.removeAt(3);
     return AppBar(
       backgroundColor: _appBarColor,
       title: (_typing)
@@ -1808,7 +1873,8 @@ class UniqueBibleState extends State<UniqueBible> {
             onPressed: () {
               if (this.config.bigScreen) {
                 setState(() {
-                  _drawer = !_drawer;
+                  this.config.showDrawer = !this.config.showDrawer;
+                  this.config.save("showDrawer", this.config.showDrawer);
                 });
               } else {
                 _scaffoldKey.currentState.openDrawer();
@@ -1858,6 +1924,19 @@ class UniqueBibleState extends State<UniqueBible> {
                   _nonPlusMessage(this.interfaceApp[this.abbreviations][11]);
                 }
                 break;
+              case "Workspace":
+                if (this.config.plus) {
+                  if (!this.config.bigScreen) {
+                    this.config.bigScreen = !this.config.bigScreen;
+                    this.config.save("bigScreen", this.config.bigScreen);
+                  }
+                  setState(() {
+                    _display = !_display;
+                  });
+                } else {
+                  _nonPlusMessage(this.interfaceBottom[this.abbreviations][9]);
+                }
+                break;
               case "Notes":
                 setState(() {
                   this.config.showNotes = !this.config.showNotes;
@@ -1879,61 +1958,7 @@ class UniqueBibleState extends State<UniqueBible> {
               default:
             }
           },
-          itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>[
-            PopupMenuItem<String>(
-              value: "Verse",
-              child: ListTile(
-                leading: Icon(Icons.directions),
-                title: Text(this.interfaceApp[this.abbreviations][24]),
-              ),
-            ),
-            const PopupMenuDivider(),
-            PopupMenuItem<String>(
-              value: "Big",
-              child: ListTile(
-                leading: Icon((this.config.bigScreen)
-                    ? Icons.phone_android
-                    : Icons.laptop),
-                title: Text((this.config.bigScreen)
-                    ? this.interfaceApp[this.abbreviations][18]
-                    : this.interfaceApp[this.abbreviations][17]),
-              ),
-            ),
-            PopupMenuItem<String>(
-              value: "Notes",
-              child: ListTile(
-                leading: Icon((this.config.showNotes)
-                    ? Icons.visibility_off
-                    : Icons.visibility),
-                title: Text(
-                    "${(this.config.showNotes) ? this.interfaceApp[this.abbreviations][20] : this.interfaceApp[this.abbreviations][19]}${this.interfaceApp[this.abbreviations][13]}"),
-              ),
-            ),
-            const PopupMenuDivider(),
-            PopupMenuItem<String>(
-              value: "Settings",
-              child: ListTile(
-                leading: Icon(Icons.settings),
-                title: Text(this.interfaceApp[this.abbreviations][4]),
-              ),
-            ),
-            const PopupMenuDivider(),
-            PopupMenuItem<String>(
-              value: "Manual",
-              child: ListTile(
-                leading: Icon(Icons.help_outline),
-                title: Text(this.interfaceBottom[this.abbreviations][8]),
-              ),
-            ),
-            //const PopupMenuDivider(),
-            PopupMenuItem<String>(
-              value: "Contact",
-              child: ListTile(
-                leading: Icon(Icons.alternate_email),
-                title: Text(this.interfaceApp[this.abbreviations][14]),
-              ),
-            ),
-          ],
+          itemBuilder: (BuildContext context) => popupMenu,
         ),
       ],
     );
@@ -1997,6 +2022,25 @@ class UniqueBibleState extends State<UniqueBible> {
           (_selection)
               ? Container()
               : IconButton(
+            tooltip: this.interfaceBottom[this.abbreviations][2],
+            icon: const Icon(Icons.games),
+            onPressed: () => _launchPromises(context),
+          ),
+          (_selection)
+              ? Container()
+              : IconButton(
+            tooltip: this.interfaceBottom[this.abbreviations][3],
+            icon: const Icon(Icons.compare),
+            onPressed: () {
+              (this.config.plus)
+                  ? _launchHarmonies(context)
+                  : _nonPlusMessage(
+                  this.interfaceBottom[this.abbreviations][3]);
+            },
+          ),
+          (_selection)
+              ? Container()
+              : IconButton(
                   tooltip: this.interfaceDialog[this.abbreviations][5],
                   icon: const Icon(Icons.link),
                   onPressed: () {
@@ -2042,25 +2086,6 @@ class UniqueBibleState extends State<UniqueBible> {
           (_selection)
               ? Container()
               : IconButton(
-                  tooltip: this.interfaceBottom[this.abbreviations][2],
-                  icon: const Icon(Icons.games),
-                  onPressed: () => _launchPromises(context),
-                ),
-          (_selection)
-              ? Container()
-              : IconButton(
-                  tooltip: this.interfaceBottom[this.abbreviations][3],
-                  icon: const Icon(Icons.compare),
-                  onPressed: () {
-                    (this.config.plus)
-                        ? _launchHarmonies(context)
-                        : _nonPlusMessage(
-                            this.interfaceBottom[this.abbreviations][3]);
-                  },
-                ),
-          (_selection)
-              ? Container()
-              : IconButton(
                   tooltip: this.interfaceBottom[this.abbreviations][11],
                   icon: const Icon(Icons.check_circle),
                   onPressed: () => _startSelection(),
@@ -2086,7 +2111,7 @@ class UniqueBibleState extends State<UniqueBible> {
                   onPressed: () => _runSelection(true),
                 )
               : Container(),
-          ((!this.config.bigScreen) || (_selection))
+          /*((!this.config.bigScreen) || (_selection))
               ? Container()
               : IconButton(
                   tooltip: this.interfaceBottom[this.abbreviations][9],
@@ -2096,7 +2121,7 @@ class UniqueBibleState extends State<UniqueBible> {
                       _display = !_display;
                     });
                   },
-                ),
+                ),*/
         ]),
       ),
     );

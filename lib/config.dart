@@ -105,6 +105,7 @@ class Config {
 
   bool bigScreen = false;
   bool showNotes = false;
+  bool showDrawer = true;
   double fontSize = 20.0;
   String abbreviations = "ENG";
   String bible1 = "KJV";
@@ -158,6 +159,11 @@ class Config {
       prefs.setBool("showNotes", this.showNotes);
     } else {
       this.showNotes = prefs.getBool("showNotes");
+    }
+    if (prefs.getBool("showDrawer") == null) {
+      prefs.setBool("showDrawer", this.showDrawer);
+    } else {
+      this.showDrawer = prefs.getBool("showDrawer");
     }
     if (prefs.getDouble("fontSize") == null) {
       prefs.setDouble("fontSize", this.fontSize);
@@ -269,6 +275,8 @@ class Config {
       this.bigScreen = prefs.getBool("bigScreen");
     if (prefs.getBool("showNotes") == null)
       this.showNotes = prefs.getBool("showNotes");
+    if (prefs.getBool("showDrawer") == null)
+      this.showDrawer = prefs.getBool("showDrawer");
     if (prefs.getDouble("fontSize") != null)
       this.fontSize = prefs.getDouble("fontSize");
     if (prefs.getString("abbreviations") != null)
@@ -329,6 +337,9 @@ class Config {
         await prefs.setBool(feature, newSetting as bool);
         break;
       case "showNotes":
+        await prefs.setBool(feature, newSetting as bool);
+        break;
+      case "showDrawer":
         await prefs.setBool(feature, newSetting as bool);
         break;
       case "fontSize":
