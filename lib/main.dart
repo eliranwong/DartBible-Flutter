@@ -11,6 +11,7 @@ import 'package:sqflite/sqflite.dart';
 import 'package:flutter_tts/flutter_tts.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:path/path.dart';
+import 'package:flutter/gestures.dart';
 import 'config.dart';
 import 'Bibles.dart';
 import 'BibleSearchDelegate.dart';
@@ -75,6 +76,7 @@ class UniqueBibleState extends State<UniqueBible> {
     ]
   ];
   List<int> _currentActiveVerse = [0, 0, 0];
+  List<Map> _morphology = [];
 
   bool _typing = false;
   bool _display = false;
@@ -82,6 +84,8 @@ class UniqueBibleState extends State<UniqueBible> {
   List _selectionIndexes = [];
   Bibles bibles;
   var scrollController;
+  TabController _tabController;
+  int _tabIndex = 0;
   int _scrollIndex = 0;
   int _activeIndex = 0;
   Config config;
@@ -304,10 +308,12 @@ class UniqueBibleState extends State<UniqueBible> {
   get isStopped => ttsState == TtsState.stopped;
   Icon _ttsIcon = Icon(Icons.volume_up);
   bool _speakOneVerse = false;
+  bool _toolOpened = false;
 
   // Variables to work with previous search interface
   final _pageSize = 20;
-  List _displayData = [];
+  List _displayData = [["", "[Verse(s)]", ""]];
+  List _displayChapter = [["", "[Chapter]", ""]];
   List _rawData = [];
   Map interfaceBibleSearch = {
     "ENG": [
@@ -364,7 +370,7 @@ class UniqueBibleState extends State<UniqueBible> {
       });
       if (_speakOneVerse) {
         _speakOneVerse = false;
-      } else {
+      } else if (!_toolOpened) {
         _scrollIndex += 1;
         _readVerse();
       }
@@ -557,15 +563,21 @@ class UniqueBibleState extends State<UniqueBible> {
 
     // pre-load bible2 data
     this.bibles.bible2 = Bible(this.config.bible2, this.abbreviations);
-    this.bibles.bible2.loadData();
+    ((this.config.bigScreen) && (this.config.instantAction == 1))
+        ? await this.bibles.bible2.loadData()
+        : this.bibles.bible2.loadData();
 
     // pre-load interlinear bible
     this.bibles.iBible = Bible("OHGBi", this.abbreviations);
-    this.bibles.iBible.loadData();
+    ((this.config.bigScreen) && (this.config.instantAction == 1))
+        ? await this.bibles.iBible.loadData()
+        : this.bibles.iBible.loadData();
 
     // pre-load transliteration bible
     this.bibles.tBible = Bible("OHGBt", this.abbreviations);
-    this.bibles.tBible.loadData();
+    ((this.config.bigScreen) && (this.config.instantAction == 1))
+        ? await this.bibles.tBible.loadData()
+        : this.bibles.tBible.loadData();
 
     _currentActiveVerse = List<int>.from(this.config.historyActiveVerse.first);
     _noteList = await noteDB.rawQuery(
@@ -577,6 +589,10 @@ class UniqueBibleState extends State<UniqueBible> {
       _data = this.bibles.bible1.openSingleChapter(_currentActiveVerse);
       _scrollIndex = getScrollIndex();
       _activeIndex = _scrollIndex;
+      if ((this.config.bigScreen) && (this.config.instantAction == 1)) {
+        if (!_display) _display = true;
+        showInterlinear(_currentActiveVerse);
+      }
     });
   }
 
@@ -651,12 +667,12 @@ class UniqueBibleState extends State<UniqueBible> {
       });
       if (this.config.instantAction != -1) {
         List instantActions = [showTip, showInterlinear];
-        instantActions[this.config.instantAction](context, bcvList);
+        instantActions[this.config.instantAction](bcvList, context);
       }
     }
   }
 
-  showTip(BuildContext context, List bcvList) {
+  showTip(List bcvList, [BuildContext context]) {
     String verseReference =
         BibleParser(this.abbreviations).bcvToVerseReference(bcvList);
     String message =
@@ -666,71 +682,84 @@ class UniqueBibleState extends State<UniqueBible> {
     _scaffoldKey.currentState.showSnackBar(snackBar);
   }
 
-  Future showInterlinear(BuildContext context, List bcvList) async {
+  Future _getMorphology(List bcvList, [String module]) async {
+    String table = module ?? "OHGB";
+    _morphology = await SqliteHelper(this.config).getMorphology(bcvList, table);
+    setState(() {
+      if (!_display) _display = true;
+      _changeWorkspace(2);
+    });
+  }
+
+  Widget _interlinearTile(BuildContext context, List bcvList) {
+    String verseReference =
+    BibleParser(this.abbreviations).bcvToVerseReference(bcvList);
+
+    var verseDirection = TextDirection.ltr;
+    bool isHebrew = (bcvList.first < 40);
+    if (isHebrew) verseDirection = TextDirection.rtl;
+
+    String verseText = this.bibles.iBible.openSingleVerse(bcvList);
+    //List<TextSpan> textContent = InterlinearHelper(this.config.verseTextStyle).getInterlinearSpan(
+    List<TextSpan> textContent = this.getInterlinearSpan(context, verseText, bcvList)
+      ..insert(0, TextSpan(text: " "))
+      ..insert(0, TextSpan(text: "$verseReference", style: _highlightStyle))
+      ..insert(0, TextSpan(text: " "));
+
+    return ListTile(
+      title: RichText(
+        text: TextSpan(
+          //style: DefaultTextStyle.of(context).style,
+          children: textContent,
+        ),
+        textDirection: verseDirection,
+      ),
+      //subtitle: Text(verseReference, style: _highlightStyle),
+      onTap: (this.config.bigScreen) ? null : () {
+        Navigator.pop(context, bcvList);
+        // note: do not use the following line to load interlinearView directly, which cause instability.
+        // _loadInterlinearView(context, bcvList);
+      },
+      onLongPress: () async {
+        if (isPlaying) _stop();
+        (isHebrew)
+            ? await flutterTts.setLanguage("he-IL")
+            : await flutterTts.setLanguage("el-GR");
+        if ((isHebrew) && (Platform.isAndroid)) {
+          verseText = TtsHelper().workaroundHebrew(
+              this.bibles.tBible.openSingleVerse(bcvList));
+          //verseText = verseText.replaceAll("ʾ", "");
+          await flutterTts.setLanguage("el-GR");
+        } else {
+          verseText = "$verseText ｜";
+          verseText = verseText.replaceAll(RegExp("｜＠.*? ｜"), "");
+        }
+        _speakOneVerse = true;
+        _speak(verseText);
+      },
+    );
+  }
+
+  Future showInterlinear(List bcvList, [BuildContext context]) async {
     if (this.config.plus) {
       if (this.bibles?.iBible?.data != null) {
-        String verseReference =
-            BibleParser(this.abbreviations).bcvToVerseReference(bcvList);
-
-        var verseDirection = TextDirection.ltr;
-        bool isHebrew = (bcvList.first < 40);
-        if (isHebrew) verseDirection = TextDirection.rtl;
-
-        String verseText = this.bibles.iBible.openSingleVerse(bcvList);
-        List<TextSpan> textContent =
-            InterlinearHelper(this.config.verseTextStyle).getInterlinearSpan(
-                verseText, bcvList.first)
-              ..insert(0, TextSpan(text: " "))
-              ..insert(
-                  0, TextSpan(text: "$verseReference", style: _highlightStyle))
-              ..insert(0, TextSpan(text: " "));
-
-        final selected = await showModalBottomSheet(
-            context: context,
-            builder: (BuildContext context) {
-              return Container(
-                color: config.myColors["background"],
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 5.0),
-                  child: ListTile(
-                    title: RichText(
-                      text: TextSpan(
-                        //style: DefaultTextStyle.of(context).style,
-                        children: textContent,
-                      ),
-                      textDirection: verseDirection,
-                    ),
-                    //subtitle: Text(verseReference, style: _highlightStyle),
-                    onTap: () {
-                      Navigator.pop(context, bcvList);
-                      // note: do not use the following line to load interlinearView directly, which cause instability.
-                      // _loadInterlinearView(context, bcvList);
-                    },
-                    onLongPress: () async {
-                      if (isPlaying) _stop();
-                      (isHebrew)
-                          ? await flutterTts.setLanguage("he-IL")
-                          : await flutterTts.setLanguage("el-GR");
-                      if ((isHebrew) && (Platform.isAndroid)) {
-                        verseText = TtsHelper().workaroundHebrew(
-                            this.bibles.tBible.openSingleVerse(bcvList));
-                        //verseText = verseText.replaceAll("ʾ", "");
-                        await flutterTts.setLanguage("el-GR");
-                      } else {
-                        verseText = "$verseText ｜";
-                        verseText = verseText.replaceAll(RegExp("｜＠.*? ｜"), "");
-                      }
-                      _speakOneVerse = true;
-                      _speak(verseText);
-                    },
+        _stopRunningActions();
+        if (this.config.bigScreen) {
+          await _getMorphology(bcvList);
+        } else {
+          final selected = await showModalBottomSheet(
+              context: context,
+              builder: (BuildContext context) {
+                return Container(
+                  color: config.myColors["background"],
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 5.0),
+                    child: _interlinearTile(context, bcvList),
                   ),
-                ),
-              );
-            });
-        if (selected != null)
-          (this.config.bigScreen)
-              ? _loadOriginalWord(context, selected)
-              : _loadInterlinearView(context, selected);
+                );
+              });
+          if (selected != null) _loadInterlinearView(context, selected);
+        }
       }
     } else {
       _nonPlusMessage(this.interfaceBottom[this.abbreviations][0]);
@@ -778,6 +807,10 @@ class UniqueBibleState extends State<UniqueBible> {
           _parallelBibles = _toggleParallelBibles();
           _scrollIndex = getScrollIndex();
           _activeIndex = _scrollIndex;
+          if ((this.config.bigScreen) && (this.config.instantAction == 1)) {
+            if (!_display) _display = true;
+            showInterlinear(_currentActiveVerse);
+          }
         });
       }
     }
@@ -1049,6 +1082,7 @@ class UniqueBibleState extends State<UniqueBible> {
         if (!_display) _display = true;
         _rawData = [];
         _displayData = xRefData;
+        _changeWorkspace(1);
       });
     } else {
       final List selected = await showSearch(
@@ -1077,6 +1111,7 @@ class UniqueBibleState extends State<UniqueBible> {
         if (!_display) _display = true;
         _rawData = [];
         _displayData = compareData;
+        _changeWorkspace(1);
       });
     } else {
       final List selected = await showSearch(
@@ -1096,8 +1131,9 @@ class UniqueBibleState extends State<UniqueBible> {
   }
 
   Future _loadOriginalWord(BuildContext context, List bcvList,
-      [String module]) async {
+      [String module, int wordIndex]) async {
     if (isAllBiblesReady()) {
+      _toolOpened = true;
       _stopRunningActions();
       String table = module ?? "OHGB";
       final List<Map> morphology =
@@ -1106,15 +1142,17 @@ class UniqueBibleState extends State<UniqueBible> {
         context,
         MaterialPageRoute(
             builder: (context) =>
-                OriginalWord(morphology, table, this.config, this.bibles)),
+                OriginalWord(morphology, table, this.config, this.bibles, this.flutterTts, wordIndex)),
       );
       if (selected != null) _newVerseSelected(selected);
+      _toolOpened = false;
     }
   }
 
   Future _loadInterlinearView(BuildContext context, List bcvList,
       [String module]) async {
     if (isAllBiblesReady()) {
+      _toolOpened = true;
       _stopRunningActions();
       String table = module ?? "OHGB";
       final List<Map> morphology =
@@ -1123,15 +1161,17 @@ class UniqueBibleState extends State<UniqueBible> {
         context,
         MaterialPageRoute(
             builder: (context) => InterlinearView(
-                morphology, true, table, this.config, this.bibles)),
+                morphology, true, table, this.config, this.bibles, this.flutterTts)),
       );
       if (selected != null) _newVerseSelected(selected);
+      _toolOpened = false;
     }
   }
 
   Future _loadMorphologyView(BuildContext context, List bcvList,
       [String module]) async {
     if (isAllBiblesReady()) {
+      _toolOpened = true;
       _stopRunningActions();
       String table = module ?? "OHGB";
       final List<Map> morphology =
@@ -1140,9 +1180,10 @@ class UniqueBibleState extends State<UniqueBible> {
         context,
         MaterialPageRoute(
             builder: (context) => MorphologyView(
-                morphology, true, table, this.config, this.bibles)),
+                morphology, true, table, this.config, this.bibles, this.flutterTts)),
       );
       if (selected != null) _newVerseSelected(selected);
+      _toolOpened = false;
     }
   }
 
@@ -1260,6 +1301,7 @@ class UniqueBibleState extends State<UniqueBible> {
               if (!_display) _display = true;
               _rawData = [];
               _displayData = selected.first;
+              _changeWorkspace(1);
             });
           }
         } else {
@@ -1313,6 +1355,7 @@ class UniqueBibleState extends State<UniqueBible> {
       setState(() {
         if (!_display) _display = true;
         _loadRawData(bcvLists);
+        _changeWorkspace(1);
       });
     } else {
       final List selected = await showSearch(
@@ -1370,6 +1413,7 @@ class UniqueBibleState extends State<UniqueBible> {
       setState(() {
         if (!_display) _display = true;
         _loadRawData(bcvLists);
+        _changeWorkspace(1);
       });
     } else {
       final List selected = await showSearch(
@@ -1472,6 +1516,7 @@ class UniqueBibleState extends State<UniqueBible> {
       setState(() {
         if (!_display) _display = true;
         _loadRawData(bcvLists);
+        _changeWorkspace(1);
       });
     } else {
       final List selected = await showSearch(
@@ -1743,7 +1788,7 @@ class UniqueBibleState extends State<UniqueBible> {
     return <Widget>[
       _wrap(_buildBibleChapter(context), 2),
       (_display) ? _buildDivider() : Container(),
-      (_display) ? _wrap(_buildDisplayVerses(context), 2) : Container(),
+      (_display) ? _wrap(_buildWorkspace(context), 2) : Container(),
     ];
   }
 
@@ -1781,6 +1826,7 @@ class UniqueBibleState extends State<UniqueBible> {
               if (!_display) _display = true;
               _rawData = [];
               _displayData = _fetch(query);
+              _changeWorkspace(1);
             });
           }
         },
@@ -2004,7 +2050,7 @@ class UniqueBibleState extends State<UniqueBible> {
                   tooltip: this.interfaceBottom[this.abbreviations][0],
                   icon: const Icon(Icons.layers),
                   onPressed: () {
-                    showInterlinear(context, _currentActiveVerse);
+                    showInterlinear(_currentActiveVerse, context);
                   },
                 ),
           (_selection)
@@ -2166,7 +2212,8 @@ class UniqueBibleState extends State<UniqueBible> {
         },
         emptyItemBuilder: (context, i) {
           return _buildEmptyVerseRow(i);
-        });
+        }
+        );
   }
 
   Widget _buildVerseRow(BuildContext context, int i) {
@@ -2429,19 +2476,36 @@ class UniqueBibleState extends State<UniqueBible> {
 
   Future _openHere(List bcvList, String module) async {
     if (module == this.bibles.bible1.module) {
-      _displayData = this.bibles.bible1.openSingleChapter(bcvList, true);
+      (this.config.bigScreen)
+          ? _displayChapter = this.bibles.bible1.openSingleChapter(bcvList, true)
+          : _displayData = this.bibles.bible1.openSingleChapter(bcvList, true);
     } else if (module == this.bibles.bible2.module) {
-      _displayData = this.bibles.bible2.openSingleChapter(bcvList, true);
+      (this.config.bigScreen)
+          ? _displayChapter = this.bibles.bible2.openSingleChapter(bcvList, true)
+          : _displayData = this.bibles.bible2.openSingleChapter(bcvList, true);
     } else if (module == this.bibles.iBible.module) {
-      _displayData = this.bibles.iBible.openSingleChapter(bcvList, true);
+      (this.config.bigScreen)
+          ? _displayChapter = this.bibles.iBible.openSingleChapter(bcvList, true)
+          : _displayData = this.bibles.iBible.openSingleChapter(bcvList, true);
     } else {
       Bible bible = Bible(module, this.abbreviations);
       await bible.loadData();
-      _displayData = bible.openSingleChapter(bcvList, true);
+      (this.config.bigScreen)
+          ? _displayChapter = bible.openSingleChapter(bcvList, true)
+          : _displayData = bible.openSingleChapter(bcvList, true);
     }
     setState(() {
-      _rawData = [];
+      if (this.config.bigScreen) {
+        _changeWorkspace(0);
+      } else {
+        _rawData = [];
+      }
     });
+  }
+
+  void _changeWorkspace(int i) {
+    _tabIndex = i;
+    if ((_tabController != null) && (!_tabController.indexIsChanging)) _tabController.animateTo(i);
   }
 
   Future<void> _longPressedActiveVerse(BuildContext context, List verseData,
@@ -2730,6 +2794,7 @@ class UniqueBibleState extends State<UniqueBible> {
         ..._displayData,
         ...this.bibles.bible1.openMultipleVerses(newBcvList)
       ];
+      _changeWorkspace(1);
     });
   }
 
@@ -2782,22 +2847,241 @@ class UniqueBibleState extends State<UniqueBible> {
     return fetchResults;
   }
 
-  Widget _buildDisplayVerses(BuildContext context) {
+  Widget _buildWorkspace(BuildContext context) {
     int count =
-        ((_rawData.isNotEmpty) && (_rawData.length > _displayData.length))
-            ? (_displayData.length + 1)
-            : _displayData.length;
-    return Container(
-      color: Colors.blueGrey[this.config.backgroundColor],
-      child: ListView.builder(
+    ((_rawData.isNotEmpty) && (_rawData.length > _displayData.length))
+        ? (_displayData.length + 1)
+        : _displayData.length;
+
+    List<Widget> pages = <Widget>[
+      ListView.builder(
+          padding: EdgeInsets.zero,
+          itemCount: _displayChapter.length,
+          itemBuilder: (context, i) {
+            _tabController = DefaultTabController.of(context);
+            return _buildDisplayVerseRow(context, i, true);
+          }),
+      ListView.builder(
           padding: EdgeInsets.zero,
           itemCount: count,
           itemBuilder: (context, i) {
+            _tabController = DefaultTabController.of(context);
             return (i == _displayData.length)
                 ? _buildMoreDisplayVerseRow(context, i)
                 : _buildDisplayVerseRow(context, i);
           }),
+      ListView.builder(
+          padding: EdgeInsets.zero,
+          itemCount: (_morphology.length + 1),
+          itemBuilder: (context, i) {
+            _tabController = DefaultTabController.of(context);
+            if (i == 0) {
+              if (_morphology.isNotEmpty) {
+                Map item1 = _morphology.first;
+                List bcvList = [item1["Book"], item1["Chapter"], item1["Verse"]];
+                return _interlinearTile(context, bcvList);
+              } else {
+                return ListTile(
+                  title: Text("[Interlinear & Morphology]", style: _verseNoFont,),
+                );
+              }
+            }
+            return _buildMorphologyCard(context, (i - 1));
+          }),
+    ];
+    return DefaultTabController(
+      initialIndex: _tabIndex,
+      length: pages.length,
+      child: Builder(
+        builder: (BuildContext context) => Padding(
+          padding: EdgeInsets.zero,
+          child: Theme(
+            data: this.config.mainTheme,
+            child: Column(
+              children: <Widget>[
+                TabPageSelector(),
+                Expanded(
+                  child: IconTheme(
+                    data: IconThemeData(
+                      color: Colors.blueGrey[this.config.backgroundColor],
+                    ),
+                    child: TabBarView(children: pages,),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
     );
+  }
+
+  Widget _buildMorphologyCard(BuildContext context, int i) {
+    final Map wordData = _morphology[i];
+    final bool _isHebrew = wordData["Book"] < 40;
+    final List bcvList = [wordData["Book"], wordData["Chapter"], wordData["Verse"]];
+    final Map interface = {
+      "ENG": [
+        "Morphology",
+        "Less",
+        "Search",
+        "More",
+        "Audio",
+        "Search this morphology"
+      ],
+      "TC": ["原文形態學", "翻譯", "搜索", "更多", "語音功能", "搜索此形態"],
+      "SC": ["原文形态学", "翻译", "搜索", "更多", "语音功能", "搜索此形态"],
+    };
+
+    String morphology = wordData["Morphology"].replaceAll(",", ", ");
+    morphology = morphology.substring(0, (morphology.length - 2));
+    final textStyle = TextStyle(
+      fontSize: (this.config.fontSize - 2),
+      color: this.config.myColors["grey"],
+    );
+    TextStyle originalStyle = (_isHebrew)
+        ? this.config.verseTextStyle["verseFontHebrew"]
+        : this.config.verseTextStyle["verseFontGreek"];
+    Widget word = Text(wordData["Word"], style: originalStyle);
+    String lexemeText = wordData["Lexeme"];
+    Widget lexeme = Text(lexemeText, style: originalStyle);
+    //String lexicalEntry = (wordData["LexicalEntry"].isNotEmpty) ? wordData["LexicalEntry"].split(",").toList()[0] : "";
+    return Center(
+      child: Card(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: <Widget>[
+            ListTile(
+              leading: IconButton(
+                tooltip: interface[this.abbreviations][4],
+                icon: Icon(
+                  Icons.volume_up,
+                  color: this.config.myColors["black"],
+                ),
+                onPressed: () {
+                  if (this.config.plus) {
+                    String wordText = ((_isHebrew) && (Platform.isAndroid))
+                        ? TtsHelper().workaroundHebrew(wordData["Transliteration"])
+                        : wordData["Word"];
+                    _speakWord(wordText, _isHebrew);
+                  } else {
+                    _nonPlusMessage(interface[this.abbreviations][4]);
+                  }
+                },
+              ),
+              title: word,
+              subtitle: Text(
+                  "${wordData["Transliteration"]} [${wordData["Pronunciation"]}]",
+                  style: textStyle),
+              onTap: () {
+                _loadLexiconView(context, wordData["LexicalEntry"]);
+              },
+              trailing: IconButton(
+                tooltip: interface[this.abbreviations][3],
+                icon: Icon(
+                  Icons.more_vert,
+                  color: this.config.myColors["black"],
+                ),
+                onPressed: () {
+                  _loadOriginalWord(context, bcvList, "OHGB", i);
+                },
+              ),
+            ),
+            ListTile(
+              leading: IconButton(
+                tooltip: interface[this.abbreviations][5],
+                icon: Icon(
+                  Icons.label_outline,
+                  color: this.config.myColors["black"],
+                ),
+                onPressed: () {
+                  _loadMorphologySearchView(context, lexemeText, wordData["LexicalEntry"], morphology);
+                },
+              ),
+              title: lexeme,
+              subtitle: Text(morphology, style: textStyle),
+              onTap: () {
+                _loadMorphologySearchView(context, lexemeText, wordData["LexicalEntry"], morphology);
+              },
+              trailing: IconButton(
+                tooltip: interface[this.abbreviations][2],
+                icon: Icon(
+                  Icons.search,
+                  color: this.config.myColors["black"],
+                ),
+                onPressed: () {
+                  _loadMorphologySearchView(context, lexemeText, wordData["LexicalEntry"], morphology);
+                },
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future _loadLexiconView(BuildContext context, String lexicalEntries) async {
+    List lexicons = await SqliteHelper(this.config).getLexicons(lexicalEntries);
+    final selected = await Navigator.push(
+      context,
+      MaterialPageRoute(
+          builder: (context) => LexiconView(this.config, lexicons, this.bibles)),
+    );
+    if (selected != null) _newVerseSelected(selected);
+  }
+
+  Future _loadMorphologySearchView(BuildContext context, lexemeText, lexicalEntry, morphology) async {
+    List searchData = await searchMorphology(lexicalEntry.split(",").first, morphology.split(", "));
+    final selected = await Navigator.push(
+      context,
+      MaterialPageRoute(
+          builder: (context) => MorphologySearchTablet(lexemeText, lexicalEntry,
+              morphology, "OHGB", this.config, this.bibles, searchData)),
+    );
+    if (selected != null) _newVerseSelected(selected);
+  }
+
+  Future searchMorphology(String lexicalEntry, List selectedMorphologyItems) async {
+    if (lexicalEntry.isNotEmpty) {
+      final Database db = await SqliteHelper(this.config).initMorphologyDb();
+      String statement;
+      String prefix =
+          "SELECT * FROM OHGB WHERE LexicalEntry LIKE '%$lexicalEntry,%'";
+      if (selectedMorphologyItems.isEmpty) {
+        statement = prefix;
+      } else {
+        List<String> statementItems = selectedMorphologyItems
+            .map<String>((i) => "AND Morphology LIKE '%$i,%'")
+            .toList()
+          ..insert(0, prefix);
+        statement = statementItems.join(" ");
+      }
+      List<Map> morphology = await db.rawQuery(statement);
+      //_morphologySearchResults(context, morphology);
+      db.close();
+      return morphology;
+    }
+    return [];
+  }
+
+  Future _speakWord(String message, bool isHebrew) async {
+    if (isPlaying) await _stop();
+    if ((message != null) && (message.isNotEmpty)) {
+      if (isHebrew) {
+        (Platform.isAndroid)
+            ? await flutterTts.setLanguage("el-GR")
+            : await flutterTts.setLanguage("he-IL");
+      } else {
+        message = TtsHelper().removeGreekAccents(message);
+        await flutterTts.setLanguage("el-GR");
+      }
+      var result = await flutterTts.speak(message);
+      if (result == 1)
+        setState(() {
+          _speakOneVerse = true;
+          ttsState = TtsState.playing;
+        });
+    }
   }
 
   Widget _buildMoreDisplayVerseRow(BuildContext context, int i) {
@@ -2812,16 +3096,16 @@ class UniqueBibleState extends State<UniqueBible> {
     );
   }
 
-  Widget _buildDisplayVerseRow(BuildContext context, int i) {
-    var verseData = _displayData[i];
+  Widget _buildDisplayVerseRow(BuildContext context, int i, [bool chapter = false]) {
+    var verseData = (chapter) ? _displayChapter[i] : _displayData[i];
 
     return ListTile(
       title: _buildVerseText(context, verseData),
       onTap: () {
-        _newVerseSelected(verseData);
+        if (verseData.first.isNotEmpty) _newVerseSelected(verseData);
       },
       onLongPress: () {
-        _longPressedActiveVerse(context, _displayData[i], true);
+        if (verseData.first.isNotEmpty) _longPressedActiveVerse(context, verseData, true);
       },
     );
   }
@@ -2835,8 +3119,8 @@ class UniqueBibleState extends State<UniqueBible> {
     var verseContent = "";
     var verseModule = verseData[2];
 
-    if ((this.config.hebrewBibles.contains(verseModule)) &&
-        (verseData[0][0] < 40)) {
+    if ((verseData.first.isNotEmpty) && (this.config.hebrewBibles.contains(verseModule)) &&
+        (verseData.first.first < 40)) {
       verseFont = _verseFontHebrew;
       activeVerseFont = _activeVerseFontHebrew;
       verseDirection = TextDirection.rtl;
@@ -2892,4 +3176,81 @@ class UniqueBibleState extends State<UniqueBible> {
       textDirection: verseDirection,
     );
   }
+
+  List<TextSpan> getInterlinearSpan(BuildContext context, String text, List bcvList, [bool isActive = false]) {
+    int book = bcvList.first;
+    bool isHebrewBible = (book < 40);
+
+    var originalStyle;
+    if (!isActive) {
+      originalStyle = _verseFontGreek;
+      if (isHebrewBible) originalStyle = _verseFontHebrew;
+    } else {
+      originalStyle = _activeVerseFontGreek;
+      if (isHebrewBible) originalStyle = _activeVerseFontHebrew;
+    }
+    List<TextSpan> words = <TextSpan>[];
+    List<String> wordList = text.split("｜");
+
+    wordList.asMap().forEach((index, word) {
+      if (word.startsWith("＠")) {
+        if (isHebrewBible) {
+          List<String> glossList = word.substring(1).split(" ");
+          for (var gloss in glossList) {
+            if ((gloss.startsWith("[")) || (gloss.endsWith("]"))) {
+              gloss = gloss.replaceAll(RegExp(r"[\[\]\+\.]"), "");
+              words.add(TextSpan(text: "$gloss ", style: _interlinearStyleDim));
+            } else {
+              words.add(TextSpan(text: "$gloss ", style: _interlinearStyle));
+            }
+          }
+        } else {
+          words
+              .add(TextSpan(text: word.substring(1), style: _interlinearStyle));
+        }
+      } else {
+        (this.config.bigScreen)
+            ? words.add(
+            TextSpan(
+              text: word,
+              style: originalStyle,
+              recognizer: TapGestureRecognizer()..onTap = () {
+                //Navigator.pop(context, [bcvList, (index ~/ 2)]);
+                _loadOriginalWord(context, bcvList, "OHGB", (index ~/ 2));
+              },
+            )
+        )
+            : words.add(
+            TextSpan(
+              text: word,
+              style: originalStyle,
+            )
+        );
+      }
+    });
+
+    /*or (var word in wordList) {
+      if (word.startsWith("＠")) {
+        if (isHebrewBible) {
+          List<String> glossList = word.substring(1).split(" ");
+          for (var gloss in glossList) {
+            if ((gloss.startsWith("[")) || (gloss.endsWith("]"))) {
+              gloss = gloss.replaceAll(RegExp(r"[\[\]\+\.]"), "");
+              words.add(TextSpan(text: "$gloss ", style: _interlinearStyleDim));
+            } else {
+              words.add(TextSpan(text: "$gloss ", style: _interlinearStyle));
+            }
+          }
+        } else {
+          words
+              .add(TextSpan(text: word.substring(1), style: _interlinearStyle));
+        }
+      } else {
+        words.add(TextSpan(text: word, style: originalStyle));
+      }
+    }*/
+
+    return words;
+  }
+
 }

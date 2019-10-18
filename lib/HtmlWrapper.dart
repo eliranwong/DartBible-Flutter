@@ -89,11 +89,14 @@ class HtmlWrapper {
         List<dynamic> bcvList = text.substring(1).split(",");
         bcvList = bcvList.map((i) => int.parse(i)).toList();
         String bcvReference = _parser.bcvToVerseReference(bcvList);
-        textSpans.add(TextSpan(
-            text: bcvReference,
-            style: _bcvStyle,
-            recognizer: TapGestureRecognizer()
-              ..onTap = () => popUpVerse(context, bcvList)));
+        textSpans.add(
+            TextSpan(
+                text: bcvReference,
+                style: _bcvStyle,
+                recognizer: TapGestureRecognizer()
+                  ..onTap = () => popUpVerse(context, bcvList)
+            )
+        );
       } else if (text.startsWith("＄")) {
         textSpans.add(TextSpan(text: text.substring(1), style: _hStyle));
       } else if (text.startsWith("｛")) {

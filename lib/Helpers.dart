@@ -351,11 +351,11 @@ class InterlinearHelper {
     _interlinearStyle = verseTextStyle["interlinearStyle"];
   }
 
-  List<TextSpan> getInterlinearSpan(String text, int book, [bool isActive]) {
+  List<TextSpan> getInterlinearSpan(String text, int book, [bool isActive = false]) {
     bool isHebrewBible = (book < 40);
 
     var originalStyle;
-    if ((isActive == null) || (!isActive)) {
+    if (!isActive) {
       originalStyle = _verseFontGreek;
       if (isHebrewBible) originalStyle = _verseFontHebrew;
     } else {

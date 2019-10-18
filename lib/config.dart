@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class Config {
-  bool plus = false;
+  bool plus = true;
   String plusURL = (Platform.isAndroid)
       ? 'https://play.google.com/store/apps/details?id=app.bibletools.unique_bible_app_plus_paid'
       : 'https://apps.apple.com/app/unique-bible-app-plus/id1480768821?ls=1';
@@ -58,7 +58,7 @@ class Config {
   List<String> chineseBibles = ["CCB", "CUV", "CUVs"];
 
   // public versions
-  List<String> allBibleList = [
+  /*List<String> allBibleList = [
     "ABG",
     "ASV",
     "BBE",
@@ -81,14 +81,14 @@ class Config {
     "ULT",
     "UST",
     "WEB"
-  ];
+  ];*/
   // private versions
-  //List<String> allBibleList = ["ABG", "ASV", "BBE", "BSB", "CCB", "CEB", "CEV", "CSB", "CUV", "CUVs", "ERV", "ESV", "EXP", "ISV", "KJV", "LEB", "LXX1", "LXX2", "LXXE", "LXXk", "NASB", "NET", "NIV", "NLT", "NRSV", "OHGB", "OHGBi", "OHGBt", "T4T", "ULT", "UST", "WEB"];
+  List<String> allBibleList = ["ABG", "ASV", "BBE", "BSB", "CCB", "CEB", "CEV", "CSB", "CUV", "CUVs", "ERV", "ESV", "EXP", "ISV", "KJV", "LEB", "LXX1", "LXX2", "LXXE", "LXXk", "NASB", "NET", "NIV", "NLT", "NRSV", "OHGB", "OHGBi", "OHGBt", "T4T", "ULT", "UST", "WEB"];
 
   // variables linked with shared preferences
 
   // public versions
-  List<String> compareBibleList = [
+  /*List<String> compareBibleList = [
     "ASV",
     "BSB",
     "ERV",
@@ -99,9 +99,9 @@ class Config {
     "NET",
     "OHGB",
     "WEB",
-  ];
+  ];*/
   // private versions
-  //List<String> compareBibleList = ["CEV", "CSB", "CUV", "ESV", "EXP", "ISV", "KJV", "LEB", "LXXE", "LXXk", "NASB", "NET", "NIV", "OHGB"];
+  List<String> compareBibleList = ["CEV", "CSB", "CUV", "ESV", "EXP", "ISV", "KJV", "LEB", "LXXE", "LXXk", "NASB", "NET", "NIV", "OHGB"];
 
   bool bigScreen = false;
   bool showNotes = false;

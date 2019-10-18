@@ -15,13 +15,14 @@ class InterlinearView extends StatefulWidget {
   final String _module;
   final Config _config;
   final Bibles _bibles;
+  final FlutterTts flutterTts;
 
   InterlinearView(
-      this._data, this._firstOpened, this._module, this._config, this._bibles);
+      this._data, this._firstOpened, this._module, this._config, this._bibles, this.flutterTts);
 
   @override
   InterlinearViewState createState() => InterlinearViewState(
-      this._data, this._firstOpened, this._module, this._config, this._bibles);
+      this._data, this._firstOpened, this._module, this._config, this._bibles, this.flutterTts);
 }
 
 class InterlinearViewState extends State<InterlinearView> {
@@ -49,7 +50,7 @@ class InterlinearViewState extends State<InterlinearView> {
   get isStopped => ttsState == TtsState.stopped;
 
   InterlinearViewState(
-      this._data, this._firstOpened, this._module, this._config, this._bibles) {
+      this._data, this._firstOpened, this._module, this._config, this._bibles, this.flutterTts) {
     this._fontSize = this._config.fontSize;
     this.abbreviations = this._config.abbreviations;
     this._isHebrew = ((_module == "OHGB") &&
@@ -58,7 +59,7 @@ class InterlinearViewState extends State<InterlinearView> {
         (_data.first["Book"] < 40));
   }
 
-  @override
+  /*@override
   initState() {
     super.initState();
     initTts();
@@ -68,9 +69,9 @@ class InterlinearViewState extends State<InterlinearView> {
   void dispose() {
     super.dispose();
     flutterTts.stop();
-  }
+  }*/
 
-  initTts() {
+  /*initTts() {
     flutterTts = FlutterTts();
 
     flutterTts.setStartHandler(() {
@@ -90,7 +91,7 @@ class InterlinearViewState extends State<InterlinearView> {
         ttsState = TtsState.stopped;
       });
     });
-  }
+  }*/
 
   Future _speak(String message) async {
     if (isPlaying) await _stop();
@@ -240,7 +241,7 @@ class InterlinearViewState extends State<InterlinearView> {
     final selected = await Navigator.push(
       context,
       MaterialPageRoute(
-          builder: (context) => WordView(wordData, _module, _config, _bibles)),
+          builder: (context) => WordView(wordData, _module, _config, _bibles, this.flutterTts)),
     );
     if (selected != null) Navigator.pop(context, selected);
   }
@@ -251,7 +252,7 @@ class InterlinearViewState extends State<InterlinearView> {
         context,
         MaterialPageRoute(
             builder: (context) =>
-                MorphologyView(_data, false, _module, _config, _bibles)),
+                MorphologyView(_data, false, _module, _config, _bibles, this.flutterTts)),
       );
       if (selected != null) Navigator.pop(context, selected);
     } else {
@@ -276,13 +277,14 @@ class MorphologyView extends StatefulWidget {
   final String _module;
   final Config _config;
   final Bibles _bibles;
+  final FlutterTts flutterTts;
 
   MorphologyView(
-      this._data, this._firstOpened, this._module, this._config, this._bibles);
+      this._data, this._firstOpened, this._module, this._config, this._bibles, this.flutterTts);
 
   @override
   MorphologyViewState createState() => MorphologyViewState(
-      this._data, this._firstOpened, this._module, this._config, this._bibles);
+      this._data, this._firstOpened, this._module, this._config, this._bibles, this.flutterTts);
 }
 
 class MorphologyViewState extends State<MorphologyView> {
@@ -317,7 +319,7 @@ class MorphologyViewState extends State<MorphologyView> {
   get isStopped => ttsState == TtsState.stopped;
 
   MorphologyViewState(
-      this._data, this._firstOpened, this._module, this._config, this._bibles) {
+      this._data, this._firstOpened, this._module, this._config, this._bibles, this.flutterTts) {
     this._fontSize = this._config.fontSize;
     this.abbreviations = this._config.abbreviations;
     this._isHebrew = ((_module == "OHGB") &&
@@ -326,7 +328,7 @@ class MorphologyViewState extends State<MorphologyView> {
         (_data.first["Book"] < 40));
   }
 
-  @override
+  /*@override
   initState() {
     super.initState();
     initTts();
@@ -358,7 +360,7 @@ class MorphologyViewState extends State<MorphologyView> {
         ttsState = TtsState.stopped;
       });
     });
-  }
+  }*/
 
   Future _speak(String message) async {
     if (isPlaying) await _stop();
@@ -438,7 +440,7 @@ class MorphologyViewState extends State<MorphologyView> {
       context,
       MaterialPageRoute(
           builder: (context) => MorphologySearchResults(
-              morphology, this._module, this._config, this._bibles)),
+              morphology, this._module, this._config, this._bibles, this.flutterTts)),
     );
     if (selected != null) Navigator.pop(context, selected);
   }
@@ -466,7 +468,7 @@ class MorphologyViewState extends State<MorphologyView> {
                     context,
                     MaterialPageRoute(
                         builder: (context) => InterlinearView(
-                            _data, false, _module, _config, _bibles)),
+                            _data, false, _module, _config, _bibles, this.flutterTts)),
                   );
                 } else {
                   Navigator.pop(context, null);
@@ -583,7 +585,7 @@ class MorphologyViewState extends State<MorphologyView> {
     final selected = await Navigator.push(
       context,
       MaterialPageRoute(
-          builder: (context) => WordView(wordData, _module, _config, _bibles)),
+          builder: (context) => WordView(wordData, _module, _config, _bibles, this.flutterTts)),
     );
     if (selected != null) Navigator.pop(context, selected);
   }
@@ -594,7 +596,7 @@ class MorphologyViewState extends State<MorphologyView> {
       context,
       MaterialPageRoute(
           builder: (context) => MorphologySearchView(lexemeText, lexicalEntry,
-              morphology, this._module, this._config, this._bibles)),
+              morphology, this._module, this._config, this._bibles, this.flutterTts)),
     );
     if (selected != null) Navigator.pop(context, selected);
   }
@@ -614,9 +616,10 @@ class MorphologySearchView extends StatefulWidget {
   final String _lexeme, _lexicalEntry, _morphology, _module;
   final Config _config;
   final Bibles _bibles;
+  final FlutterTts flutterTts;
 
   MorphologySearchView(this._lexeme, this._lexicalEntry, this._morphology,
-      this._module, this._config, this._bibles);
+      this._module, this._config, this._bibles, this.flutterTts);
 
   @override
   MorphologySearchViewState createState() => MorphologySearchViewState(
@@ -625,7 +628,9 @@ class MorphologySearchView extends StatefulWidget {
       this._morphology,
       this._module,
       this._config,
-      this._bibles);
+      this._bibles,
+      this.flutterTts,
+  );
 }
 
 class MorphologySearchViewState extends State<MorphologySearchView> {
@@ -634,6 +639,7 @@ class MorphologySearchViewState extends State<MorphologySearchView> {
   final String _lexeme, _lexicalEntry, _morphology, _module;
   final Config _config;
   final Bibles _bibles;
+  FlutterTts flutterTts;
   var lexicalEntry = "";
   List<String> morphologyItems, selectedMorphologyItems;
 
@@ -644,7 +650,7 @@ class MorphologySearchViewState extends State<MorphologySearchView> {
   };
 
   MorphologySearchViewState(this._lexeme, this._lexicalEntry, this._morphology,
-      this._module, this._config, this._bibles) {
+      this._module, this._config, this._bibles, this.flutterTts) {
     morphologyItems = _morphology.split(", ").toList();
     selectedMorphologyItems = List<String>.from(morphologyItems);
     if (_lexicalEntry.isNotEmpty)
@@ -699,7 +705,7 @@ class MorphologySearchViewState extends State<MorphologySearchView> {
       context,
       MaterialPageRoute(
           builder: (context) => MorphologySearchResults(
-              morphology, this._module, this._config, this._bibles)),
+              morphology, this._module, this._config, this._bibles, this.flutterTts)),
     );
     if (selected != null) Navigator.pop(context, selected);
   }
@@ -777,12 +783,13 @@ class MorphologySearchResults extends StatefulWidget {
   final String _module;
   final Config _config;
   final Bibles _bibles;
+  final FlutterTts flutterTts;
 
-  MorphologySearchResults(this._data, this._module, this._config, this._bibles);
+  MorphologySearchResults(this._data, this._module, this._config, this._bibles, this.flutterTts);
 
   @override
   MorphologySearchResultsState createState() => MorphologySearchResultsState(
-      this._data, this._module, this._config, this._bibles);
+      this._data, this._module, this._config, this._bibles, this.flutterTts);
 }
 
 class MorphologySearchResultsState extends State<MorphologySearchResults> {
@@ -791,6 +798,7 @@ class MorphologySearchResultsState extends State<MorphologySearchResults> {
   final String _module;
   final Config _config;
   final Bibles _bibles;
+  FlutterTts flutterTts;
   double _fontSize;
   String abbreviations;
   final Map interface = {
@@ -800,7 +808,7 @@ class MorphologySearchResultsState extends State<MorphologySearchResults> {
   };
 
   MorphologySearchResultsState(
-      this._data, this._module, this._config, this._bibles) {
+      this._data, this._module, this._config, this._bibles, this.flutterTts) {
     this._fontSize = this._config.fontSize;
     this.abbreviations = this._config.abbreviations;
   }
@@ -881,7 +889,7 @@ class MorphologySearchResultsState extends State<MorphologySearchResults> {
     final selected = await Navigator.push(
       context,
       MaterialPageRoute(
-          builder: (context) => WordView(wordData, _module, _config, _bibles)),
+          builder: (context) => WordView(wordData, _module, _config, _bibles, this.flutterTts)),
     );
     if (selected != null) Navigator.pop(context, selected);
   }
@@ -892,12 +900,13 @@ class WordView extends StatefulWidget {
   final String _module;
   final Config _config;
   final Bibles _bibles;
+  final FlutterTts flutterTts;
 
-  WordView(this._data, this._module, this._config, this._bibles);
+  WordView(this._data, this._module, this._config, this._bibles, this.flutterTts);
 
   @override
   WordViewState createState() =>
-      WordViewState(this._data, this._module, this._config, this._bibles);
+      WordViewState(this._data, this._module, this._config, this._bibles, this.flutterTts);
 }
 
 class WordViewState extends State<WordView> {
@@ -922,7 +931,7 @@ class WordViewState extends State<WordView> {
   get isPlaying => ttsState == TtsState.playing;
   get isStopped => ttsState == TtsState.stopped;
 
-  WordViewState(this._data, this._module, this._config, this._bibles) {
+  WordViewState(this._data, this._module, this._config, this._bibles, this.flutterTts) {
     this._isHebrew = ((_module == "OHGB") &&
         (_data != null) &&
         (_data.isNotEmpty) &&
@@ -931,7 +940,7 @@ class WordViewState extends State<WordView> {
     _regex = RegexHelper();
   }
 
-  @override
+  /*@override
   initState() {
     super.initState();
     initTts();
@@ -963,7 +972,7 @@ class WordViewState extends State<WordView> {
         ttsState = TtsState.stopped;
       });
     });
-  }
+  }*/
 
   Future _speak(String message) async {
     if (isPlaying) await _stop();
@@ -1206,7 +1215,7 @@ class WordViewState extends State<WordView> {
       context,
       MaterialPageRoute(
           builder: (context) => MorphologySearchView(lexemeText, lexicalEntry,
-              morphology, this._module, this._config, this._bibles)),
+              morphology, this._module, this._config, this._bibles, this.flutterTts)),
     );
     if (selected != null) Navigator.pop(context, selected);
   }

@@ -7,21 +7,22 @@ import 'Bibles.dart';
 import 'BibleParser.dart';
 import 'config.dart';
 import 'Helpers.dart';
-import 'HtmlWrapper.dart';
+import 'Morphology.dart';
 
 class OriginalWord extends StatefulWidget {
   final List<Map> _data;
   final String _module;
   final Config _config;
   final Bibles _bibles;
+  final FlutterTts flutterTts;
   final int _wordIndex;
 
-  OriginalWord(this._data, this._module, this._config, this._bibles,
+  OriginalWord(this._data, this._module, this._config, this._bibles, this.flutterTts,
       [this._wordIndex]);
 
   @override
   OriginalWordState createState() => OriginalWordState(
-      this._data, this._module, this._config, this._bibles, this._wordIndex);
+      this._data, this._module, this._config, this._bibles, this._wordIndex, this.flutterTts);
 }
 
 class OriginalWordState extends State<OriginalWord> {
@@ -67,7 +68,7 @@ class OriginalWordState extends State<OriginalWord> {
   get isStopped => ttsState == TtsState.stopped;
 
   OriginalWordState(
-      this._data, this._module, this._config, this._bibles, this._wordIndex) {
+      this._data, this._module, this._config, this._bibles, this._wordIndex, this.flutterTts) {
     this._fontSize = this._config.fontSize;
     this.abbreviations = this._config.abbreviations;
     this._isHebrew = ((_module == "OHGB") &&
@@ -78,7 +79,7 @@ class OriginalWordState extends State<OriginalWord> {
     if (this._wordIndex != null) _wData = _data[this._wordIndex];
   }
 
-  @override
+  /*@override
   initState() {
     super.initState();
     initTts();
@@ -110,7 +111,7 @@ class OriginalWordState extends State<OriginalWord> {
         ttsState = TtsState.stopped;
       });
     });
-  }
+  }*/
 
   Future _speak(String message) async {
     if (isPlaying) await _stop();
@@ -1080,105 +1081,3 @@ class MorphologySearchTabletState extends State<MorphologySearchTablet> {
   }
 }
 
-/*
-class LexiconView extends StatefulWidget {
-  final List _lexicalEntries;
-  final Config _config;
-  final Bibles _bibles;
-
-  LexiconView(this._config, this._lexicalEntries, this._bibles);
-
-  @override
-  LexiconViewState createState() => LexiconViewState(this._config, this._lexicalEntries, this._bibles);
-}
-
-class LexiconViewState extends State<LexiconView> {
-
-  final List _lexicalEntries;
-  final Config _config;
-  final Bibles _bibles;
-
-  Map interface = {
-    "ENG": ["Lexicon"],
-    "TC": ["原文辭典"],
-    "SC": ["原文词典"],
-  };
-
-  LexiconViewState(this._config, this._lexicalEntries, this._bibles);
-*/
-class LexiconView extends StatelessWidget {
-  final List _lexicalEntries;
-  final Config _config;
-  final Bibles _bibles;
-
-  final Map interface = {
-    "ENG": ["Lexicon"],
-    "TC": ["原文辭典"],
-    "SC": ["原文词典"],
-  };
-
-  LexiconView(this._config, this._lexicalEntries, this._bibles);
-
-  List<Widget> formatItem(BuildContext context, Map item) {
-    HtmlWrapper _wrapper = HtmlWrapper(_bibles, _config);
-
-    //String _entry = item["Entry"];
-    String _lexeme = item["Lexeme"];
-    String _transliteration = item["Transliteration"];
-    String _morphology = item["Morphology"];
-    String _gloss = item["Gloss"];
-    String _lexicon = item["Lexicon"];
-    String _content = item["Content"];
-
-    Widget headingRichText = Text(
-      _lexicon,
-      style: TextStyle(color: _config.myColors["grey"]),
-    );
-
-    String content =
-        "<h>$_lexeme</h><p>Transliteration: $_transliteration<br>Morphology: $_morphology<br>Gloss: $_gloss</p><p>$_content</p>";
-    Widget contentRichText = _wrapper.buildRichText(context, content);
-
-    return [headingRichText, contentRichText];
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Theme(
-      data: _config.mainTheme,
-      child: Scaffold(
-        appBar: AppBar(
-          title: Text(interface[_config.abbreviations][0]),
-        ),
-        body: _buildCardList(context),
-      ),
-    );
-  }
-
-  Widget _buildCardList(BuildContext context) {
-    return ListView.builder(
-        padding: const EdgeInsets.all(15.0),
-        itemCount: _lexicalEntries.length,
-        itemBuilder: (context, i) {
-          return _buildCard(context, i);
-        });
-  }
-
-  Widget _buildCard(BuildContext context, int i) {
-    final wordItem = _lexicalEntries[i];
-    final wordData = formatItem(context, wordItem);
-    return Center(
-      child: Card(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: <Widget>[
-            ListTile(
-              title: wordData[1],
-              subtitle: wordData[0],
-            )
-          ],
-        ),
-      ),
-    );
-  }
-}

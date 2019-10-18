@@ -275,6 +275,7 @@ class Bible {
         this.module
       ];
     }).toList();
+    if (verseNo) versesFound.insert(0, [[], "[${BibleParser(this.abbreviations).bcvToChapterReference(bcvList)}, ${this.module}]", this.module]);
     return versesFound;
   }
 
