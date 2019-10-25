@@ -793,24 +793,36 @@ class MorphologySearchResults extends StatefulWidget {
 }
 
 class MorphologySearchResultsState extends State<MorphologySearchResults> {
+  final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
+
   // [{WordID: 1, ClauseID: 1, Book: 1, Chapter: 1, Verse: 1, Word: בְּ, LexicalEntry: E70001,H9003,, MorphologyCode: prep, Morphology: preposition,, Lexeme: בְּ, Transliteration: bĕ, Pronunciation: bᵊ, Interlinear: in, Translation: In, Gloss: in}]
   final List<Map> _data;
   final String _module;
   final Config _config;
   final Bibles _bibles;
+
   FlutterTts flutterTts;
+  TtsState ttsState = TtsState.stopped;
+  get isPlaying => ttsState == TtsState.playing;
+  get isStopped => ttsState == TtsState.stopped;
+
   double _fontSize;
   String abbreviations;
+  bool _isHebrew;
   final Map interface = {
-    "ENG": ["Found", "words", "More"],
-    "TC": ["找到", "個字", "更多"],
-    "SC": ["找到", "个字", "更多"],
+    "ENG": ["Found", "words", "More", "Audio"],
+    "TC": ["找到", "個字", "更多", "語音功能"],
+    "SC": ["找到", "个字", "更多", "语音功能"],
   };
 
   MorphologySearchResultsState(
       this._data, this._module, this._config, this._bibles, this.flutterTts) {
     this._fontSize = this._config.fontSize;
     this.abbreviations = this._config.abbreviations;
+    this._isHebrew = ((_module == "OHGB") &&
+        (_data != null) &&
+        (_data.isNotEmpty) &&
+        (_data.first["Book"] < 40));
   }
 
   @override
@@ -820,6 +832,7 @@ class MorphologySearchResultsState extends State<MorphologySearchResults> {
     return Theme(
       data: _config.mainTheme,
       child: Scaffold(
+        key: _scaffoldKey,
         appBar: AppBar(
           title: Text(title),
         ),
@@ -858,9 +871,23 @@ class MorphologySearchResultsState extends State<MorphologySearchResults> {
             mainAxisSize: MainAxisSize.min,
             children: <Widget>[
               ListTile(
-                leading: Icon(
-                  Icons.album,
-                  color: _config.myColors["black"],
+                leading: IconButton(
+                  tooltip: interface[this.abbreviations][3],
+                  icon: Icon(
+                    Icons.volume_up,
+                    color: _config.myColors["black"],
+                  ),
+                  onPressed: () {
+                    if (_config.plus) {
+                      String wordText = ((_isHebrew) && (Platform.isAndroid))
+                          ? TtsHelper()
+                          .workaroundHebrew(wordData["Transliteration"])
+                          : wordData["Word"];
+                      _speak(wordText);
+                    } else {
+                      _nonPlusMessage(interface[this.abbreviations][3]);
+                    }
+                  },
                 ),
                 title: word,
                 subtitle: Text(verseReference, style: textStyle),
@@ -883,6 +910,57 @@ class MorphologySearchResultsState extends State<MorphologySearchResults> {
         ),
       ),
     );
+  }
+
+  Future _speak(String message) async {
+    if (isPlaying) await _stop();
+    if ((message != null) && (message.isNotEmpty)) {
+      if (_isHebrew) {
+        (Platform.isAndroid)
+            ? await flutterTts.setLanguage("el-GR")
+            : await flutterTts.setLanguage("he-IL");
+      } else if (_config.greekBibles.contains(_module)) {
+        message = TtsHelper().removeGreekAccents(message);
+        await flutterTts.setLanguage("el-GR");
+      }
+      var result = await flutterTts.speak(message);
+      if (result == 1)
+        setState(() {
+          ttsState = TtsState.playing;
+        });
+    }
+  }
+
+  Future _stop() async {
+    var result = await flutterTts.stop();
+    if (result == 1)
+      setState(() {
+        ttsState = TtsState.stopped;
+      });
+  }
+
+  void _nonPlusMessage(String feature) {
+    String message =
+        "'$feature' ${_config.plusMessage[this.abbreviations].first}";
+    final snackBar = SnackBar(
+      content: Text(message),
+      action: SnackBarAction(
+        label: _config.plusMessage[this.abbreviations].last,
+        onPressed: () {
+          _launchPlusPage();
+        },
+      ),
+    );
+    _scaffoldKey.currentState.showSnackBar(snackBar);
+  }
+
+  Future _launchPlusPage() async {
+    String url = _config.plusURL;
+    if (await canLaunch(url)) {
+      await launch(url);
+    } else {
+      throw 'Could not launch $url';
+    }
   }
 
   Future _loadWordView(BuildContext context, Map wordData) async {

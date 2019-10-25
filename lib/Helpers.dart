@@ -218,7 +218,7 @@ class SqliteHelper {
     Directory directory = await getApplicationDocumentsDirectory();
     var dbPath = join(directory.path, "tools.sqlite");
 
-    double latestToolsVersion = 1.0;
+    double latestToolsVersion = 1.1;
 
     // check if database is up-to-date
     if (this.config.toolsVersion < latestToolsVersion) {

@@ -408,7 +408,7 @@ class OriginalWordState extends State<OriginalWord> {
       context,
       MaterialPageRoute(
           builder: (context) => MorphologySearchTablet(lexemeText, lexicalEntry,
-              morphology, this._module, this._config, this._bibles, searchData)),
+              morphology, this._module, this._config, this._bibles, searchData, this.flutterTts)),
     );
     if (selected != null) Navigator.pop(context, selected);
   }
@@ -590,20 +590,22 @@ class MorphologySearchTablet extends StatefulWidget {
   final Config _config;
   final Bibles _bibles;
   final List<Map> _data;
+  final FlutterTts flutterTts;
 
   MorphologySearchTablet(this._lexeme, this._lexicalEntry, this._morphology,
-      this._module, this._config, this._bibles, this._data);
+      this._module, this._config, this._bibles, this._data, this.flutterTts);
 
   @override
   MorphologySearchTabletState createState() => MorphologySearchTabletState(
-        this._lexeme,
-        this._lexicalEntry,
-        this._morphology,
-        this._module,
-        this._config,
-        this._bibles,
-        this._data,
-      );
+    this._lexeme,
+    this._lexicalEntry,
+    this._morphology,
+    this._module,
+    this._config,
+    this._bibles,
+    this._data,
+    this.flutterTts,
+  );
 }
 
 class MorphologySearchTabletState extends State<MorphologySearchTablet> {
@@ -644,7 +646,7 @@ class MorphologySearchTabletState extends State<MorphologySearchTablet> {
   get isStopped => ttsState == TtsState.stopped;
 
   MorphologySearchTabletState(this._lexeme, this._lexicalEntry,
-      this._morphology, this._module, this._config, this._bibles, this._data) {
+      this._morphology, this._module, this._config, this._bibles, this._data, this.flutterTts) {
     morphologyItems = _morphology.split(", ");
     selectedMorphologyItems = List<String>.from(morphologyItems);
     if (_lexicalEntry.isNotEmpty)
@@ -657,7 +659,7 @@ class MorphologySearchTabletState extends State<MorphologySearchTablet> {
         (_data.first["Book"] < 40));
   }
 
-  @override
+  /*@override
   initState() {
     super.initState();
     initTts();
@@ -689,7 +691,7 @@ class MorphologySearchTabletState extends State<MorphologySearchTablet> {
         ttsState = TtsState.stopped;
       });
     });
-  }
+  }*/
 
   Future _speak(String message) async {
     if (isPlaying) await _stop();
@@ -895,9 +897,23 @@ class MorphologySearchTabletState extends State<MorphologySearchTablet> {
             mainAxisSize: MainAxisSize.min,
             children: <Widget>[
               ListTile(
-                leading: Icon(
-                  Icons.album,
-                  color: _config.myColors["black"],
+                leading: IconButton(
+                  tooltip: interface3[this.abbreviations][2],
+                  icon: Icon(
+                    Icons.volume_up,
+                    color: _config.myColors["black"],
+                  ),
+                  onPressed: () {
+                    if (_config.plus) {
+                      String wordText = ((_isHebrew) && (Platform.isAndroid))
+                          ? TtsHelper()
+                          .workaroundHebrew(wordData["Transliteration"])
+                          : wordData["Word"];
+                      _speak(wordText);
+                    } else {
+                      _nonPlusMessage(interface3[this.abbreviations][2]);
+                    }
+                  },
                 ),
                 title: word,
                 subtitle: Text(verseReference, style: textStyle),

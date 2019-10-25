@@ -95,7 +95,7 @@ class UniqueBibleState extends State<UniqueBible> {
       _activeVerseFontHebrew,
       _activeVerseFontGreek;
   var _interlinearStyle, _interlinearStyleDim;
-  Color _appBarColor, _bottomAppBarColor, _backgroundColor;
+  Color _appBarColor, _bottomAppBarColor, _backgroundColor, _floatingButtonColor;
   final _highlightStyle = TextStyle(
     fontWeight: FontWeight.bold,
     //fontStyle: FontStyle.italic,
@@ -696,15 +696,18 @@ class UniqueBibleState extends State<UniqueBible> {
     BibleParser(this.abbreviations).bcvToVerseReference(bcvList);
 
     var verseDirection = TextDirection.ltr;
-    bool isHebrew = (bcvList.first < 40);
+    bool isHebrew = ((bcvList.isNotEmpty) && (bcvList.first < 40));
     if (isHebrew) verseDirection = TextDirection.rtl;
 
     String verseText = this.bibles.iBible.openSingleVerse(bcvList);
-    //List<TextSpan> textContent = InterlinearHelper(this.config.verseTextStyle).getInterlinearSpan(
-    List<TextSpan> textContent = this.getInterlinearSpan(context, verseText, bcvList)
-      ..insert(0, TextSpan(text: " "))
-      ..insert(0, TextSpan(text: "$verseReference", style: _highlightStyle))
-      ..insert(0, TextSpan(text: " "));
+
+    List<TextSpan> textContent = [
+      (this.config.bigScreen)
+          ? TextSpan(text: verseReference, style: _highlightStyle, recognizer: TapGestureRecognizer()..onTap = () => _newVerseSelected([bcvList, "", this.bibles.bible1.module]))
+          : TextSpan(text: verseReference, style: _highlightStyle),
+      TextSpan(text: " "),
+      ...this.getInterlinearSpan(context, verseText, bcvList),
+    ];
 
     return ListTile(
       title: RichText(
@@ -1222,7 +1225,7 @@ class UniqueBibleState extends State<UniqueBible> {
       "TC": this.interfaceBottom["TC"][2],
       "SC": this.interfaceBottom["SC"][2],
     };
-    List menu = [
+    List menuENG = [
       "Precious Bible Promises I",
       "Precious Bible Promises II",
       "Precious Bible Promises III",
@@ -1230,9 +1233,12 @@ class UniqueBibleState extends State<UniqueBible> {
       "Take Words with You",
       "Index",
       "When you ...",
+    ];
+    List menuZh = [
       "當你 ……",
       "当你 ……",
     ];
+    List menu = (this.config.abbreviations == "ENG") ? menuENG : [...menuENG, ...menuZh];
     _loadTools(
         context,
         title,
@@ -1250,15 +1256,30 @@ class UniqueBibleState extends State<UniqueBible> {
       "TC": this.interfaceBottom["TC"][3],
       "SC": this.interfaceBottom["SC"][3],
     };
-    List menu = [
+    List menuENG = [
       "History of Israel I",
       "History of Israel II",
       "Gospels I",
       "Gospels II",
+      "Book of Moses",
+      "Samuel, Kings, Chronicles",
+      "Psalms",
+      "Gospels - (Mark, Matthew, Luke [ordered] + John) x 54",
+      "Gospels - (Mark, Matthew, Luke [unordered]) x 14",
+      "Gospels - (Mark & Matthew ONLY) x 11",
+      "Gospels - (Mark, Matthew & John ONLY) x 4",
+      "Gospels - (Mark & Luke ONLY) x 7",
+      "Gospels - (Mathhew & Luke ONLY) x 32",
+      "Gospels - (Mark ONLY) x 5",
+      "Gospels - (Matthew ONLY) x 30",
+      "Gospels - (Luke ONLY) x 39",
+      "Gospels - (John ONLY) x 61",
+    ];
+    List menuZh = [
       "摩西五經",
       "撒母耳記，列王紀，歷代志",
       "詩篇",
-      "福音書（可，太，路〔順序〕，約） x 54",
+      "福音書（可，太，路〔順序〕＋ 約） x 54",
       "福音書（可，太，路〔不順序〕） x 14",
       "福音書（可，太） x 11",
       "福音書（可，太，約） x 4",
@@ -1269,6 +1290,7 @@ class UniqueBibleState extends State<UniqueBible> {
       "福音書（路〔獨家記載〕） x 39",
       "福音書（約〔獨家記載〕） x 61",
     ];
+    List menu = (this.config.abbreviations == "ENG") ? menuENG : [...menuENG, ...menuZh];
     _loadTools(
         context,
         title,
@@ -1283,6 +1305,7 @@ class UniqueBibleState extends State<UniqueBible> {
   Future _loadTools(BuildContext context, Map title, String table, List menu,
       Icon icon) async {
     if (this.bibles?.bible1?.data != null) {
+      _stopRunningActions();
       final selected = await Navigator.push(
         context,
         MaterialPageRoute(
@@ -1576,6 +1599,7 @@ class UniqueBibleState extends State<UniqueBible> {
       deepOrange = Colors.deepOrange[300];
       grey = Colors.grey[400];
       _appBarColor = Colors.blueGrey[this.config.backgroundColor - 200];
+      _floatingButtonColor = Colors.blueGrey[this.config.backgroundColor - 300];
       _bottomAppBarColor = Colors.grey[500];
     } else {
       blueAccent = Colors.blue[700];
@@ -1586,6 +1610,7 @@ class UniqueBibleState extends State<UniqueBible> {
       grey = Colors.grey[700];
       //_appBarColor = Theme.of(context).appBarTheme.color;
       _appBarColor = Colors.blue[600];
+      _floatingButtonColor = Colors.blue[600];
       _bottomAppBarColor = Colors.grey[config.backgroundColor + 100];
     }
 
@@ -1721,7 +1746,7 @@ class UniqueBibleState extends State<UniqueBible> {
         bottomNavigationBar: _buildBottomAppBar(context),
         floatingActionButtonLocation: FloatingActionButtonLocation.endDocked,
         floatingActionButton: FloatingActionButton(
-          backgroundColor: _appBarColor,
+          backgroundColor: _floatingButtonColor,
           onPressed: () {
             setState(() {
               _parallelBibles = _toggleParallelBibles();
@@ -3031,14 +3056,16 @@ class UniqueBibleState extends State<UniqueBible> {
   }
 
   Future _loadMorphologySearchView(BuildContext context, lexemeText, lexicalEntry, morphology) async {
+    _toolOpened = true;
     List searchData = await searchMorphology(lexicalEntry.split(",").first, morphology.split(", "));
     final selected = await Navigator.push(
       context,
       MaterialPageRoute(
           builder: (context) => MorphologySearchTablet(lexemeText, lexicalEntry,
-              morphology, "OHGB", this.config, this.bibles, searchData)),
+              morphology, "OHGB", this.config, this.bibles, searchData, this.flutterTts)),
     );
     if (selected != null) _newVerseSelected(selected);
+    _toolOpened = false;
   }
 
   Future searchMorphology(String lexicalEntry, List selectedMorphologyItems) async {
@@ -3228,27 +3255,6 @@ class UniqueBibleState extends State<UniqueBible> {
         );
       }
     });
-
-    /*or (var word in wordList) {
-      if (word.startsWith("＠")) {
-        if (isHebrewBible) {
-          List<String> glossList = word.substring(1).split(" ");
-          for (var gloss in glossList) {
-            if ((gloss.startsWith("[")) || (gloss.endsWith("]"))) {
-              gloss = gloss.replaceAll(RegExp(r"[\[\]\+\.]"), "");
-              words.add(TextSpan(text: "$gloss ", style: _interlinearStyleDim));
-            } else {
-              words.add(TextSpan(text: "$gloss ", style: _interlinearStyle));
-            }
-          }
-        } else {
-          words
-              .add(TextSpan(text: word.substring(1), style: _interlinearStyle));
-        }
-      } else {
-        words.add(TextSpan(text: word, style: originalStyle));
-      }
-    }*/
 
     return words;
   }
