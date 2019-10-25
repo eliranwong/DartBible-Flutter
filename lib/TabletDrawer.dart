@@ -351,8 +351,8 @@ class TabletDrawerState extends State<TabletDrawer> {
           (int index) {
         String abb = moduleList[index];
         return ChoiceChip(
-          tooltip: config.allBibleMap[abb],
-          label: Text(abb),
+          //tooltip: config.allBibleMap[abb],
+          label: Tooltip(message: config.allBibleMap[abb], child: Text(abb)),
           selected: (abb == bible.module),
           onSelected: (bool selected) {
             if ((selected) && (abb != bible.module)) {
@@ -408,8 +408,8 @@ class TabletDrawerState extends State<TabletDrawer> {
           abb = parser.standardAbbreviation[book.toString()];
           fullName = parser.standardBookname[book.toString()];
           return ChoiceChip(
-            tooltip: fullName,
-            label: Text(abb),
+            //tooltip: fullName,
+            label: Tooltip(message: fullName, child: Text(abb)),
             selected: (book == currentBook),
             onSelected: (bool selected) {
               setState(() {
@@ -428,8 +428,8 @@ class TabletDrawerState extends State<TabletDrawer> {
       fullName = parser.standardBookname[book.toString()];
       bookChips = [
         ChoiceChip(
-          tooltip: fullName,
-          label: Text(abb),
+          //tooltip: fullName,
+          label: Tooltip(message: fullName, child: Text(abb)),
           selected: true,
           onSelected: (bool selected) {
             setState(() {
