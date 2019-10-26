@@ -12,6 +12,7 @@ import 'package:flutter_tts/flutter_tts.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:path/path.dart';
 import 'package:flutter/gestures.dart';
+import 'package:webview_flutter/webview_flutter.dart';
 import 'config.dart';
 import 'Bibles.dart';
 import 'BibleSearchDelegate.dart';
@@ -85,6 +86,7 @@ class UniqueBibleState extends State<UniqueBible> {
   Bibles bibles;
   var scrollController;
   TabController _tabController;
+  WebViewController _webViewController;
   int _tabIndex = 0;
   int _scrollIndex = 0;
   int _activeIndex = 0;
@@ -205,6 +207,7 @@ class UniqueBibleState extends State<UniqueBible> {
       "Select / Clear All",
       "Text copied to clipboard.",
       "You have to select at least a verse for this action.",
+      "Marvel.Bible",
     ],
     "TC": [
       "即時原文逐字翻譯",
@@ -222,6 +225,7 @@ class UniqueBibleState extends State<UniqueBible> {
       "選擇／清除所有",
       "文字已複製",
       "你必須選擇至少一節經文才能啟動此功能。",
+      "Marvel.Bible",
     ],
     "SC": [
       "即时原文逐字翻译",
@@ -239,6 +243,7 @@ class UniqueBibleState extends State<UniqueBible> {
       "选择／清除所有",
       "文字已拷贝",
       "你必须选择至少一节经文才能启动此功能。",
+      "Marvel.Bible",
     ],
   };
 
@@ -2157,6 +2162,13 @@ class UniqueBibleState extends State<UniqueBible> {
           (_selection)
               ? Container()
               : IconButton(
+            tooltip: this.interfaceBottom[this.abbreviations][15],
+            icon: const Icon(Icons.call_made),
+            onPressed: () => _launchMarvelBible(),
+          ),
+          (_selection)
+              ? Container()
+              : IconButton(
                   tooltip: this.interfaceBottom[this.abbreviations][11],
                   icon: const Icon(Icons.check_circle),
                   onPressed: () => _startSelection(),
@@ -2182,17 +2194,6 @@ class UniqueBibleState extends State<UniqueBible> {
                   onPressed: () => _runSelection(true),
                 )
               : Container(),
-          /*((!this.config.bigScreen) || (_selection))
-              ? Container()
-              : IconButton(
-                  tooltip: this.interfaceBottom[this.abbreviations][9],
-                  icon: const Icon(Icons.add_to_home_screen),
-                  onPressed: () {
-                    setState(() {
-                      _display = !_display;
-                    });
-                  },
-                ),*/
         ]),
       ),
     );
@@ -2204,6 +2205,24 @@ class UniqueBibleState extends State<UniqueBible> {
       await launch(url);
     } else {
       throw 'Could not launch $url';
+    }
+  }
+
+  Future _launchMarvelBible() async {
+    String mabLink = 'https://marvel.bible/index.php?text=MAB&b=${_currentActiveVerse[0]}&c=${_currentActiveVerse[1]}&v=${_currentActiveVerse[2]}';
+    if (this.config.bigScreen) {
+      setState(() {
+        if (!_display) _display = true;
+        _changeWorkspace(3);
+        if (_webViewController != null) _webViewController.loadUrl(mabLink);
+      });
+    } else {
+      String url = mabLink;
+      if (await canLaunch(url)) {
+        await launch(url);
+      } else {
+        throw 'Could not launch $url';
+      }
     }
   }
 
@@ -2913,6 +2932,14 @@ class UniqueBibleState extends State<UniqueBible> {
             }
             return _buildMorphologyCard(context, (i - 1));
           }),
+      // https://medium.com/flutter/the-power-of-webviews-in-flutter-a56234b57df2
+      WebView(
+        initialUrl: 'https://marvel.bible/index.php?text=MAB&b=${_currentActiveVerse[0]}&c=${_currentActiveVerse[1]}&v=${_currentActiveVerse[2]}',
+        javascriptMode: JavascriptMode.unrestricted,
+        onWebViewCreated: (WebViewController webViewController) {
+          _webViewController = webViewController;
+        },
+      ),
     ];
     return DefaultTabController(
       initialIndex: _tabIndex,
