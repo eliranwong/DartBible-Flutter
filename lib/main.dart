@@ -20,6 +20,7 @@ import 'TopicSearchDelegate.dart';
 import 'PeopleSearchDelegate.dart';
 import 'LocationSearchDelegate.dart';
 import 'VerseSelector.dart';
+import 'ChapterSelector.dart';
 import 'BibleSettings.dart';
 import 'BibleParser.dart';
 import 'Morphology.dart';
@@ -133,6 +134,7 @@ class UniqueBibleState extends State<UniqueBible> {
       "Open '",
       "' Here",
       "New Verse",
+      "Open a Chapter HERE",
     ],
     "TC": [
       "跨平台聖經工具",
@@ -160,6 +162,7 @@ class UniqueBibleState extends State<UniqueBible> {
       "在這裡打開【",
       "】",
       "新章節",
+      "在這裡打開經文",
     ],
     "SC": [
       "跨平台圣经工具",
@@ -187,6 +190,7 @@ class UniqueBibleState extends State<UniqueBible> {
       "在这里打开【",
       "】",
       "新章节",
+      "在这里打开经文",
     ],
   };
 
@@ -317,8 +321,8 @@ class UniqueBibleState extends State<UniqueBible> {
 
   // Variables to work with previous search interface
   final _pageSize = 20;
-  List _displayData = [["", "[Verse(s)]", ""]];
-  List _displayChapter = [["", "[Chapter]", ""]];
+  List _displayData = [["", "[Reference]", ""]];
+  List _displayChapter = [["", "[Open a Chapter HERE]", ""]];
   List _rawData = [];
   Map interfaceBibleSearch = {
     "ENG": [
@@ -944,49 +948,6 @@ class UniqueBibleState extends State<UniqueBible> {
               )),
     );
     if (newBibleSettings != null) {
-      // secondary bible
-      //if (newBibleSettings.module2 != this.bibles.bible2.module) await reloadSecondaryBible(newBibleSettings.module2);
-      // Big Screen Mode
-      //this.config.bigScreen = newBibleSettings.bigScreen;
-      //this.config.save("bigScreen", newBibleSettings.bigScreen);
-      //if ((_typing) && (!newBibleSettings.bigScreen)) _typing = !_typing;
-      // Font size
-      //this.config.fontSize = newBibleSettings.fontSize;
-      //this.config.save("fontSize", newBibleSettings.fontSize);
-      // Abbreviations
-      //this.abbreviations = newBibleSettings.abbreviations;
-      //this.config.abbreviations = newBibleSettings.abbreviations;
-      //updateBibleAbbreviations(newBibleSettings.abbreviations);
-      //this.config.save("abbreviations", newBibleSettings.abbreviations);
-      // Bible comparison list
-      //this.config.compareBibleList = newBibleSettings.compareBibleList;
-      //this.config.save("compareBibleList", newBibleSettings.compareBibleList);
-      // Instant action
-      //this.config.instantAction = newBibleSettings.instantAction;
-      //this.config.save("instantAction", newBibleSettings.instantAction);
-      // Quick action
-      //this.config.favouriteAction = newBibleSettings.favouriteAction;
-      //this.config.save("favouriteAction", newBibleSettings.favouriteAction);
-      // Background color
-      //this.config.backgroundColor = newBibleSettings.backgroundColor;
-      //this.config.save("backgroundColor", newBibleSettings.backgroundColor);
-      // TTS English
-      //this.config.ttsEnglish = newBibleSettings.ttsEnglish;
-      //this.config.save("ttsEnglish", newBibleSettings.ttsEnglish);
-      // TTS Chinese
-      //this.config.ttsChinese = newBibleSettings.ttsChinese;
-      //this.config.save("ttsChinese", newBibleSettings.ttsChinese);
-      // TTS Greek
-      //this.config.ttsGreek = newBibleSettings.ttsGreek;
-      //this.config.save("ttsGreek", newBibleSettings.ttsGreek);
-      // TTS speech rate
-      //this.config.speechRate = newBibleSettings.speechRate;
-      //this.config.save("speechRate", newBibleSettings.speechRate);
-      //await flutterTts.setSpeechRate(newBibleSettings.speechRate);
-      // update UpdateCenter
-      //final state = Provider.of<UpdateCenter>(context);
-      //state.config = this.config;
-      // Newly selected verse
       var newVerse = [
         [
           newBibleSettings.book,
@@ -997,6 +958,29 @@ class UniqueBibleState extends State<UniqueBible> {
         newBibleSettings.module
       ];
       _newVerseSelected(newVerse);
+    }
+  }
+
+  Future _openChapterSelector(BuildContext context) async {
+    _stopRunningActions();
+    final BibleSettingsParser newBibleSettings = await Navigator.push(
+      context,
+      MaterialPageRoute(
+          builder: (context) => ChapterSelector(
+            this.bibles.bible1,
+            _currentActiveVerse,
+            this.interfaceDialog,
+            this.config,
+          )),
+    );
+    if (newBibleSettings != null) {
+      List newChapter = [
+          newBibleSettings.book,
+          newBibleSettings.chapter,
+          newBibleSettings.verse,
+        ];
+      String newModule = newBibleSettings.module;
+      _openHere(newChapter, newModule);
     }
   }
 
@@ -2434,90 +2418,6 @@ class UniqueBibleState extends State<UniqueBible> {
     }
   }
 
-  // reference: https://api.flutter.dev/flutter/material/SimpleDialog-class.html
-  /*Future<void> _longPressedVerse(BuildContext context, List verseData,
-      [bool openHere = false]) async {
-    if (verseData.first.isNotEmpty) {
-      List bcvList = verseData.first;
-      String ref = BibleParser(this.abbreviations).bcvToVerseReference(bcvList);
-      String refCh =
-          BibleParser(this.abbreviations).bcvToChapterReference(bcvList);
-      _stopRunningActions();
-      var copiedText = await Clipboard.getData('text/plain');
-      switch (await showDialog<DialogAction>(
-          context: context,
-          builder: (BuildContext context) {
-            return SimpleDialog(
-              title: Text(ref),
-              children: <Widget>[
-                (openHere)
-                    ? ListTile(
-                        leading: Icon(Icons.open_in_browser),
-                        title: Text(
-                            "${interfaceApp[this.abbreviations][22]}$refCh${interfaceApp[this.abbreviations][23]}"),
-                        onTap: () =>
-                            Navigator.pop(context, DialogAction.openHere),
-                      )
-                    : Container(),
-                ListTile(
-                  leading: Icon(Icons.share),
-                  title: Text(this.interfaceDialog[this.abbreviations][1]),
-                  onTap: () => Navigator.pop(context, DialogAction.share),
-                ),
-                ListTile(
-                  leading: Icon(Icons.content_copy),
-                  title: Text(this.interfaceDialog[this.abbreviations][2]),
-                  onTap: () => Navigator.pop(context, DialogAction.copy),
-                ),
-                ListTile(
-                  leading: Icon(Icons.playlist_add),
-                  title: Text(this.interfaceDialog[this.abbreviations][3]),
-                  onTap: () => Navigator.pop(context, DialogAction.addCopy),
-                ),
-              ],
-              /*title: Text(this.interfaceDialog[this.abbreviations].first),
-            children: <Widget>[
-              SimpleDialogOption(
-                onPressed: () {
-                  Navigator.pop(context, DialogAction.share);
-                },
-                child: Text(this.interfaceDialog[this.abbreviations][1]),
-              ),
-              SimpleDialogOption(
-                onPressed: () {
-                  Navigator.pop(context, DialogAction.copy);
-                },
-                child: Text(this.interfaceDialog[this.abbreviations][2]),
-              ),
-              SimpleDialogOption(
-                onPressed: () {
-                  Navigator.pop(context, DialogAction.addCopy);
-                },
-                child: Text(this.interfaceDialog[this.abbreviations][3]),
-              ),
-            ],*/
-            );
-          })) {
-        case DialogAction.share:
-          Share.share("${verseData[1]} ($ref, ${verseData.last})");
-          break;
-        case DialogAction.copy:
-          Clipboard.setData(
-              ClipboardData(text: "${verseData[1]} ($ref, ${verseData.last})"));
-          break;
-        case DialogAction.addCopy:
-          var combinedText = copiedText.text;
-          combinedText += "\n${verseData[1]} ($ref, ${verseData.last})";
-          Clipboard.setData(ClipboardData(text: combinedText));
-          break;
-        case DialogAction.openHere:
-          _openHere(bcvList, verseData.last);
-          break;
-        default:
-      }
-    }
-  }*/
-
   Future _openHere(List bcvList, String module) async {
     if (module == this.bibles.bible1.module) {
       (this.config.bigScreen)
@@ -2897,12 +2797,19 @@ class UniqueBibleState extends State<UniqueBible> {
         ? (_displayData.length + 1)
         : _displayData.length;
 
+    /*final _tabs = <Tab>[
+      Tab(text: "1",),
+      Tab(text: "2",),
+      Tab(text: "3",),
+      Tab(text: "4",),
+    ];*/
     List<Widget> pages = <Widget>[
       ListView.builder(
           padding: EdgeInsets.zero,
           itemCount: _displayChapter.length,
           itemBuilder: (context, i) {
             _tabController = DefaultTabController.of(context);
+            if (i == 0) return _buildDisplayChapterRow(context, i, true);
             return _buildDisplayVerseRow(context, i, true);
           }),
       ListView.builder(
@@ -2932,7 +2839,7 @@ class UniqueBibleState extends State<UniqueBible> {
             }
             return _buildMorphologyCard(context, (i - 1));
           }),
-      // https://medium.com/flutter/the-power-of-webviews-in-flutter-a56234b57df2
+      // Reference: https://medium.com/flutter/the-power-of-webviews-in-flutter-a56234b57df2
       WebView(
         initialUrl: 'https://marvel.bible/index.php?text=MAB&b=${_currentActiveVerse[0]}&c=${_currentActiveVerse[1]}&v=${_currentActiveVerse[2]}',
         javascriptMode: JavascriptMode.unrestricted,
@@ -2952,6 +2859,13 @@ class UniqueBibleState extends State<UniqueBible> {
             child: Column(
               children: <Widget>[
                 TabPageSelector(),
+                /*TabBar(
+                  labelColor: this.config.myColors["blueAccent"],
+                  unselectedLabelColor: this.config.myColors["blue"],
+                  //labelStyle: _activeVerseNoFont,
+                  //unselectedLabelStyle: _verseNoFont,
+                  tabs: _tabs,
+                ),*/
                 Expanded(
                   child: IconTheme(
                     data: IconThemeData(
@@ -3161,6 +3075,24 @@ class UniqueBibleState extends State<UniqueBible> {
       onLongPress: () {
         if (verseData.first.isNotEmpty) _longPressedActiveVerse(context, verseData, true);
       },
+    );
+  }
+
+  Widget _buildDisplayChapterRow(BuildContext context, int i, [bool chapter = false]) {
+    var verseData = (chapter) ? _displayChapter[i] : _displayData[i];
+
+    return ListTile(
+      title: _buildVerseText(context, verseData),
+      onTap: () {
+        _openChapterSelector(context);
+      },
+      trailing: IconButton(
+        tooltip: interfaceApp[this.config.abbreviations][25],
+        icon: Icon(Icons.more_vert),
+        onPressed: () async {
+          _openChapterSelector(context);
+        },
+      ),
     );
   }
 

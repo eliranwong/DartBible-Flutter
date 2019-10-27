@@ -5,27 +5,27 @@ import 'BibleSettings.dart';
 import 'Bibles.dart';
 import 'config.dart';
 
-class VerseSelector extends StatefulWidget {
+class ChapterSelector extends StatefulWidget {
   final Bible _bible;
   final List _bcvList;
   final Map _favouriteActionMap;
   final Config _config;
 
-  VerseSelector(
+  ChapterSelector(
       this._bible, this._bcvList, this._favouriteActionMap, this._config);
 
   @override
-  VerseSelectorState createState() => VerseSelectorState(
+  ChapterSelectorState createState() => ChapterSelectorState(
       this._bible, this._bcvList, this._favouriteActionMap, this._config);
 }
 
-class VerseSelectorState extends State<VerseSelector> {
+class ChapterSelectorState extends State<ChapterSelector> {
   List _interface;
 
   String abbreviations;
   Map interfaceBibleSettings = {
     "ENG": [
-      "Select a Verse",
+      "Select a Chapter",
       "Interface",
       "Primary Bible",
       "Book",
@@ -172,7 +172,7 @@ class VerseSelectorState extends State<VerseSelector> {
   int _instantAction, _favouriteAction;
   Config _config;
 
-  VerseSelectorState(
+  ChapterSelectorState(
       Bible bible, List bcvList, this._favouriteActionMap, this._config) {
     // The following line is used instead of "_compareBibleList = compareBibleList";
     // Reason: To avoid direct update of original config settings
@@ -560,7 +560,7 @@ class VerseSelectorState extends State<VerseSelector> {
                 }).toList(),
               ),
             ),
-            ListTile(
+            /*ListTile(
               title: Text(_interface[5], style: style),
               trailing: DropdownButton<String>(
                 style: style,
@@ -583,7 +583,7 @@ class VerseSelectorState extends State<VerseSelector> {
                   );
                 }).toList(),
               ),
-            ),
+            ),*/
             ExpansionTile(
               title: Text(_interface[7], style: style),
               backgroundColor: Theme.of(context).accentColor.withOpacity(0.025),
