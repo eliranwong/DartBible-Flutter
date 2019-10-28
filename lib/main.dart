@@ -321,7 +321,7 @@ class UniqueBibleState extends State<UniqueBible> {
 
   // Variables to work with previous search interface
   final _pageSize = 20;
-  List _displayData = [["", "[Reference]", ""]];
+  List _displayData = [["", "[...]", ""]];
   List _displayChapter = [["", "[Open a Chapter HERE]", ""]];
   List _rawData = [];
   Map interfaceBibleSearch = {
@@ -710,13 +710,8 @@ class UniqueBibleState extends State<UniqueBible> {
 
     String verseText = this.bibles.iBible.openSingleVerse(bcvList);
 
-    List<TextSpan> textContent = [
-      (this.config.bigScreen)
-          ? TextSpan(text: verseReference, style: _highlightStyle, recognizer: TapGestureRecognizer()..onTap = () => _newVerseSelected([bcvList, "", this.bibles.bible1.module]))
-          : TextSpan(text: verseReference, style: _highlightStyle),
-      TextSpan(text: " "),
-      ...this.getInterlinearSpan(context, verseText, bcvList),
-    ];
+    List<TextSpan> textContent = this.getInterlinearSpan(context, verseText, bcvList);
+    if (!this.config.bigScreen) textContent.insert(0, TextSpan(text: verseReference, style: _highlightStyle));
 
     return ListTile(
       title: RichText(
@@ -727,11 +722,7 @@ class UniqueBibleState extends State<UniqueBible> {
         textDirection: verseDirection,
       ),
       //subtitle: Text(verseReference, style: _highlightStyle),
-      onTap: (this.config.bigScreen) ? null : () {
-        Navigator.pop(context, bcvList);
-        // note: do not use the following line to load interlinearView directly, which cause instability.
-        // _loadInterlinearView(context, bcvList);
-      },
+      onTap: (this.config.bigScreen) ? null : () => Navigator.pop(context, bcvList),
       onLongPress: () async {
         if (isPlaying) _stop();
         (isHebrew)
@@ -750,6 +741,29 @@ class UniqueBibleState extends State<UniqueBible> {
         _speak(verseText);
       },
     );
+  }
+
+  Future _selectInterlinear(BuildContext context) async {
+    _stopRunningActions();
+    final BibleSettingsParser newBibleSettings = await Navigator.push(
+      context,
+      MaterialPageRoute(
+          builder: (context) => VerseSelector(
+            this.bibles.bible1,
+            _currentActiveVerse,
+            this.interfaceDialog,
+            this.config,
+            false,
+          )),
+    );
+    if (newBibleSettings != null) {
+      var newVerse = [
+          newBibleSettings.book,
+          newBibleSettings.chapter,
+          newBibleSettings.verse,
+        ];
+      showInterlinear(newVerse);
+    }
   }
 
   Future showInterlinear(List bcvList, [BuildContext context]) async {
@@ -997,6 +1011,9 @@ class UniqueBibleState extends State<UniqueBible> {
               )),
     );
     if (newBibleSettings != null) {
+      // default marvel bible
+      this.config.marvelBible = newBibleSettings.marvelBible;
+      this.config.save("marvelBible", newBibleSettings.marvelBible);
       // secondary bible
       if (newBibleSettings.module2 != this.bibles.bible2.module)
         await reloadSecondaryBible(newBibleSettings.module2);
@@ -2193,15 +2210,15 @@ class UniqueBibleState extends State<UniqueBible> {
   }
 
   Future _launchMarvelBible() async {
-    String mabLink = 'https://marvel.bible/index.php?text=MAB&b=${_currentActiveVerse[0]}&c=${_currentActiveVerse[1]}&v=${_currentActiveVerse[2]}';
+    String marvelLink = 'https://marvel.bible/index.php?text=${this.config.marvelBible}&b=${_currentActiveVerse[0]}&c=${_currentActiveVerse[1]}&v=${_currentActiveVerse[2]}';
     if (this.config.bigScreen) {
       setState(() {
         if (!_display) _display = true;
         _changeWorkspace(3);
-        if (_webViewController != null) _webViewController.loadUrl(mabLink);
+        if (_webViewController != null) _webViewController.loadUrl(marvelLink);
       });
     } else {
-      String url = mabLink;
+      String url = marvelLink;
       if (await canLaunch(url)) {
         await launch(url);
       } else {
@@ -2809,7 +2826,7 @@ class UniqueBibleState extends State<UniqueBible> {
           itemCount: _displayChapter.length,
           itemBuilder: (context, i) {
             _tabController = DefaultTabController.of(context);
-            if (i == 0) return _buildDisplayChapterRow(context, i, true);
+            if (i == 0) return _buildDisplayChapterRow(context, i);
             return _buildDisplayVerseRow(context, i, true);
           }),
       ListView.builder(
@@ -2823,23 +2840,46 @@ class UniqueBibleState extends State<UniqueBible> {
           }),
       ListView.builder(
           padding: EdgeInsets.zero,
-          itemCount: (_morphology.length + 1),
+          itemCount: (_morphology.isEmpty) ? (_morphology.length + 1) : (_morphology.length + 2),
           itemBuilder: (context, i) {
             _tabController = DefaultTabController.of(context);
+            Map item1;
+            List bcvList;
+            if (_morphology.isNotEmpty) {
+              item1 = _morphology.first;
+              bcvList = [item1["Book"], item1["Chapter"], item1["Verse"]];
+            }
             if (i == 0) {
-              if (_morphology.isNotEmpty) {
-                Map item1 = _morphology.first;
-                List bcvList = [item1["Book"], item1["Chapter"], item1["Verse"]];
-                return _interlinearTile(context, bcvList);
-              } else {
+              if (_morphology.isEmpty) {
+                Map captions = {
+                  "ENG": "[Open Interlinear & Morphology HERE]",
+                  "TC": "[在這裡開啟聖經原文資料]",
+                  "SC": "[在这里开启圣经原文资料]",
+                };
                 return ListTile(
-                  title: Text("[Interlinear & Morphology]", style: _verseNoFont,),
+                  title: Text(captions[this.abbreviations], style: _verseNoFont,),
+                  onTap: () => _selectInterlinear(context),
+                  trailing: IconButton(
+                    icon: Icon(Icons.more_vert),
+                    onPressed: () => _selectInterlinear(context),
+                  ),
+                );
+              } else {
+                String verseReference = BibleParser(this.abbreviations).bcvToVerseReference(bcvList);
+                return ListTile(
+                  title: Text("[$verseReference]", style: _verseNoFont,),
+                  onTap: () => _newVerseSelected([bcvList, "", this.bibles.bible1.module]),
+                  trailing: IconButton(
+                    icon: Icon(Icons.more_vert),
+                    onPressed: () => _selectInterlinear(context),
+                  ),
                 );
               }
+            } else if (i == 1) {
+              return _interlinearTile(context, bcvList);
             }
-            return _buildMorphologyCard(context, (i - 1));
+            return _buildMorphologyCard(context, (i - 2));
           }),
-      // Reference: https://medium.com/flutter/the-power-of-webviews-in-flutter-a56234b57df2
       WebView(
         initialUrl: 'https://marvel.bible/index.php?text=MAB&b=${_currentActiveVerse[0]}&c=${_currentActiveVerse[1]}&v=${_currentActiveVerse[2]}',
         javascriptMode: JavascriptMode.unrestricted,
@@ -2862,8 +2902,6 @@ class UniqueBibleState extends State<UniqueBible> {
                 /*TabBar(
                   labelColor: this.config.myColors["blueAccent"],
                   unselectedLabelColor: this.config.myColors["blue"],
-                  //labelStyle: _activeVerseNoFont,
-                  //unselectedLabelStyle: _verseNoFont,
                   tabs: _tabs,
                 ),*/
                 Expanded(
@@ -3078,9 +3116,13 @@ class UniqueBibleState extends State<UniqueBible> {
     );
   }
 
-  Widget _buildDisplayChapterRow(BuildContext context, int i, [bool chapter = false]) {
-    var verseData = (chapter) ? _displayChapter[i] : _displayData[i];
-
+  Widget _buildDisplayChapterRow(BuildContext context, int i) {
+    Map captions = {
+      "ENG": ["", "[Open a Chapter HERE]", ""],
+      "TC": ["", "[在這裡開啟經文]", ""],
+      "SC": ["", "[在这里开启经文]", ""],
+    };
+    var verseData = captions[this.abbreviations];
     return ListTile(
       title: _buildVerseText(context, verseData),
       onTap: () {

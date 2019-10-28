@@ -110,6 +110,7 @@ class Config {
   String abbreviations = "ENG";
   String bible1 = "KJV";
   String bible2 = "NET";
+  String marvelBible = "MAB";
   List<List<int>> historyActiveVerse = [
     [43, 3, 16]
   ];
@@ -184,6 +185,11 @@ class Config {
       prefs.setString("bible2", this.bible2);
     } else {
       this.bible2 = prefs.getString("bible2");
+    }
+    if (prefs.getString("marvelBible") == null) {
+      prefs.setString("marvelBible", this.marvelBible);
+    } else {
+      this.marvelBible = prefs.getString("marvelBible");
     }
     if (prefs.getString("ttsChinese") == null) {
       prefs.setString("ttsChinese", this.ttsChinese);
@@ -285,6 +291,8 @@ class Config {
       this.bible1 = prefs.getString("bible1");
     if (prefs.getString("bible2") != null)
       this.bible2 = prefs.getString("bible2");
+    if (prefs.getString("marvelBible") != null)
+      this.marvelBible = prefs.getString("marvelBible");
     if (prefs.getString("ttsEnglish") != null)
       this.ttsEnglish = prefs.getString("ttsEnglish");
     if (prefs.getString("ttsGreek") != null)
@@ -352,6 +360,9 @@ class Config {
         await prefs.setString(feature, newSetting as String);
         break;
       case "bible2":
+        await prefs.setString(feature, newSetting as String);
+        break;
+      case "marvelBible":
         await prefs.setString(feature, newSetting as String);
         break;
       case "ttsChinese":

@@ -10,13 +10,14 @@ class VerseSelector extends StatefulWidget {
   final List _bcvList;
   final Map _favouriteActionMap;
   final Config _config;
+  final bool _version;
 
   VerseSelector(
-      this._bible, this._bcvList, this._favouriteActionMap, this._config);
+      this._bible, this._bcvList, this._favouriteActionMap, this._config, [this._version = true]);
 
   @override
   VerseSelectorState createState() => VerseSelectorState(
-      this._bible, this._bcvList, this._favouriteActionMap, this._config);
+      this._bible, this._bcvList, this._favouriteActionMap, this._config, this._version);
 }
 
 class VerseSelectorState extends State<VerseSelector> {
@@ -171,9 +172,10 @@ class VerseSelectorState extends State<VerseSelector> {
   List _instantActionList, _favouriteActionList;
   int _instantAction, _favouriteAction;
   Config _config;
+  bool _version;
 
   VerseSelectorState(
-      Bible bible, List bcvList, this._favouriteActionMap, this._config) {
+      Bible bible, List bcvList, this._favouriteActionMap, this._config, this._version) {
     // The following line is used instead of "_compareBibleList = compareBibleList";
     // Reason: To avoid direct update of original config settings
     // This allows users to cancel the changes made by pressing the "back" button
@@ -360,392 +362,138 @@ class VerseSelectorState extends State<VerseSelector> {
     List moduleList = Bibles(this.abbreviations).getALLBibleList();
     List<Widget> versionRowList = moduleList.map((i) => _buildVersionRow(context, i, dropdownBackground)).toList();
 
+    List<Widget> options = <Widget>[
+      ListTile(
+        title: Text(_interface[3], style: style),
+        trailing: DropdownButton<String>(
+          style: style,
+          underline: dropdownUnderline,
+          iconDisabledColor: dropdownDisabled,
+          iconEnabledColor: dropdownEnabled,
+          value: _bookValue,
+          onChanged: (String newValue) {
+            if (_bookValue != newValue) {
+              setState(() {
+                _bookValue = newValue;
+                _chapterList =
+                    _bible.getChapterList(int.parse(getBookNo()));
+                _chapterList =
+                    _chapterList.map((i) => (i).toString()).toList();
+                _chapterValue = "1";
+                _verseList = _bible.getVerseList(
+                    int.parse(getBookNo()), int.parse(_chapterValue));
+                _verseList =
+                    _verseList.map((i) => (i).toString()).toList();
+                _verseValue = "1";
+              });
+            }
+          },
+          items: <String>[..._bookList]
+              .map<DropdownMenuItem<String>>((String value) {
+            return DropdownMenuItem<String>(
+              value: value,
+              child: Text(value),
+            );
+          }).toList(),
+        ),
+      ),
+      ListTile(
+        title: Text(_interface[4], style: style),
+        trailing: DropdownButton<String>(
+          style: style,
+          underline: dropdownUnderline,
+          iconDisabledColor: dropdownDisabled,
+          iconEnabledColor: dropdownEnabled,
+          value: _chapterValue,
+          onChanged: (String newValue) {
+            if (_chapterValue != newValue) {
+              setState(() {
+                _chapterValue = newValue;
+                _verseList = _bible.getVerseList(
+                    int.parse(getBookNo()), int.parse(_chapterValue));
+                _verseList =
+                    _verseList.map((i) => (i).toString()).toList();
+                _verseValue = "1";
+              });
+            }
+          },
+          items: <String>[..._chapterList]
+              .map<DropdownMenuItem<String>>((String value) {
+            return DropdownMenuItem<String>(
+              value: value,
+              child: Text(value),
+            );
+          }).toList(),
+        ),
+      ),
+      ListTile(
+        title: Text(_interface[5], style: style),
+        trailing: DropdownButton<String>(
+          style: style,
+          underline: dropdownUnderline,
+          iconDisabledColor: dropdownDisabled,
+          iconEnabledColor: dropdownEnabled,
+          value: _verseValue,
+          onChanged: (String newValue) {
+            if (_verseValue != newValue) {
+              setState(() {
+                _verseValue = newValue;
+              });
+            }
+          },
+          items: <String>[..._verseList]
+              .map<DropdownMenuItem<String>>((String value) {
+            return DropdownMenuItem<String>(
+              value: value,
+              child: Text(value),
+            );
+          }).toList(),
+        ),
+      ),
+    ];
+
+    if (_version) {
+      options.insert(
+        0,
+        ListTile(
+          title: Text(_interface[2], style: style),
+          trailing: DropdownButton<String>(
+            style: style,
+            underline: dropdownUnderline,
+            iconDisabledColor: dropdownDisabled,
+            iconEnabledColor: dropdownEnabled,
+            value: _moduleValue,
+            onChanged: (String newValue) {
+              if (_moduleValue != newValue) {
+                onModuleChanged(newValue);
+              }
+            },
+            items: <String>[...moduleList]
+                .map<DropdownMenuItem<String>>((String value) {
+              return DropdownMenuItem<String>(
+                value: value,
+                child: Text(value),
+              );
+            }).toList(),
+          ),
+        ),
+      );
+      options.insert(
+        4,
+        ExpansionTile(
+          title: Text(_interface[7], style: style),
+          backgroundColor: Theme.of(context).accentColor.withOpacity(0.025),
+          children: versionRowList,
+        ),
+      );
+    }
+
     return Container(
       color: Colors.blueGrey[int.parse(_colorDegreeValue)],
       child: Padding(
         padding: const EdgeInsets.all(24.0),
         child: ListView(
-          children: <Widget>[
-            /*ListTile(
-              title: Text(_interface[17], style: style),
-              trailing: Switch(
-                  value: _bigScreenValue,
-                  onChanged: (!_config.plus)
-                      ? null
-                      : (bool value) {
-                    setState(() {
-                      _bigScreenValue = value;
-                    });
-                  }
-                  ),
-            ),*/
-            /*ListTile(
-              title: Text(_interface[1], style: style),
-              trailing: DropdownButton<String>(
-                style: style,
-                underline: dropdownUnderline,
-                iconDisabledColor: dropdownDisabled,
-                iconEnabledColor: dropdownEnabled,
-                value: _interfaceValue,
-                onChanged: (String newValue) {
-                  if (_interfaceValue != newValue) {
-                    setState(() {
-                      this.updateInterface(newValue);
-                    });
-                  }
-                },
-                items: <String>[...interfaceMap.keys.toList()]
-                    .map<DropdownMenuItem<String>>((String value) {
-                  return DropdownMenuItem<String>(
-                    value: value,
-                    child: Text(value),
-                  );
-                }).toList(),
-              ),
-            ),
-            ListTile(
-              title: Text(_interface[11], style: style),
-              trailing: DropdownButton<String>(
-                style: style,
-                underline: dropdownUnderline,
-                iconDisabledColor: dropdownDisabled,
-                iconEnabledColor: dropdownEnabled,
-                value: _colorDegreeValue,
-                onChanged: (String newValue) {
-                  if (_colorDegreeValue != newValue) {
-                    setState(() {
-                      _colorDegreeValue = newValue;
-                    });
-                  }
-                },
-                items: <String>[...colorDegree]
-                    .map<DropdownMenuItem<String>>((String value) {
-                  return DropdownMenuItem<String>(
-                    value: value,
-                    child: Text(value),
-                  );
-                }).toList(),
-              ),
-            ),
-            ListTile(
-              title: Text(_interface[6], style: style),
-              trailing: DropdownButton<String>(
-                style: style,
-                underline: dropdownUnderline,
-                iconDisabledColor: dropdownDisabled,
-                iconEnabledColor: dropdownEnabled,
-                value: _fontSizeValue,
-                onChanged: (String newValue) {
-                  if (_verseValue != newValue) {
-                    setState(() {
-                      _fontSizeValue = newValue;
-                    });
-                  }
-                },
-                items: <String>[...fontSizeList]
-                    .map<DropdownMenuItem<String>>((String value) {
-                  return DropdownMenuItem<String>(
-                    value: value,
-                    child: Text(value),
-                  );
-                }).toList(),
-              ),
-            ),*/
-            ListTile(
-              title: Text(_interface[2], style: style),
-              trailing: DropdownButton<String>(
-                style: style,
-                underline: dropdownUnderline,
-                iconDisabledColor: dropdownDisabled,
-                iconEnabledColor: dropdownEnabled,
-                value: _moduleValue,
-                onChanged: (String newValue) {
-                  if (_moduleValue != newValue) {
-                    onModuleChanged(newValue);
-                  }
-                },
-                items: <String>[...moduleList]
-                    .map<DropdownMenuItem<String>>((String value) {
-                  return DropdownMenuItem<String>(
-                    value: value,
-                    child: Text(value),
-                  );
-                }).toList(),
-              ),
-            ),
-            /*ListTile(
-              title: Text(_interface[18], style: style),
-              trailing: DropdownButton<String>(
-                style: style,
-                underline: dropdownUnderline,
-                iconDisabledColor: dropdownDisabled,
-                iconEnabledColor: dropdownEnabled,
-                value: _moduleValue2,
-                onChanged: (String newValue) {
-                  if (_moduleValue2 != newValue) {
-                    setState(() {
-                      _moduleValue2 = newValue;
-                    });
-                  }
-                },
-                items: <String>[...moduleList]
-                    .map<DropdownMenuItem<String>>((String value) {
-                  return DropdownMenuItem<String>(
-                    value: value,
-                    child: Text(value),
-                  );
-                }).toList(),
-              ),
-            ),*/
-            ListTile(
-              title: Text(_interface[3], style: style),
-              trailing: DropdownButton<String>(
-                style: style,
-                underline: dropdownUnderline,
-                iconDisabledColor: dropdownDisabled,
-                iconEnabledColor: dropdownEnabled,
-                value: _bookValue,
-                onChanged: (String newValue) {
-                  if (_bookValue != newValue) {
-                    setState(() {
-                      _bookValue = newValue;
-                      _chapterList =
-                          _bible.getChapterList(int.parse(getBookNo()));
-                      _chapterList =
-                          _chapterList.map((i) => (i).toString()).toList();
-                      _chapterValue = "1";
-                      _verseList = _bible.getVerseList(
-                          int.parse(getBookNo()), int.parse(_chapterValue));
-                      _verseList =
-                          _verseList.map((i) => (i).toString()).toList();
-                      _verseValue = "1";
-                    });
-                  }
-                },
-                items: <String>[..._bookList]
-                    .map<DropdownMenuItem<String>>((String value) {
-                  return DropdownMenuItem<String>(
-                    value: value,
-                    child: Text(value),
-                  );
-                }).toList(),
-              ),
-            ),
-            ListTile(
-              title: Text(_interface[4], style: style),
-              trailing: DropdownButton<String>(
-                style: style,
-                underline: dropdownUnderline,
-                iconDisabledColor: dropdownDisabled,
-                iconEnabledColor: dropdownEnabled,
-                value: _chapterValue,
-                onChanged: (String newValue) {
-                  if (_chapterValue != newValue) {
-                    setState(() {
-                      _chapterValue = newValue;
-                      _verseList = _bible.getVerseList(
-                          int.parse(getBookNo()), int.parse(_chapterValue));
-                      _verseList =
-                          _verseList.map((i) => (i).toString()).toList();
-                      _verseValue = "1";
-                    });
-                  }
-                },
-                items: <String>[..._chapterList]
-                    .map<DropdownMenuItem<String>>((String value) {
-                  return DropdownMenuItem<String>(
-                    value: value,
-                    child: Text(value),
-                  );
-                }).toList(),
-              ),
-            ),
-            ListTile(
-              title: Text(_interface[5], style: style),
-              trailing: DropdownButton<String>(
-                style: style,
-                underline: dropdownUnderline,
-                iconDisabledColor: dropdownDisabled,
-                iconEnabledColor: dropdownEnabled,
-                value: _verseValue,
-                onChanged: (String newValue) {
-                  if (_verseValue != newValue) {
-                    setState(() {
-                      _verseValue = newValue;
-                    });
-                  }
-                },
-                items: <String>[..._verseList]
-                    .map<DropdownMenuItem<String>>((String value) {
-                  return DropdownMenuItem<String>(
-                    value: value,
-                    child: Text(value),
-                  );
-                }).toList(),
-              ),
-            ),
-            ExpansionTile(
-              title: Text(_interface[7], style: style),
-              backgroundColor: Theme.of(context).accentColor.withOpacity(0.025),
-              children: versionRowList,
-            ),
-            /*ListTile(
-              title: Text(_interface[9], style: style),
-              trailing: DropdownButton<String>(
-                style: style,
-                underline: dropdownUnderline,
-                iconDisabledColor: dropdownDisabled,
-                iconEnabledColor: dropdownEnabled,
-                value: _instantActionList[_instantAction],
-                onChanged: (String newValue) {
-                  if (_instantActionList[_instantAction] != newValue) {
-                    setState(() {
-                      _instantAction = _instantActionList.indexOf(newValue);
-                    });
-                  }
-                },
-                items: <String>[..._instantActionList]
-                    .map<DropdownMenuItem<String>>((String value) {
-                  return DropdownMenuItem<String>(
-                    value: value,
-                    child: Text(value),
-                  );
-                }).toList(),
-              ),
-            ),
-            ListTile(
-              title: Text(
-                _interface[8],
-                style: style,
-              ),
-              trailing: DropdownButton<String>(
-                style: style,
-                underline: dropdownUnderline,
-                iconDisabledColor: dropdownDisabled,
-                iconEnabledColor: dropdownEnabled,
-                value: _favouriteActionList[_favouriteAction],
-                onChanged: (String newValue) {
-                  if (_favouriteActionList[_favouriteAction] != newValue) {
-                    setState(() {
-                      _favouriteAction = _favouriteActionList.indexOf(newValue);
-                    });
-                  }
-                },
-                items: <String>[..._favouriteActionList]
-                    .map<DropdownMenuItem<String>>((String value) {
-                  return DropdownMenuItem<String>(
-                    value: value,
-                    child: Text(value),
-                  );
-                }).toList(),
-              ),
-            ),
-            ListTile(
-              title: Text(
-                _interface[14],
-                style: style,
-              ),
-              trailing: IconButton(
-                tooltip: _interface[15],
-                icon: Icon(Icons.settings_backup_restore,
-                    color: (int.parse(_colorDegreeValue) >= 500)
-                        ? Colors.blueAccent[100]
-                        : Colors.blueAccent[700]),
-                onPressed: () {
-                  setState(() {
-                    _speechRateValue = (Platform.isAndroid) ? 1.0 : 0.5;
-                  });
-                },
-              ),
-            ),
-            Slider(
-              activeColor: (int.parse(_colorDegreeValue) >= 500)
-                  ? Colors.blueAccent[100]
-                  : Colors.blueAccent[700],
-              min: 0.1,
-              max: (Platform.isAndroid) ? 3.0 : 1.0,
-              onChanged: (newValue) {
-                setState(() {
-                  _speechRateValue = num.parse(newValue.toStringAsFixed(1));
-                });
-              },
-              value: _speechRateValue,
-            ),
-            ListTile(
-              title: Text(_interface[12], style: style),
-              trailing: DropdownButton<String>(
-                style: style,
-                underline: dropdownUnderline,
-                iconDisabledColor: dropdownDisabled,
-                iconEnabledColor: dropdownEnabled,
-                value: _ttsEnglishValue,
-                onChanged: (String newValue) {
-                  if (_ttsEnglishValue != newValue) {
-                    setState(() {
-                      _ttsEnglishValue = newValue;
-                    });
-                  }
-                },
-                items: <String>["en-GB", "en-US"]
-                    .map<DropdownMenuItem<String>>((String value) {
-                  return DropdownMenuItem<String>(
-                    value: value,
-                    child: Text(value),
-                  );
-                }).toList(),
-              ),
-            ),
-            ListTile(
-              title: Text(_interface[13], style: style),
-              trailing: DropdownButton<String>(
-                style: style,
-                underline: dropdownUnderline,
-                iconDisabledColor: dropdownDisabled,
-                iconEnabledColor: dropdownEnabled,
-                value: _ttsChineseValue,
-                onChanged: (String newValue) {
-                  if (_ttsChineseValue != newValue) {
-                    setState(() {
-                      _ttsChineseValue = newValue;
-                    });
-                  }
-                },
-                items: <String>[
-                  "zh-CN",
-                  (Platform.isAndroid) ? "yue-HK" : "zh-HK"
-                ].map<DropdownMenuItem<String>>((String value) {
-                  return DropdownMenuItem<String>(
-                    value: value,
-                    child: Text(value),
-                  );
-                }).toList(),
-              ),
-            ),*/
-            /*ListTile(
-              title: Text(_interface[16], style: style),
-              trailing: DropdownButton<String>(
-                style: style,
-                underline: dropdownUnderline,
-                iconDisabledColor: dropdownDisabled,
-                iconEnabledColor: dropdownEnabled,
-                value: _ttsGreekValue,
-                onChanged: (String newValue) {
-                  if (_ttsGreekValue != newValue) {
-                    setState(() {
-                      _ttsGreekValue = newValue;
-                    });
-                  }
-                },
-                items: <String>["modern", "Erasmian"]
-                    .map<DropdownMenuItem<String>>((String value) {
-                  return DropdownMenuItem<String>(
-                    value: value,
-                    child: Text(value),
-                  );
-                }).toList(),
-              ),
-            ),*/
-          ],
+          children: options,
         ),
       ),
     );

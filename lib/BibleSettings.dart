@@ -43,6 +43,7 @@ class BibleSettingsState extends State<BibleSettings> {
       "Greek Speech",
       "Big Screen Mode",
       "Secondary Bible",
+      "Default Marvel Bible",
     ],
     "TC": [
       "設定",
@@ -64,6 +65,7 @@ class BibleSettingsState extends State<BibleSettings> {
       "希臘語發聲",
       "大屏幕模式",
       "次選聖經",
+      "預設 Marvel.Bible",
     ],
     "SC": [
       "设定",
@@ -85,6 +87,7 @@ class BibleSettingsState extends State<BibleSettings> {
       "希腊语发声",
       "大屏幕模式",
       "次选圣经",
+      "预设 Marvel.Bible",
     ],
   };
 
@@ -96,6 +99,7 @@ class BibleSettingsState extends State<BibleSettings> {
   List<String> _compareBibleList;
   String _moduleValue,
       _moduleValue2,
+      _marvelBible,
       _bookValue,
       _chapterValue,
       _verseValue,
@@ -194,6 +198,14 @@ class BibleSettingsState extends State<BibleSettings> {
     _bible = bible;
     _moduleValue = _bible.module;
     _moduleValue2 = _config.bible2;
+    Map marvelBibles = {
+      "MAB": "Annotated",
+      "MIB": "Interlinear",
+      "MOB": "Original",
+      "MPB": "Parallel",
+      "MTB": "Trilingual",
+    };
+    _marvelBible = marvelBibles[_config.marvelBible];
 
     _bookValue = _abbreviations[bcvList[0].toString()];
     _chapterValue = bcvList[1].toString();
@@ -322,7 +334,7 @@ class BibleSettingsState extends State<BibleSettings> {
                       _ttsChineseValue,
                       _speechRateValue,
                       _ttsGreekValue,
-                      //_bigScreenValue,
+                      _marvelBible,
                     ));
               },
             ),
@@ -746,6 +758,30 @@ class BibleSettingsState extends State<BibleSettings> {
                 }).toList(),
               ),
             ),*/
+            ListTile(
+              title: Text(_interface[19], style: style),
+              trailing: DropdownButton<String>(
+                style: style,
+                underline: dropdownUnderline,
+                iconDisabledColor: dropdownDisabled,
+                iconEnabledColor: dropdownEnabled,
+                value: _marvelBible,
+                onChanged: (String newValue) {
+                  if (_marvelBible != newValue) {
+                    setState(() {
+                      _marvelBible = newValue;
+                    });
+                  }
+                },
+                items: <String>["Annotated", "Interlinear", "Original", "Parallel", "Trilingual"]
+                    .map<DropdownMenuItem<String>>((String value) {
+                  return DropdownMenuItem<String>(
+                    value: value,
+                    child: Text(value),
+                  );
+                }).toList(),
+              ),
+            ),
           ],
         ),
       ),
@@ -806,6 +842,7 @@ class BibleSettingsParser {
   int book, chapter, verse, instantAction, favouriteAction, backgroundColor;
   double fontSize;
   List<String> compareBibleList;
+  String marvelBible;
 
   BibleSettingsParser(
       this.module,
@@ -822,7 +859,8 @@ class BibleSettingsParser {
       this.ttsEnglish,
       this.ttsChinese,
       this.speechRate,
-      this.ttsGreek) {
+      this.ttsGreek,
+      [this.marvelBible = "Annotated"]) {
     this.book = int.parse(_book);
     this.chapter = int.parse(_chapter);
     this.verse = int.parse(_verse);
@@ -831,5 +869,13 @@ class BibleSettingsParser {
     this.favouriteAction = _quickAction - 1;
     this.instantAction = _instantAction - 1;
     this.backgroundColor = int.parse(_backgroundColor);
+    Map marvelBibles = {
+      "Annotated": "MAB",
+      "Interlinear": "MIB",
+      "Original": "MOB",
+      "Parallel": "MPB",
+      "Trilingual": "MTB",
+    };
+    this.marvelBible = marvelBibles[this.marvelBible];
   }
 }
