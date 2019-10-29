@@ -2860,7 +2860,7 @@ class UniqueBibleState extends State<UniqueBible> {
                   title: Text(captions[this.abbreviations], style: _verseNoFont,),
                   onTap: () => _selectInterlinear(context),
                   trailing: IconButton(
-                    icon: Icon(Icons.more_vert),
+                    icon: Icon(Icons.more_vert, color: this.config.myColors["blueAccent"],),
                     onPressed: () => _selectInterlinear(context),
                   ),
                 );
@@ -2881,7 +2881,7 @@ class UniqueBibleState extends State<UniqueBible> {
             return _buildMorphologyCard(context, (i - 2));
           }),
       WebView(
-        initialUrl: 'https://marvel.bible/index.php?text=MAB&b=${_currentActiveVerse[0]}&c=${_currentActiveVerse[1]}&v=${_currentActiveVerse[2]}',
+        initialUrl: 'https://marvel.bible/index.php?text=${this.config.marvelBible}&b=${_currentActiveVerse[0]}&c=${_currentActiveVerse[1]}&v=${_currentActiveVerse[2]}',
         javascriptMode: JavascriptMode.unrestricted,
         onWebViewCreated: (WebViewController webViewController) {
           _webViewController = webViewController;
@@ -3130,7 +3130,7 @@ class UniqueBibleState extends State<UniqueBible> {
       },
       trailing: IconButton(
         tooltip: interfaceApp[this.config.abbreviations][25],
-        icon: Icon(Icons.more_vert),
+        icon: Icon(Icons.more_vert, color: this.config.myColors["blueAccent"],),
         onPressed: () async {
           _openChapterSelector(context);
         },
