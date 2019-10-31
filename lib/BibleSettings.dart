@@ -609,6 +609,30 @@ class BibleSettingsState extends State<BibleSettings> {
               children: versionRowList,
             ),
             ListTile(
+              title: Text(_interface[20], style: style),
+              trailing: DropdownButton<String>(
+                style: style,
+                underline: dropdownUnderline,
+                iconDisabledColor: dropdownDisabled,
+                iconEnabledColor: dropdownEnabled,
+                value: _iBible,
+                onChanged: (String newValue) {
+                  if (_iBible != newValue) {
+                    setState(() {
+                      _iBible = newValue;
+                    });
+                  }
+                },
+                items: _config.interlinearBibles
+                    .map<DropdownMenuItem<String>>((String value) {
+                  return DropdownMenuItem<String>(
+                    value: value,
+                    child: Text(value),
+                  );
+                }).toList(),
+              ),
+            ),
+            ListTile(
               title: Text(_interface[9], style: style),
               trailing: DropdownButton<String>(
                 style: style,
@@ -780,30 +804,6 @@ class BibleSettingsState extends State<BibleSettings> {
                   }
                 },
                 items: <String>["Annotated", "Interlinear", "Original", "Parallel", "Trilingual"]
-                    .map<DropdownMenuItem<String>>((String value) {
-                  return DropdownMenuItem<String>(
-                    value: value,
-                    child: Text(value),
-                  );
-                }).toList(),
-              ),
-            ),
-            ListTile(
-              title: Text(_interface[20], style: style),
-              trailing: DropdownButton<String>(
-                style: style,
-                underline: dropdownUnderline,
-                iconDisabledColor: dropdownDisabled,
-                iconEnabledColor: dropdownEnabled,
-                value: _iBible,
-                onChanged: (String newValue) {
-                  if (_iBible != newValue) {
-                    setState(() {
-                      _iBible = newValue;
-                    });
-                  }
-                },
-                items: _config.interlinearBibles
                     .map<DropdownMenuItem<String>>((String value) {
                   return DropdownMenuItem<String>(
                     value: value,

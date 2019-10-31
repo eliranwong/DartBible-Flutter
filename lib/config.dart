@@ -40,9 +40,11 @@ class Config {
     "LXXGNT": "Septuagint & Greek New Testament",
     "LXXGNTi": "Septuagint & Greek New Testament [interlinear]",
     "LXXk": "Septuagint [KJV versification]",
+    "MSG": "The Message",
     "NASB": "New American Standard Bible",
     "NET": "New English Translation",
     "NIV": "New International Version",
+    "NKJV": "New King James Version",
     "NLT": "New Living Translation",
     "NRSV": "New Revised Standard Version",
     "OHGB": "Open Hebrew & Greek Bible",
@@ -60,7 +62,7 @@ class Config {
   List<String> chineseBibles = ["CCB", "CUV", "CUVs"];
 
   // public versions
-  /*List<String> allBibleList = [
+  List<String> allBibleList = [
     "ABG",
     "ASV",
     "BBE",
@@ -85,14 +87,14 @@ class Config {
     "ULT",
     "UST",
     "WEB"
-  ];*/
+  ];
   // private versions
-  List<String> allBibleList = ["ABG", "ASV", "BBE", "BSB", "CCB", "CEB", "CEV", "CSB", "CUV", "CUVs", "ERV", "ESV", "EXP", "ISV", "KJV", "LEB", "LXX1", "LXX2", "LXXE", "LXXGNT", "LXXGNTi", "LXXk", "NASB", "NET", "NIV", "NLT", "NRSV", "OHGB", "OHGBi", "OHGBt", "T4T", "ULT", "UST", "WEB"];
+  //List<String> allBibleList = ["ABG", "ASV", "BBE", "BSB", "CCB", "CEB", "CEV", "CSB", "CUV", "CUVs", "ERV", "ESV", "EXP", "ISV", "KJV", "LEB", "LXX1", "LXX2", "LXXE", "LXXGNT", "LXXGNTi", "LXXk", "MSG", "NASB", "NET", "NIV", "NKJV", "NLT", "NRSV", "OHGB", "OHGBi", "OHGBt", "T4T", "ULT", "UST", "WEB"];
 
   // variables linked with shared preferences
 
   // public versions
-  /*List<String> compareBibleList = [
+  List<String> compareBibleList = [
     "ASV",
     "BSB",
     "ERV",
@@ -103,9 +105,9 @@ class Config {
     "NET",
     "OHGB",
     "WEB",
-  ];*/
+  ];
   // private versions
-  List<String> compareBibleList = ["CEV", "CSB", "CUV", "ESV", "EXP", "ISV", "KJV", "LEB", "LXXE", "LXXk", "NASB", "NET", "NIV", "OHGB"];
+  //List<String> compareBibleList = ["CEV", "CSB", "CUV", "ESV", "EXP", "ISV", "KJV", "LEB", "LXXE", "LXXk", "NASB", "NET", "NIV", "OHGB"];
 
   bool bigScreen = false;
   bool showNotes = false;
