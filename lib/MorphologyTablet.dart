@@ -491,7 +491,7 @@ class OriginalWordState extends State<OriginalWord> {
     }
     List<TextSpan> wordSpans = (_config.interlinearBibles.contains(module))
         ? InterlinearHelper(_config.verseTextStyle)
-            .getInterlinearSpan(text, book)
+            .getInterlinearSpan(module, text, book)
         : <TextSpan>[TextSpan(text: text, style: verseFont)];
     return ListTile(
       title: RichText(
@@ -1005,7 +1005,7 @@ class MorphologySearchTabletState extends State<MorphologySearchTablet> {
     }
     List<TextSpan> wordSpans = (_config.interlinearBibles.contains(module))
         ? InterlinearHelper(_config.verseTextStyle)
-        .getInterlinearSpan(text, book)
+        .getInterlinearSpan(module, text, book)
         : <TextSpan>[TextSpan(text: text, style: verseFont)];
     return ListTile(
       title: RichText(

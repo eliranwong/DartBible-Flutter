@@ -577,7 +577,7 @@ class UniqueBibleState extends State<UniqueBible> {
         : this.bibles.bible2.loadData();
 
     // pre-load interlinear bible
-    this.bibles.iBible = Bible("OHGBi", this.abbreviations);
+    this.bibles.iBible = Bible(this.config.iBible, this.abbreviations);
     ((this.config.bigScreen) && (this.config.instantAction == 1))
         ? await this.bibles.iBible.loadData()
         : this.bibles.iBible.loadData();
@@ -705,7 +705,7 @@ class UniqueBibleState extends State<UniqueBible> {
     BibleParser(this.abbreviations).bcvToVerseReference(bcvList);
 
     var verseDirection = TextDirection.ltr;
-    bool isHebrew = ((bcvList.isNotEmpty) && (bcvList.first < 40));
+    bool isHebrew = ((bcvList.isNotEmpty) && (bcvList.first < 40) && (this.bibles.iBible.module == "OHGBi"));
     if (isHebrew) verseDirection = TextDirection.rtl;
 
     String verseText = this.bibles.iBible.openSingleVerse(bcvList);
@@ -736,6 +736,7 @@ class UniqueBibleState extends State<UniqueBible> {
         } else {
           verseText = "$verseText ｜";
           verseText = verseText.replaceAll(RegExp("｜＠.*? ｜"), "");
+          verseText = TtsHelper().removeGreekAccents(verseText);
         }
         _speakOneVerse = true;
         _speak(verseText);
@@ -769,9 +770,10 @@ class UniqueBibleState extends State<UniqueBible> {
   Future showInterlinear(List bcvList, [BuildContext context]) async {
     if (this.config.plus) {
       if (this.bibles?.iBible?.data != null) {
+        bool isLXX1 = ((this.bibles.iBible.module != "OHGBi") && ((bcvList.first > 66) || (bcvList.first < 40)));
         _stopRunningActions();
         if (this.config.bigScreen) {
-          await _getMorphology(bcvList);
+          await _getMorphology(bcvList, (isLXX1) ? "LXX1" : "OHGB");
         } else {
           final selected = await showModalBottomSheet(
               context: context,
@@ -784,7 +786,7 @@ class UniqueBibleState extends State<UniqueBible> {
                   ),
                 );
               });
-          if (selected != null) _loadInterlinearView(context, selected);
+          if (selected != null) _loadInterlinearView(context, selected, (isLXX1) ? "LXX1" : "OHGB");
         }
       }
     } else {
@@ -847,10 +849,19 @@ class UniqueBibleState extends State<UniqueBible> {
     this.bibles.bible2 = Bible(module, this.abbreviations);
     await this.bibles.bible2.loadData();
     // save config
-    this.config.save("bible2", module);
     this.config.bible2 = module;
+    this.config.save("bible2", module);
     // reload parallel bibles
     if (_parallelBibles) _reLoadBibles();
+  }
+
+  Future reloadInterlinearBible(String module) async {
+    // reload iBible in memory
+    this.bibles.iBible = Bible(module, this.abbreviations);
+    await this.bibles.iBible.loadData();
+    // save config
+    this.config.iBible = module;
+    this.config.save("iBible", module);
   }
 
   void updateHistoryActiveVerse() {
@@ -1017,6 +1028,9 @@ class UniqueBibleState extends State<UniqueBible> {
       // secondary bible
       if (newBibleSettings.module2 != this.bibles.bible2.module)
         await reloadSecondaryBible(newBibleSettings.module2);
+      // instant interlinear bible
+      if (newBibleSettings.iBible != this.bibles.iBible.module)
+        await reloadInterlinearBible(newBibleSettings.iBible);
       // Big Screen Mode
       //this.config.bigScreen = newBibleSettings.bigScreen;
       //this.config.save("bigScreen", newBibleSettings.bigScreen);
@@ -2015,10 +2029,14 @@ class UniqueBibleState extends State<UniqueBible> {
                 }
                 break;
               case "Notes":
-                setState(() {
-                  this.config.showNotes = !this.config.showNotes;
-                  this.config.save("showNotes", this.config.showNotes);
-                });
+                if (this.config.plus) {
+                  setState(() {
+                    this.config.showNotes = !this.config.showNotes;
+                    this.config.save("showNotes", this.config.showNotes);
+                  });
+                } else {
+                  _nonPlusMessage(this.interfaceApp[this.abbreviations][13]);
+                }
                 break;
               case "Verse":
                 _openVerseSelector(context);
@@ -2108,12 +2126,7 @@ class UniqueBibleState extends State<UniqueBible> {
               : IconButton(
             tooltip: this.interfaceBottom[this.abbreviations][3],
             icon: const Icon(Icons.compare),
-            onPressed: () {
-              (this.config.plus)
-                  ? _launchHarmonies(context)
-                  : _nonPlusMessage(
-                  this.interfaceBottom[this.abbreviations][3]);
-            },
+            onPressed: () => _launchHarmonies(context),
           ),
           (_selection)
               ? Container()
@@ -2170,10 +2183,15 @@ class UniqueBibleState extends State<UniqueBible> {
           (_selection)
               ? Container()
               : IconButton(
-                  tooltip: this.interfaceBottom[this.abbreviations][11],
-                  icon: const Icon(Icons.check_circle),
-                  onPressed: () => _startSelection(),
-                ),
+            tooltip: this.interfaceBottom[this.abbreviations][11],
+            icon: const Icon(Icons.check_circle),
+            onPressed: () {
+              (this.config.plus)
+                  ? _startSelection()
+                  : _nonPlusMessage(
+                  this.interfaceBottom[this.abbreviations][11]);
+            },
+          ),
           (_selection)
               ? IconButton(
                   tooltip: this.interfaceBottom[this.abbreviations][12],
@@ -2296,7 +2314,7 @@ class UniqueBibleState extends State<UniqueBible> {
         if (this.config.interlinearBibles.contains(module)) {
           List<TextSpan> interlinearSpans =
               InterlinearHelper(this.config.verseTextStyle)
-                  .getInterlinearSpan(verseContent, book, true);
+                  .getInterlinearSpan(module, verseContent, book, true);
           wordSpans = <TextSpan>[
             TextSpan(text: verseNo, style: _activeVerseNoFont),
             ...interlinearSpans
@@ -2348,7 +2366,7 @@ class UniqueBibleState extends State<UniqueBible> {
         if (this.config.interlinearBibles.contains(module)) {
           List<TextSpan> interlinearSpans =
               InterlinearHelper(this.config.verseTextStyle)
-                  .getInterlinearSpan(verseContent, book);
+                  .getInterlinearSpan(module, verseContent, book);
           wordSpans = <TextSpan>[
             TextSpan(text: verseNo, style: _verseNoFont),
             ...interlinearSpans
@@ -2922,7 +2940,7 @@ class UniqueBibleState extends State<UniqueBible> {
 
   Widget _buildMorphologyCard(BuildContext context, int i) {
     final Map wordData = _morphology[i];
-    final bool _isHebrew = wordData["Book"] < 40;
+    final bool _isHebrew = (wordData["Book"] < 40) && (this.bibles.iBible.module == "OHGBi");
     final List bcvList = [wordData["Book"], wordData["Chapter"], wordData["Verse"]];
     final Map interface = {
       "ENG": [
@@ -3172,7 +3190,7 @@ class UniqueBibleState extends State<UniqueBible> {
       if (this.config.interlinearBibles.contains(verseModule)) {
         List<TextSpan> interlinearSpan =
             InterlinearHelper(this.config.verseTextStyle)
-                .getInterlinearSpan(verseContent, verseData[0][0]);
+                .getInterlinearSpan(verseModule, verseContent, verseData[0][0]);
         textContent = interlinearSpan
           ..insert(0, TextSpan(text: versePrefix, style: _verseNoFont));
       } else if (searchEntry.isEmpty) {
@@ -3207,7 +3225,7 @@ class UniqueBibleState extends State<UniqueBible> {
 
   List<TextSpan> getInterlinearSpan(BuildContext context, String text, List bcvList, [bool isActive = false]) {
     int book = bcvList.first;
-    bool isHebrewBible = (book < 40);
+    bool isHebrewBible = ((book < 40) && (this.bibles.iBible.module == "OHGBi"));
 
     var originalStyle;
     if (!isActive) {
@@ -3244,7 +3262,7 @@ class UniqueBibleState extends State<UniqueBible> {
               style: originalStyle,
               recognizer: TapGestureRecognizer()..onTap = () {
                 //Navigator.pop(context, [bcvList, (index ~/ 2)]);
-                _loadOriginalWord(context, bcvList, "OHGB", (index ~/ 2));
+                _loadOriginalWord(context, bcvList, ((this.bibles.iBible.module != "OHGBi") && ((bcvList.first > 66) || (bcvList.first < 40))) ? "LXX1" : "OHGB", (index ~/ 2));
               },
             )
         )

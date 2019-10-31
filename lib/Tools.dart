@@ -464,7 +464,7 @@ class NotePadState extends State<NotePad> {
     }
     List<TextSpan> wordSpans = (_config.interlinearBibles.contains(module))
         ? InterlinearHelper(_config.verseTextStyle)
-            .getInterlinearSpan(text, book)
+            .getInterlinearSpan(module, text, book)
         : <TextSpan>[TextSpan(text: text, style: verseFont)];
     return ListTile(
       title: RichText(

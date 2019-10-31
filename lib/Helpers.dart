@@ -351,8 +351,8 @@ class InterlinearHelper {
     _interlinearStyle = verseTextStyle["interlinearStyle"];
   }
 
-  List<TextSpan> getInterlinearSpan(String text, int book, [bool isActive = false]) {
-    bool isHebrewBible = (book < 40);
+  List<TextSpan> getInterlinearSpan(String module, String text, int book, [bool isActive = false]) {
+    bool isHebrewBible = (book < 40) && (module == "OHGBi");
 
     var originalStyle;
     if (!isActive) {

@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class Config {
-  bool plus = false;
+  bool plus = true;
   String plusURL = (Platform.isAndroid)
       ? 'https://play.google.com/store/apps/details?id=app.bibletools.unique_bible_app_plus_paid'
       : 'https://apps.apple.com/app/unique-bible-app-plus/id1480768821?ls=1';
@@ -37,6 +37,8 @@ class Config {
     "LXX1": "Septuagint [Rahlfs 1935]; main text",
     "LXX2": "Septuagint [Rahlfs 1935]; alternate text",
     "LXXE": "Brenton English Septuagint",
+    "LXXGNT": "Septuagint & Greek New Testament",
+    "LXXGNTi": "Septuagint & Greek New Testament [interlinear]",
     "LXXk": "Septuagint [KJV versification]",
     "NASB": "New American Standard Bible",
     "NET": "New English Translation",
@@ -53,12 +55,12 @@ class Config {
   };
 
   List<String> hebrewBibles = ["OHGB", "OHGBi"];
-  List<String> greekBibles = ["ABG", "LXX1", "LXX2", "LXXk", "OHGB", "OHGBi"];
-  List<String> interlinearBibles = ["OHGBi"];
+  List<String> greekBibles = ["ABG", "LXX1", "LXX2", "LXXk", "OHGB", "OHGBi", "LXXGNT", "LXXGNTi"];
+  List<String> interlinearBibles = ["OHGBi", "LXXGNTi"];
   List<String> chineseBibles = ["CCB", "CUV", "CUVs"];
 
   // public versions
-  List<String> allBibleList = [
+  /*List<String> allBibleList = [
     "ABG",
     "ASV",
     "BBE",
@@ -72,6 +74,8 @@ class Config {
     "LXX1",
     "LXX2",
     "LXXE",
+    "LXXGNT",
+    "LXXGNTi",
     "LXXk",
     "NET",
     "OHGB",
@@ -81,14 +85,14 @@ class Config {
     "ULT",
     "UST",
     "WEB"
-  ];
+  ];*/
   // private versions
-  //List<String> allBibleList = ["ABG", "ASV", "BBE", "BSB", "CCB", "CEB", "CEV", "CSB", "CUV", "CUVs", "ERV", "ESV", "EXP", "ISV", "KJV", "LEB", "LXX1", "LXX2", "LXXE", "LXXk", "NASB", "NET", "NIV", "NLT", "NRSV", "OHGB", "OHGBi", "OHGBt", "T4T", "ULT", "UST", "WEB"];
+  List<String> allBibleList = ["ABG", "ASV", "BBE", "BSB", "CCB", "CEB", "CEV", "CSB", "CUV", "CUVs", "ERV", "ESV", "EXP", "ISV", "KJV", "LEB", "LXX1", "LXX2", "LXXE", "LXXGNT", "LXXGNTi", "LXXk", "NASB", "NET", "NIV", "NLT", "NRSV", "OHGB", "OHGBi", "OHGBt", "T4T", "ULT", "UST", "WEB"];
 
   // variables linked with shared preferences
 
   // public versions
-  List<String> compareBibleList = [
+  /*List<String> compareBibleList = [
     "ASV",
     "BSB",
     "ERV",
@@ -99,9 +103,9 @@ class Config {
     "NET",
     "OHGB",
     "WEB",
-  ];
+  ];*/
   // private versions
-  //List<String> compareBibleList = ["CEV", "CSB", "CUV", "ESV", "EXP", "ISV", "KJV", "LEB", "LXXE", "LXXk", "NASB", "NET", "NIV", "OHGB"];
+  List<String> compareBibleList = ["CEV", "CSB", "CUV", "ESV", "EXP", "ISV", "KJV", "LEB", "LXXE", "LXXk", "NASB", "NET", "NIV", "OHGB"];
 
   bool bigScreen = false;
   bool showNotes = false;
@@ -111,6 +115,7 @@ class Config {
   String bible1 = "KJV";
   String bible2 = "NET";
   String marvelBible = "MAB";
+  String iBible = "OHGBi";
   List<List<int>> historyActiveVerse = [
     [43, 3, 16]
   ];
@@ -190,6 +195,11 @@ class Config {
       prefs.setString("marvelBible", this.marvelBible);
     } else {
       this.marvelBible = prefs.getString("marvelBible");
+    }
+    if (prefs.getString("iBible") == null) {
+      prefs.setString("iBible", this.iBible);
+    } else {
+      this.iBible = prefs.getString("iBible");
     }
     if (prefs.getString("ttsChinese") == null) {
       prefs.setString("ttsChinese", this.ttsChinese);
@@ -293,6 +303,8 @@ class Config {
       this.bible2 = prefs.getString("bible2");
     if (prefs.getString("marvelBible") != null)
       this.marvelBible = prefs.getString("marvelBible");
+    if (prefs.getString("iBible") != null)
+      this.iBible = prefs.getString("iBible");
     if (prefs.getString("ttsEnglish") != null)
       this.ttsEnglish = prefs.getString("ttsEnglish");
     if (prefs.getString("ttsGreek") != null)
@@ -363,6 +375,9 @@ class Config {
         await prefs.setString(feature, newSetting as String);
         break;
       case "marvelBible":
+        await prefs.setString(feature, newSetting as String);
+        break;
+      case "iBible":
         await prefs.setString(feature, newSetting as String);
         break;
       case "ttsChinese":

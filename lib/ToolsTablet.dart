@@ -171,7 +171,7 @@ class ToolState extends State<Tool> {
     try {
       if (_config.interlinearBibles.contains(verseModule)) {
         List<TextSpan> interlinearSpan = InterlinearHelper(_config.verseTextStyle)
-            .getInterlinearSpan(verseContent, verseData[0][0]);
+            .getInterlinearSpan(verseModule, verseContent, verseData[0][0]);
         textContent = interlinearSpan
           ..insert(0, TextSpan(text: versePrefix, style: _verseNoFont));
       } else {

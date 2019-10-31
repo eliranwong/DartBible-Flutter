@@ -273,7 +273,7 @@ class BibleSearchDelegate extends SearchDelegate<List> {
         searchEntry = query.split(":::").sublist(1).join(":::");
       if (this.interlinearBibles.contains(verseModule)) {
         List<TextSpan> interlinearSpan = InterlinearHelper(this.verseTextStyle)
-            .getInterlinearSpan(verseContent, verseData[0][0]);
+            .getInterlinearSpan(verseModule, verseContent, verseData[0][0]);
         textContent = interlinearSpan
           ..insert(0, TextSpan(text: versePrefix, style: _verseNoFont));
       } else if (searchEntry.isEmpty) {

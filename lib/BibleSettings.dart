@@ -44,6 +44,7 @@ class BibleSettingsState extends State<BibleSettings> {
       "Big Screen Mode",
       "Secondary Bible",
       "Default Marvel Bible",
+      "Instant Interlinear",
     ],
     "TC": [
       "設定",
@@ -66,6 +67,7 @@ class BibleSettingsState extends State<BibleSettings> {
       "大屏幕模式",
       "次選聖經",
       "預設 Marvel.Bible",
+      "即時原文逐字翻譯",
     ],
     "SC": [
       "设定",
@@ -88,6 +90,7 @@ class BibleSettingsState extends State<BibleSettings> {
       "大屏幕模式",
       "次选圣经",
       "预设 Marvel.Bible",
+      "即时原文逐字翻译",
     ],
   };
 
@@ -100,6 +103,7 @@ class BibleSettingsState extends State<BibleSettings> {
   String _moduleValue,
       _moduleValue2,
       _marvelBible,
+      _iBible,
       _bookValue,
       _chapterValue,
       _verseValue,
@@ -206,6 +210,7 @@ class BibleSettingsState extends State<BibleSettings> {
       "MTB": "Trilingual",
     };
     _marvelBible = marvelBibles[_config.marvelBible];
+    _iBible = _config.iBible;
 
     _bookValue = _abbreviations[bcvList[0].toString()];
     _chapterValue = bcvList[1].toString();
@@ -335,6 +340,7 @@ class BibleSettingsState extends State<BibleSettings> {
                       _speechRateValue,
                       _ttsGreekValue,
                       _marvelBible,
+                      _iBible,
                     ));
               },
             ),
@@ -782,6 +788,30 @@ class BibleSettingsState extends State<BibleSettings> {
                 }).toList(),
               ),
             ),
+            ListTile(
+              title: Text(_interface[20], style: style),
+              trailing: DropdownButton<String>(
+                style: style,
+                underline: dropdownUnderline,
+                iconDisabledColor: dropdownDisabled,
+                iconEnabledColor: dropdownEnabled,
+                value: _iBible,
+                onChanged: (String newValue) {
+                  if (_iBible != newValue) {
+                    setState(() {
+                      _iBible = newValue;
+                    });
+                  }
+                },
+                items: _config.interlinearBibles
+                    .map<DropdownMenuItem<String>>((String value) {
+                  return DropdownMenuItem<String>(
+                    value: value,
+                    child: Text(value),
+                  );
+                }).toList(),
+              ),
+            ),
           ],
         ),
       ),
@@ -843,6 +873,7 @@ class BibleSettingsParser {
   double fontSize;
   List<String> compareBibleList;
   String marvelBible;
+  String iBible;
 
   BibleSettingsParser(
       this.module,
@@ -860,7 +891,7 @@ class BibleSettingsParser {
       this.ttsChinese,
       this.speechRate,
       this.ttsGreek,
-      [this.marvelBible = "Annotated"]) {
+      [this.marvelBible = "Annotated", this.iBible = "OHGBi"]) {
     this.book = int.parse(_book);
     this.chapter = int.parse(_chapter);
     this.verse = int.parse(_verse);
