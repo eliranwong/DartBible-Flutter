@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class Config {
-  bool plus = true;
+  bool plus = false;
   String plusURL = (Platform.isAndroid)
       ? 'https://play.google.com/store/apps/details?id=app.bibletools.unique_bible_app_plus_paid'
       : 'https://apps.apple.com/app/unique-bible-app-plus/id1480768821?ls=1';
@@ -22,7 +22,8 @@ class Config {
     "ASV": "American Standard Version",
     "BBE": "Bible in Basic English",
     "BSB": "Berean Study Bible",
-    "CCB": "當代聖經修訂版",
+    "CCB": "當代聖經修訂版〔繁體〕",
+    "CCBs": "当代圣经修订版〔简体〕",
     "CEB": "Common English Bible",
     "CEV": "Contemporary English Version",
     "CSB": "Christian Standard Bible",
@@ -35,7 +36,9 @@ class Config {
     "KJV": "King James Version",
     "LEB": "Lexham English Bible",
     "LXX1": "Septuagint [Rahlfs 1935]; main text",
+    "LXX1i": "Septuagint [Rahlfs 1935]; main text [interlinear]",
     "LXX2": "Septuagint [Rahlfs 1935]; alternate text",
+    "LXX2i": "Septuagint [Rahlfs 1935]; alternate text [interlinear]",
     "LXXE": "Brenton English Septuagint",
     "LXXGNT": "Septuagint & Greek New Testament",
     "LXXGNTi": "Septuagint & Greek New Testament [interlinear]",
@@ -54,12 +57,33 @@ class Config {
     "ULT": "UnfoldingWord Literal Text",
     "UST": "UnfoldingWord Simplified Text",
     "WEB": "World English Bible",
+    "AMP": "Amplified Bible",
+    "AMPC": "Amplified Bible, Classic Edition",
+    "NA28": "NA28 Greek New Testament",
+    "NETS": "New English Translation of the Septuagint",
+    "NETS2": "New English Translation of the Septuagint [alternate texts]",
+    "NJPS": "New Jewish Publication Society of America Tanakh",
+    "TNK": "Tanakh",
+    "UBS5": "UBS5 Greek New Testament",
   };
 
   List<String> hebrewBibles = ["OHGB", "OHGBi"];
-  List<String> greekBibles = ["ABG", "LXX1", "LXX2", "LXXk", "OHGB", "OHGBi", "LXXGNT", "LXXGNTi"];
-  List<String> interlinearBibles = ["OHGBi", "LXXGNTi"];
-  List<String> chineseBibles = ["CCB", "CUV", "CUVs"];
+  List<String> greekBibles = [
+    "ABG",
+    "LXX1",
+    "LXX2",
+    "LXXk",
+    "OHGB",
+    "OHGBi",
+    "LXXGNT",
+    "LXXGNTi",
+    "LXX1i",
+    "LXX2i",
+    "NA28",
+    "UBS5"
+  ];
+  List<String> interlinearBibles = ["OHGBi", "LXXGNTi", "LXX1i", "LXX2i"];
+  List<String> chineseBibles = ["CCB", "CCBs", "CUV", "CUVs"];
 
   // public versions
   List<String> allBibleList = [
@@ -74,7 +98,9 @@ class Config {
     "KJV",
     "LEB",
     "LXX1",
+    "LXX1i",
     "LXX2",
+    "LXX2i",
     "LXXE",
     "LXXGNT",
     "LXXGNTi",
@@ -89,7 +115,55 @@ class Config {
     "WEB"
   ];
   // private versions
-  //List<String> allBibleList = ["ABG", "ASV", "BBE", "BSB", "CCB", "CEB", "CEV", "CSB", "CUV", "CUVs", "ERV", "ESV", "EXP", "ISV", "KJV", "LEB", "LXX1", "LXX2", "LXXE", "LXXGNT", "LXXGNTi", "LXXk", "MSG", "NASB", "NET", "NIV", "NKJV", "NLT", "NRSV", "OHGB", "OHGBi", "OHGBt", "T4T", "ULT", "UST", "WEB"];
+  /*List<String> allBibleList = [
+    "ABG",
+    "AMP",
+    "AMPC",
+    "ASV",
+    "BBE",
+    "BSB",
+    "CCB",
+    "CCBs",
+    "CEB",
+    "CEV",
+    "CSB",
+    "CUV",
+    "CUVs",
+    "ERV",
+    "ESV",
+    "EXP",
+    "ISV",
+    "KJV",
+    "LEB",
+    "LXX1",
+    "LXX1i",
+    "LXX2",
+    "LXX2i",
+    "LXXE",
+    "LXXGNT",
+    "LXXGNTi",
+    "LXXk",
+    "MSG",
+    "NA28",
+    "NASB",
+    "NET",
+    "NETS",
+    "NETS2",
+    "NIV",
+    "NJPS",
+    "NKJV",
+    "NLT",
+    "NRSV",
+    "OHGB",
+    "OHGBi",
+    "OHGBt",
+    "T4T",
+    "TNK",
+    "UBS5",
+    "ULT",
+    "UST",
+    "WEB"
+  ];*/
 
   // variables linked with shared preferences
 
@@ -107,7 +181,22 @@ class Config {
     "WEB",
   ];
   // private versions
-  //List<String> compareBibleList = ["CEV", "CSB", "CUV", "ESV", "EXP", "ISV", "KJV", "LEB", "LXXE", "LXXk", "NASB", "NET", "NIV", "OHGB"];
+  /*List<String> compareBibleList = [
+    "CEV",
+    "CSB",
+    "CUV",
+    "ESV",
+    "EXP",
+    "ISV",
+    "KJV",
+    "LEB",
+    "LXXE",
+    "LXXk",
+    "NASB",
+    "NET",
+    "NIV",
+    "OHGB"
+  ];*/
 
   bool bigScreen = false;
   bool showNotes = false;

@@ -412,16 +412,11 @@ class UniqueBibleState extends State<UniqueBible> {
       List bcvList = item.first;
       String module = item.last;
       String verse;
-      if (((Platform.isAndroid) &&
-              (this.config.hebrewBibles.contains(module)) &&
-              (bcvList.first < 40)) ||
-          ((this.config.ttsGreek != "modern") &&
-              (this.config.hebrewBibles.contains(module)) &&
-              (bcvList.first >= 40))) {
-        verse = TtsHelper()
-            .workaroundHebrew(this.bibles.tBible.openSingleVerse(bcvList));
+      bool isHebrew = ((this.config.hebrewBibles.contains(module)) && (bcvList.first < 40));
+      if ((Platform.isAndroid) && isHebrew) {
+        verse = TtsHelper().workaroundHebrew(this.bibles.tBible.openSingleVerse(bcvList));
       } else if (this.config.interlinearBibles.contains(module)) {
-        verse = "$verse ｜";
+        verse = "${item[1]} ｜";
         verse = verse.replaceAll(RegExp("｜＠.*? ｜"), "");
       } else {
         verse = item[1];
@@ -429,19 +424,13 @@ class UniqueBibleState extends State<UniqueBible> {
       if (this.config.chineseBibles.contains(module)) {
         await flutterTts.setLanguage(this.config.ttsChinese);
         //zh-CN, yue-HK (Android), zh-HK (iOS)
-      } else if ((item.first.first < 40) &&
-          (this.config.hebrewBibles.contains(module))) {
+      } else if (isHebrew) {
         (Platform.isAndroid)
             ? await flutterTts.setLanguage("el-GR")
             : await flutterTts.setLanguage("he-IL");
       } else if (this.config.greekBibles.contains(module)) {
-        if ((this.config.ttsGreek != "modern") &&
-            (this.config.hebrewBibles.contains(module))) {
-          await flutterTts.setLanguage(this.config.ttsEnglish);
-        } else {
-          verse = TtsHelper().removeGreekAccents(verse);
-          await flutterTts.setLanguage("el-GR");
-        }
+        verse = TtsHelper().removeGreekAccents(verse);
+        await flutterTts.setLanguage("el-GR");
       } else {
         await flutterTts.setLanguage(this.config.ttsEnglish);
         //en-GB, en-US
