@@ -1,4 +1,4 @@
-import re, glob, os
+import re, glob, os, sys
 
 class SearchReplaceHelper:
 
@@ -64,9 +64,16 @@ class SearchReplaceHelper:
             print("\""+inputName+"\"", "is not found!")
 
 if __name__ == '__main__':
-    # Interaction with user
-    # ask for filename or folder name
-    inputName = input("Enter a file / folder name here: ")
+    inputName = ""
+
+    arguments = sys.argv
+
+    if (len(arguments) > 1):
+        inputName = " ".join(arguments[1:])
+    else:
+        # Interaction with user
+        # ask for filename or folder name
+        inputName = input("Enter a file / folder name here: ")
 
     SearchReplaceHelper().startSearching(inputName)
     
