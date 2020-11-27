@@ -93,6 +93,10 @@ flutter:
   # For details regarding fonts from package dependencies,
   # see https://flutter.dev/custom-fonts/#from-packages
 
+  # sqlite files at:
+  # android > app > src > main > assets
+  # ios > Runner
+
   assets:
     - assets/bible/
     - assets/xRef/
