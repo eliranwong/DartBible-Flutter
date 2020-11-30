@@ -221,7 +221,7 @@ class TabletDrawerState extends State<TabletDrawer> {
         color: this.config.myColors["grey"],
       ),
       title: Text(
-        verseItem[1],
+        (this.config.showHeadingVerseNo) ? "[${verseItem.first.last}] ${verseItem[1]}" : verseItem[1],
         style: _entryTextStyle,
       ),
       onTap: () {

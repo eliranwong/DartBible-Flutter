@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class Config {
-  bool plus = false;
+  bool plus = true;
   String plusURL = (Platform.isAndroid)
       ? 'https://play.google.com/store/apps/details?id=app.bibletools.unique_bible_app_plus_paid'
       : 'https://apps.apple.com/app/unique-bible-app-plus/id1480768821?ls=1';
@@ -86,7 +86,7 @@ class Config {
   List<String> chineseBibles = ["CCB", "CCBs", "CUV", "CUVs"];
 
   // public versions
-  List<String> allBibleList = [
+  /*List<String> allBibleList = [
     "ABG",
     "ASV",
     "BBE",
@@ -113,9 +113,9 @@ class Config {
     "ULT",
     "UST",
     "WEB"
-  ];
+  ];*/
   // private versions
-  /*List<String> allBibleList = [
+  List<String> allBibleList = [
     "ABG",
     "AMP",
     "AMPC",
@@ -163,11 +163,12 @@ class Config {
     "ULT",
     "UST",
     "WEB"
-  ];*/
+  ];
 
   // variables linked with shared preferences
 
   // public versions
+/*
   List<String> compareBibleList = [
     "ASV",
     "BSB",
@@ -180,8 +181,9 @@ class Config {
     "OHGB",
     "WEB",
   ];
+*/
   // private versions
-  /*List<String> compareBibleList = [
+  List<String> compareBibleList = [
     "CEV",
     "CSB",
     "CUV",
@@ -189,18 +191,18 @@ class Config {
     "EXP",
     "ISV",
     "KJV",
-    "LEB",
     "LXXE",
     "LXXk",
     "NASB",
     "NET",
     "NIV",
     "OHGB"
-  ];*/
+  ];
 
   bool bigScreen = false;
   bool showNotes = false;
   bool showDrawer = true;
+  bool showHeadingVerseNo = false;
   double fontSize = 20.0;
   String abbreviations = "ENG";
   String bible1 = "KJV";
@@ -261,6 +263,11 @@ class Config {
       prefs.setBool("showDrawer", this.showDrawer);
     } else {
       this.showDrawer = prefs.getBool("showDrawer");
+    }
+    if (prefs.getBool("showHeadingVerseNo") == null) {
+      prefs.setBool("showHeadingVerseNo", this.showHeadingVerseNo);
+    } else {
+      this.showHeadingVerseNo = prefs.getBool("showHeadingVerseNo");
     }
     if (prefs.getDouble("fontSize") == null) {
       prefs.setDouble("fontSize", this.fontSize);
@@ -384,6 +391,8 @@ class Config {
       this.showNotes = prefs.getBool("showNotes");
     if (prefs.getBool("showDrawer") == null)
       this.showDrawer = prefs.getBool("showDrawer");
+    if (prefs.getBool("showHeadingVerseNo") == null)
+      this.showHeadingVerseNo = prefs.getBool("showHeadingVerseNo");
     if (prefs.getDouble("fontSize") != null)
       this.fontSize = prefs.getDouble("fontSize");
     if (prefs.getString("abbreviations") != null)
@@ -451,6 +460,9 @@ class Config {
         await prefs.setBool(feature, newSetting as bool);
         break;
       case "showDrawer":
+        await prefs.setBool(feature, newSetting as bool);
+        break;
+      case "showHeadingVerseNo":
         await prefs.setBool(feature, newSetting as bool);
         break;
       case "fontSize":

@@ -45,6 +45,7 @@ class BibleSettingsState extends State<BibleSettings> {
       "Secondary Bible",
       "Default Marvel Bible",
       "Instant Interlinear",
+      "Show Heading Verse No.",
     ],
     "TC": [
       "設定",
@@ -68,6 +69,7 @@ class BibleSettingsState extends State<BibleSettings> {
       "次選聖經",
       "預設 Marvel.Bible",
       "即時原文逐字翻譯",
+      "在標題前顯示節數",
     ],
     "SC": [
       "设定",
@@ -91,6 +93,7 @@ class BibleSettingsState extends State<BibleSettings> {
       "次选圣经",
       "预设 Marvel.Bible",
       "即时原文逐字翻译",
+      "在标题前显示节数",
     ],
   };
 
@@ -165,6 +168,7 @@ class BibleSettingsState extends State<BibleSettings> {
   ];
 
   //bool _bigScreenValue;
+  bool _showHeadingVerseNoValue;
   double _speechRateValue;
 
   Map interfaceMap = {"English": "ENG", "繁體中文": "TC", "简体中文": "SC"};
@@ -187,6 +191,7 @@ class BibleSettingsState extends State<BibleSettings> {
     _compareBibleList = List<String>.from(_config.compareBibleList);
 
     //_bigScreenValue = _config.bigScreen;
+    _showHeadingVerseNoValue = _config.showHeadingVerseNo;
     _fontSizeValue = _config.fontSize
         .toString()
         .substring(0, (_config.fontSize.toString().length - 2));
@@ -341,6 +346,7 @@ class BibleSettingsState extends State<BibleSettings> {
                       _ttsGreekValue,
                       _marvelBible,
                       _iBible,
+                      _showHeadingVerseNoValue,
                     ));
               },
             ),
@@ -609,6 +615,19 @@ class BibleSettingsState extends State<BibleSettings> {
               children: versionRowList,
             ),
             ListTile(
+              title: Text(_interface[21], style: style),
+              trailing: Switch(
+                  value: _showHeadingVerseNoValue,
+                  onChanged: (!_config.plus)
+                      ? null
+                      : (bool value) {
+                    setState(() {
+                      _showHeadingVerseNoValue = value;
+                    });
+                  }
+              ),
+            ),
+            ListTile(
               title: Text(_interface[20], style: style),
               trailing: DropdownButton<String>(
                 style: style,
@@ -874,6 +893,7 @@ class BibleSettingsParser {
   List<String> compareBibleList;
   String marvelBible;
   String iBible;
+  bool showHeadingVerseNo;
 
   BibleSettingsParser(
       this.module,
@@ -891,7 +911,7 @@ class BibleSettingsParser {
       this.ttsChinese,
       this.speechRate,
       this.ttsGreek,
-      [this.marvelBible = "Annotated", this.iBible = "OHGBi"]) {
+      [this.marvelBible = "Annotated", this.iBible = "OHGBi", this.showHeadingVerseNo = false]) {
     this.book = int.parse(_book);
     this.chapter = int.parse(_chapter);
     this.verse = int.parse(_verse);

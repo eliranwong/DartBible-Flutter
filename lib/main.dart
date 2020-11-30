@@ -1032,6 +1032,9 @@ class UniqueBibleState extends State<UniqueBible> {
       this.config.abbreviations = newBibleSettings.abbreviations;
       updateBibleAbbreviations(newBibleSettings.abbreviations);
       this.config.save("abbreviations", newBibleSettings.abbreviations);
+      // Show heading verse no
+      this.config.showHeadingVerseNo = newBibleSettings.showHeadingVerseNo;
+      this.config.save("showHeadingVerseNo", newBibleSettings.showHeadingVerseNo);
       // Bible comparison list
       this.config.compareBibleList = newBibleSettings.compareBibleList;
       this.config.save("compareBibleList", newBibleSettings.compareBibleList);
