@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class Config {
-  bool plus = true;
+  bool plus = false;
   String plusURL = (Platform.isAndroid)
       ? 'https://play.google.com/store/apps/details?id=app.bibletools.unique_bible_app_plus_paid'
       : 'https://apps.apple.com/app/unique-bible-app-plus/id1480768821?ls=1';
@@ -86,7 +86,7 @@ class Config {
   List<String> chineseBibles = ["CCB", "CCBs", "CUV", "CUVs"];
 
   // public versions
-  /*List<String> allBibleList = [
+  List<String> allBibleList = [
     "ABG",
     "ASV",
     "BBE",
@@ -113,8 +113,9 @@ class Config {
     "ULT",
     "UST",
     "WEB"
-  ];*/
+  ];
   // private versions
+  /*
   List<String> allBibleList = [
     "ABG",
     "AMP",
@@ -163,12 +164,12 @@ class Config {
     "ULT",
     "UST",
     "WEB"
-  ];
+  ];*/
 
   // variables linked with shared preferences
 
   // public versions
-/*
+
   List<String> compareBibleList = [
     "ASV",
     "BSB",
@@ -181,8 +182,9 @@ class Config {
     "OHGB",
     "WEB",
   ];
-*/
+
   // private versions
+/*
   List<String> compareBibleList = [
     "CEV",
     "CSB",
@@ -198,6 +200,7 @@ class Config {
     "NIV",
     "OHGB"
   ];
+ */
 
   bool bigScreen = false;
   bool showNotes = false;
