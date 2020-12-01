@@ -110,11 +110,15 @@ class BibleSearchDelegate extends SearchDelegate<List> {
   List _fetch(BuildContext context, String query) {
     List<dynamic> fetchResults = [];
 
+    if (query.contains("：：：")) {
+      query = query.replaceAll("：：：", ":::");
+    }
     try {
       // search the whole bible, e.g. God.*?love
       // search in a book, e.g. John:::Jesus Christ
       // search in multiple books, e.g. Matthew, John:::Jesus Christ
-      // search in book collections, e.g. Torah:::God.*?love or Torah, Gospels:::God.*?love
+      // search in a book collection, e.g. Torah:::God.*?love
+      // search in multiple book collections, e.g. Moses, Gospels:::God.*?love
       // search with combination of book collections and individual books, e.g. Torah, Major Prophets, Gospels, Hebrews:::God.*?love
       if (query.contains(":::")) {
         List queryList = query.split(":::");
@@ -190,8 +194,13 @@ class BibleSearchDelegate extends SearchDelegate<List> {
       }
 
       // check if the query contains verse references or not.
+      String possibleReference = (query.contains("：")) ? query.replaceAll("：", ":") : query;
+      RegExp irregularHyphen = new RegExp(r"[－─]");
+      if (irregularHyphen.hasMatch(possibleReference)) {
+        possibleReference = possibleReference.replaceAll(irregularHyphen, "-");
+      }
       var verseReferenceList =
-          BibleParser(this.abbreviations).extractAllReferences(query);
+          BibleParser(this.abbreviations).extractAllReferences(possibleReference);
       (verseReferenceList.isEmpty)
           ? fetchResults = _bible.search(query)
           : fetchResults = _bible.openMultipleVerses(verseReferenceList);
@@ -322,8 +331,11 @@ class BibleSearchDelegate extends SearchDelegate<List> {
     ];
     try {
       String searchEntry = query;
-      if (query.contains(":::"))
+      if (query.contains(":::")) {
         searchEntry = query.split(":::").sublist(1).join(":::");
+      } else if (query.contains("：：：")) {
+        searchEntry = query.split("：：：").sublist(1).join("：：：");
+      }
       if (this.interlinearBibles.contains(verseModule)) {
         List<TextSpan> interlinearSpan = InterlinearHelper(this.verseTextStyle)
             .getInterlinearSpan(verseModule, verseContent, verseData[0][0]);
