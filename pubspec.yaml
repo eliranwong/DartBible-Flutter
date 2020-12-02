@@ -176,6 +176,14 @@ flutter:
   # Common commands to test an app with a connected device (Android / iOS)
   # flutter run --debug
   # flutter run --profile
+
+  # To install the app in a connected Android device:
+  # flutter build apk
+  # flutter install
+  # remarks: "flutter build appbundle" doesn't work with flutter install
+
+  # To install the app in a connected iOS device:
+  # flutter build ios
   # flutter install
 
   # To publish and app, check the following links:
