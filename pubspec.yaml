@@ -1,5 +1,5 @@
-name: unique_bible_app_plus_paid
-description: Unique Bible App Plus
+name: unique_bible_app_plus
+description: Unique Bible App
 
 # The following line prevents the package from being accidentally published to
 # pub.dev using `pub publish`. This is preferred for private packages.
@@ -108,7 +108,7 @@ flutter:
   # Essential files for migration
   # android/key.properties
   # android/app/build.gradle (manually add a block of codes about key.properties, manually check and edit "applicationId" [this one must be same as the id specified in Google Play], "flutterVersionCode", "flutterVersionName", "minSdkVersion")
-  # android/app/src/main/AndroidManifest.xml, edit the app name in entry "android:label" and add "<uses-permission android:name="android.permission.INTERNET" />" after "</application>".
+  # android/app/src/main/AndroidManifest.xml, check the "package" value within the manifest tag on the 1st line, edit the app name in entry "android:label" and add "<uses-permission android:name="android.permission.INTERNET" />" after "</application>".
   # folder "assets"
   # folder "fonts"
   # folder "lib"
