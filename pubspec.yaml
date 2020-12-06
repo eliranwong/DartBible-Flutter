@@ -19,6 +19,8 @@ version: 1.0.0+1
 
 environment:
   sdk: ">=2.7.0 <3.0.0"
+  #reguired by null-safe packages
+  #sdk: ">=2.12.0-0 <3.0.0"
 
 dependencies:
   flutter:
@@ -27,18 +29,29 @@ dependencies:
   # The following adds the Cupertino Icons font to your application.
   # Use with the CupertinoIcons class for iOS style icons.
   cupertino_icons: ^0.1.2
-  indexed_list_view: ^1.0.6
-  shared_preferences: ^0.5.4+1
-  flutter_launcher_icons: ^0.7.2+1
-  sqflite: ^1.1.6+4
-  share: ^0.6.2+1
+  #cupertino_icons: ^1.0.1+1
+  #indexed_list_view: ^1.0.6
+  indexed_list_view: ^1.1.5
+  #shared_preferences: ^0.5.4+1
+  shared_preferences: ^0.5.12+4
+  #flutter_launcher_icons: ^0.7.2+1
+  flutter_launcher_icons: ^0.8.1
+  #sqflite: ^1.1.6+4
+  sqflite: ^1.3.2+1
+  #share: ^0.6.2+1
+  share: ^0.6.5+4
+  #swipedetector: ^1.2.0
   swipedetector: ^1.2.0
-  photo_view: ^0.5.0
-  url_launcher: ^5.2.5
+  #photo_view: ^0.5.0
+  photo_view: ^0.10.3
+  #url_launcher: ^5.2.5
+  url_launcher: ^5.7.10
   flutter_tts: ^1.3.0
   large_file_copy: ^0.0.1
-  path_provider: ^1.3.0
-  webview_flutter: ^0.3.15+1
+  #path_provider: ^1.3.0
+  path_provider: ^1.6.24
+  #webview_flutter: ^0.3.15+1
+  webview_flutter: ^1.0.7
 
 # Run the following command:
 # flutter pub run flutter_launcher_icons:main
