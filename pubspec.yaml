@@ -121,7 +121,11 @@ flutter:
 
   # Essential files for migration
   # android/key.properties
-  # android/app/build.gradle (manually add a block of codes about key.properties, manually check and edit "applicationId" [this one must be same as the id specified in Google Play], "flutterVersionCode", "flutterVersionName", "minSdkVersion")
+  # android/app/build.gradle (manually check and edit "applicationId" [this one must be same as the id specified in Google Play], "flutterVersionCode", "flutterVersionName", "minSdkVersion")
+    #read https://flutter.dev/docs/deployment/android to add 3 blocks of codes:
+    #...keystoreProperties ...
+    #...signingConfigs { ...
+    #...buildTypes { ... (replace the "debug" one)
   # android/app/src/main/AndroidManifest.xml, check the "package" value within the manifest tag on the 1st line, edit the app name in entry "android:label" and add the following 3 permissions after after "</application>":
     #<uses-permission android:name="android.permission.INTERNET" />
     #<uses-permission android:name="android.permission.ReadExternalStorage" />
