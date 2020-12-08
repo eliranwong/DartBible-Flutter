@@ -1,5 +1,5 @@
-name: unique_bible_app
-description: Unique Bible App
+name: unique_bible_app_special
+description: UniqueBible.app Special
 
 # The following line prevents the package from being accidentally published to
 # pub.dev using `pub publish`. This is preferred for private packages.
@@ -52,6 +52,7 @@ dependencies:
   path_provider: ^1.6.24
   #webview_flutter: ^0.3.15+1
   webview_flutter: ^1.0.7
+  simple_permissions: ^0.1.9
 
 # Run the following command:
 # flutter pub run flutter_launcher_icons:main
@@ -121,7 +122,10 @@ flutter:
   # Essential files for migration
   # android/key.properties
   # android/app/build.gradle (manually add a block of codes about key.properties, manually check and edit "applicationId" [this one must be same as the id specified in Google Play], "flutterVersionCode", "flutterVersionName", "minSdkVersion")
-  # android/app/src/main/AndroidManifest.xml, check the "package" value within the manifest tag on the 1st line, edit the app name in entry "android:label" and add "<uses-permission android:name="android.permission.INTERNET" />" after "</application>".
+  # android/app/src/main/AndroidManifest.xml, check the "package" value within the manifest tag on the 1st line, edit the app name in entry "android:label" and add the following 3 permissions after after "</application>":
+    #<uses-permission android:name="android.permission.INTERNET" />
+    #<uses-permission android:name="android.permission.ReadExternalStorage" />
+    #<uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
   # folder "assets"
   # folder "fonts"
   # folder "lib"
@@ -185,6 +189,27 @@ flutter:
   # "Copy items if needed"
   # "Create groups" instead of "Create folder references"
   # Add to targets > "Runner"
+
+  # Troubleshooting iOS > using plugin "simple_permissions" (version 0.1.9):
+  # Error message during compilation: Specs satisfying the `simple_permissions (from `.symlinks/plugins/simple_permissions/ios`)` dependency were found, but they required a higher minimum deployment target.
+  # Open file "Runner.xcworkspace" with Xcode
+  # Select "Runner" on left navigation panel
+    # Select Project "Runner"
+    # Select Tab "Info"
+    # Change "Deployment Target" to 9.3
+  # Select "Runner > Flutter > AppFrameworkInfo.plist" on left navigation panel
+    # Change "MinimiumOSVersion" to "9.3"
+
+  # Troubleshooting permissions (e.g. internet, read/write)
+  # For Android apps, in AndroidManifest.xml, add:
+    #<uses-permission android:name="android.permission.INTERNET" />
+    #<uses-permission android:name="android.permission.ReadExternalStorage" />
+    #<uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
+  # For iOS apps, in
+    #<key>LSSupportsOpeningDocumentsInPlace</key>
+    #<true/>
+    #<key>UIFileSharingEnabled</key>
+    #<true/>
 
   # Common commands to test an app with a connected device (Android / iOS)
   # flutter run --debug
