@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class Config {
-  bool plus = false;
+  bool plus = true;
   String plusURL = (Platform.isAndroid)
       ? 'https://play.google.com/store/apps/details?id=app.bibletools.unique_bible_app_plus_paid'
       : 'https://apps.apple.com/app/unique-bible-app-plus/id1480768821?ls=1';
@@ -86,6 +86,7 @@ class Config {
   List<String> chineseBibles = ["CCB", "CCBs", "CUV", "CUVs"];
 
   // public versions
+/*
   List<String> allBibleList = [
     "ABG",
     "ASV",
@@ -114,8 +115,9 @@ class Config {
     "UST",
     "WEB"
   ];
+*/
   // private versions
-  /*
+
   List<String> allBibleList = [
     "ABG",
     "AMP",
@@ -164,12 +166,12 @@ class Config {
     "ULT",
     "UST",
     "WEB"
-  ];*/
+  ];
 
   // variables linked with shared preferences
 
   // public versions
-
+/*
   List<String> compareBibleList = [
     "ASV",
     "BSB",
@@ -181,10 +183,10 @@ class Config {
     "NET",
     "OHGB",
     "WEB",
-  ];
+  ];*/
 
   // private versions
-/*
+
   List<String> compareBibleList = [
     "CEV",
     "CSB",
@@ -200,12 +202,12 @@ class Config {
     "NIV",
     "OHGB"
   ];
- */
 
   bool bigScreen = false;
   bool showNotes = false;
   bool showDrawer = true;
   bool showHeadingVerseNo = false;
+  bool alwaysOpenMarvelBibleExternally = false;
   double fontSize = 20.0;
   String abbreviations = "ENG";
   String bible1 = "KJV";
@@ -232,6 +234,55 @@ class Config {
   Map myColors;
   Map verseTextStyle;
   ThemeData mainTheme;
+
+  Map<String, String> bookCollection = {
+    "Tanakh": "Gen 0; Exod 0; Lev 0; Num 0; Deut 0; Josh 0; Judg 0; Ruth 0; 1Sam 0; 2Sam 0; 1Kgs 0; 2Kgs 0; 1Chr 0; 2Chr 0; Ezra 0; Neh 0; Esth 0; Job 0; Ps 0; Prov 0; Eccl 0; Song 0; Isa 0; Jer 0; Lam 0; Ezek 0; Dan 0; Hos 0; Joel 0; Amos 0; Obad 0; Jonah 0; Mic 0; Nah 0; Hab 0; Zeph 0; Hag 0; Zech 0; Mal 0; ",
+    "Torah": "Gen 0; Exod 0; Lev 0; Num 0; Deut 0; ",
+    "Neviim": "Josh 0; Judg 0; 1Sam 0; 2Sam 0; 1Kgs 0; 2Kgs 0; Isa 0; Jer 0; Ezek 0; Hos 0; Joel 0; Amos 0; Obad 0; Jonah 0; Mic 0; Nah 0; Hab 0; Zeph 0; Hag 0; Zech 0; Mal 0; ",
+    "Ketuvim": "Ps 0; Prov 0; Job 0; Song 0; Ruth 0; Lam 0; Eccl 0; Esth 0; Dan 0; Ezra 0; 1Chr 0; 2Chr 0; ",
+    "OT": "Gen 0; Exod 0; Lev 0; Num 0; Deut 0; Josh 0; Judg 0; Ruth 0; 1Sam 0; 2Sam 0; 1Kgs 0; 2Kgs 0; 1Chr 0; 2Chr 0; Ezra 0; Neh 0; Esth 0; Job 0; Ps 0; Prov 0; Eccl 0; Song 0; Isa 0; Jer 0; Lam 0; Ezek 0; Dan 0; Hos 0; Joel 0; Amos 0; Obad 0; Jonah 0; Mic 0; Nah 0; Hab 0; Zeph 0; Hag 0; Zech 0; Mal 0; ",
+    "NT": "Matt 0; Mark 0; Luke 0; John 0; Acts 0; Rom 0; 1Cor 0; 2Cor 0; Gal 0; Eph 0; Phil 0; Col 0; 1Thess 0; 2Thess 0; 1Tim 0; 2Tim 0; Titus 0; Phlm 0; Heb 0; Jas 0; 1Pet 0; 2Pet 0; 1John 0; 2John 0; 3John 0; Jude 0; Rev 0; ",
+    "HB": "Gen 0; Exod 0; Lev 0; Num 0; Deut 0; Josh 0; Judg 0; Ruth 0; 1Sam 0; 2Sam 0; 1Kgs 0; 2Kgs 0; 1Chr 0; 2Chr 0; Ezra 0; Neh 0; Esth 0; Job 0; Ps 0; Prov 0; Eccl 0; Song 0; Isa 0; Jer 0; Lam 0; Ezek 0; Dan 0; Hos 0; Joel 0; Amos 0; Obad 0; Jonah 0; Mic 0; Nah 0; Hab 0; Zeph 0; Hag 0; Zech 0; Mal 0; ",
+    "GNT": "Matt 0; Mark 0; Luke 0; John 0; Acts 0; Rom 0; 1Cor 0; 2Cor 0; Gal 0; Eph 0; Phil 0; Col 0; 1Thess 0; 2Thess 0; 1Tim 0; 2Tim 0; Titus 0; Phlm 0; Heb 0; Jas 0; 1Pet 0; 2Pet 0; 1John 0; 2John 0; 3John 0; Jude 0; Rev 0; ",
+    "舊約": "Gen 0; Exod 0; Lev 0; Num 0; Deut 0; Josh 0; Judg 0; Ruth 0; 1Sam 0; 2Sam 0; 1Kgs 0; 2Kgs 0; 1Chr 0; 2Chr 0; Ezra 0; Neh 0; Esth 0; Job 0; Ps 0; Prov 0; Eccl 0; Song 0; Isa 0; Jer 0; Lam 0; Ezek 0; Dan 0; Hos 0; Joel 0; Amos 0; Obad 0; Jonah 0; Mic 0; Nah 0; Hab 0; Zeph 0; Hag 0; Zech 0; Mal 0; ",
+    "新約": "Matt 0; Mark 0; Luke 0; John 0; Acts 0; Rom 0; 1Cor 0; 2Cor 0; Gal 0; Eph 0; Phil 0; Col 0; 1Thess 0; 2Thess 0; 1Tim 0; 2Tim 0; Titus 0; Phlm 0; Heb 0; Jas 0; 1Pet 0; 2Pet 0; 1John 0; 2John 0; 3John 0; Jude 0; Rev 0; ",
+    "旧约": "Gen 0; Exod 0; Lev 0; Num 0; Deut 0; Josh 0; Judg 0; Ruth 0; 1Sam 0; 2Sam 0; 1Kgs 0; 2Kgs 0; 1Chr 0; 2Chr 0; Ezra 0; Neh 0; Esth 0; Job 0; Ps 0; Prov 0; Eccl 0; Song 0; Isa 0; Jer 0; Lam 0; Ezek 0; Dan 0; Hos 0; Joel 0; Amos 0; Obad 0; Jonah 0; Mic 0; Nah 0; Hab 0; Zeph 0; Hag 0; Zech 0; Mal 0; ",
+    "新约": "Matt 0; Mark 0; Luke 0; John 0; Acts 0; Rom 0; 1Cor 0; 2Cor 0; Gal 0; Eph 0; Phil 0; Col 0; 1Thess 0; 2Thess 0; 1Tim 0; 2Tim 0; Titus 0; Phlm 0; Heb 0; Jas 0; 1Pet 0; 2Pet 0; 1John 0; 2John 0; 3John 0; Jude 0; Rev 0; ",
+    "Pentateuch": "Gen 0; Exod 0; Lev 0; Num 0; Deut 0; ",
+    "Moses": "Gen 0; Exod 0; Lev 0; Num 0; Deut 0; ",
+    "摩西五經": "Gen 0; Exod 0; Lev 0; Num 0; Deut 0; ",
+    "摩西五经": "Gen 0; Exod 0; Lev 0; Num 0; Deut 0; ",
+    "History": "Josh 0; Judg 0; Ruth 0; 1Sam 0; 2Sam 0; 1Kgs 0; 2Kgs 0; 1Chr 0; 2Chr 0; Ezra 0; Neh 0; Esth 0; ",
+    "歷史書": "Josh 0; Judg 0; Ruth 0; 1Sam 0; 2Sam 0; 1Kgs 0; 2Kgs 0; 1Chr 0; 2Chr 0; Ezra 0; Neh 0; Esth 0; ",
+    "历史书": "Josh 0; Judg 0; Ruth 0; 1Sam 0; 2Sam 0; 1Kgs 0; 2Kgs 0; 1Chr 0; 2Chr 0; Ezra 0; Neh 0; Esth 0; ",
+    "Wisdom": "Job 0; Ps 0; Prov 0; Eccl 0; Song 0; ",
+    "智慧文學": "Job 0; Ps 0; Prov 0; Eccl 0; Song 0; ",
+    "智慧文学": "Job 0; Ps 0; Prov 0; Eccl 0; Song 0; ",
+    "Prophets": "Isa 0; Jer 0; Lam 0; Ezek 0; Dan 0; Hos 0; Joel 0; Amos 0; Obad 0; Jonah 0; Mic 0; Nah 0; Hab 0; Zeph 0; Hag 0; Zech 0; Mal 0; ",
+    "先知書": "Isa 0; Jer 0; Lam 0; Ezek 0; Dan 0; Hos 0; Joel 0; Amos 0; Obad 0; Jonah 0; Mic 0; Nah 0; Hab 0; Zeph 0; Hag 0; Zech 0; Mal 0; ",
+    "先知书": "Isa 0; Jer 0; Lam 0; Ezek 0; Dan 0; Hos 0; Joel 0; Amos 0; Obad 0; Jonah 0; Mic 0; Nah 0; Hab 0; Zeph 0; Hag 0; Zech 0; Mal 0; ",
+    "Major Prophets": "Isa 0; Jer 0; Lam 0; Ezek 0; Dan 0; ",
+    "Minor Prophets": "Hos 0; Joel 0; Amos 0; Obad 0; Jonah 0; Mic 0; Nah 0; Hab 0; Zeph 0; Hag 0; Zech 0; Mal 0; ",
+    "大先知書": "Isa 0; Jer 0; Lam 0; Ezek 0; Dan 0; ",
+    "小先知書": "Hos 0; Joel 0; Amos 0; Obad 0; Jonah 0; Mic 0; Nah 0; Hab 0; Zeph 0; Hag 0; Zech 0; Mal 0; ",
+    "大先知书": "Isa 0; Jer 0; Lam 0; Ezek 0; Dan 0; ",
+    "小先知书": "Hos 0; Joel 0; Amos 0; Obad 0; Jonah 0; Mic 0; Nah 0; Hab 0; Zeph 0; Hag 0; Zech 0; Mal 0; ",
+    "Gospels": "Matt 0; Mark 0; Luke 0; John 0; ",
+    "福音書": "Matt 0; Mark 0; Luke 0; John 0; ",
+    "福音书": "Matt 0; Mark 0; Luke 0; John 0; ",
+    "Paul": "Rom 0; 1Cor 0; 2Cor 0; Gal 0; Eph 0; Phil 0; Col 0; 1Thess 0; 2Thess 0; 1Tim 0; 2Tim 0; Titus 0; Phlm 0; Heb 0; ",
+    "保羅書信": "Rom 0; 1Cor 0; 2Cor 0; Gal 0; Eph 0; Phil 0; Col 0; 1Thess 0; 2Thess 0; 1Tim 0; 2Tim 0; Titus 0; Phlm 0; Heb 0; ",
+    "保罗书信": "Rom 0; 1Cor 0; 2Cor 0; Gal 0; Eph 0; Phil 0; Col 0; 1Thess 0; 2Thess 0; 1Tim 0; 2Tim 0; Titus 0; Phlm 0; Heb 0; ",
+    "General": "Jas 0; 1Pet 0; 2Pet 0; 1John 0; 2John 0; 3John 0; Jude 0; ",
+    "Catholic": "Jas 0; 1Pet 0; 2Pet 0; 1John 0; 2John 0; 3John 0; Jude 0; ",
+    "大公書信": "Jas 0; 1Pet 0; 2Pet 0; 1John 0; 2John 0; 3John 0; Jude 0; ",
+    "大公书信": "Jas 0; 1Pet 0; 2Pet 0; 1John 0; 2John 0; 3John 0; Jude 0; ",
+    "普通書信": "Jas 0; 1Pet 0; 2Pet 0; 1John 0; 2John 0; 3John 0; Jude 0; ",
+    "普通书信": "Jas 0; 1Pet 0; 2Pet 0; 1John 0; 2John 0; 3John 0; Jude 0; ",
+    "Apocrypha": "Bar 0; AddDan 0; PrAzar 0; Bel 0; Sus 0; 1Esd 0; 2Esd 0; AddEsth 0; EpJer 0; Jdt 0; 1Macc 0; 2Macc 0; 3Macc 0; 4Macc 0; PrMan 0; Ps151 0; Sir 0; Tob 0; Wis 0; PssSol 0; Odes 0; EpLao 0; ",
+    "次經": "Bar 0; AddDan 0; PrAzar 0; Bel 0; Sus 0; 1Esd 0; 2Esd 0; AddEsth 0; EpJer 0; Jdt 0; 1Macc 0; 2Macc 0; 3Macc 0; 4Macc 0; PrMan 0; Ps151 0; Sir 0; Tob 0; Wis 0; PssSol 0; Odes 0; EpLao 0; ",
+    "次经": "Bar 0; AddDan 0; PrAzar 0; Bel 0; Sus 0; 1Esd 0; 2Esd 0; AddEsth 0; EpJer 0; Jdt 0; 1Macc 0; 2Macc 0; 3Macc 0; 4Macc 0; PrMan 0; Ps151 0; Sir 0; Tob 0; Wis 0; PssSol 0; Odes 0; EpLao 0; ",
+  };
 
   void updateThemeData() {
     if (this.myColors != null) {
@@ -271,6 +322,11 @@ class Config {
       prefs.setBool("showHeadingVerseNo", this.showHeadingVerseNo);
     } else {
       this.showHeadingVerseNo = prefs.getBool("showHeadingVerseNo");
+    }
+    if (prefs.getBool("alwaysOpenMarvelBibleExternally") == null) {
+      prefs.setBool("alwaysOpenMarvelBibleExternally", this.alwaysOpenMarvelBibleExternally);
+    } else {
+      this.alwaysOpenMarvelBibleExternally = prefs.getBool("alwaysOpenMarvelBibleExternally");
     }
     if (prefs.getDouble("fontSize") == null) {
       prefs.setDouble("fontSize", this.fontSize);
@@ -396,6 +452,8 @@ class Config {
       this.showDrawer = prefs.getBool("showDrawer");
     if (prefs.getBool("showHeadingVerseNo") == null)
       this.showHeadingVerseNo = prefs.getBool("showHeadingVerseNo");
+    if (prefs.getBool("alwaysOpenMarvelBibleExternally") == null)
+      this.alwaysOpenMarvelBibleExternally = prefs.getBool("alwaysOpenMarvelBibleExternally");
     if (prefs.getDouble("fontSize") != null)
       this.fontSize = prefs.getDouble("fontSize");
     if (prefs.getString("abbreviations") != null)
@@ -466,6 +524,9 @@ class Config {
         await prefs.setBool(feature, newSetting as bool);
         break;
       case "showHeadingVerseNo":
+        await prefs.setBool(feature, newSetting as bool);
+        break;
+      case "alwaysOpenMarvelBibleExternally":
         await prefs.setBool(feature, newSetting as bool);
         break;
       case "fontSize":

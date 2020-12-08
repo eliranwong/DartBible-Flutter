@@ -46,6 +46,7 @@ class BibleSettingsState extends State<BibleSettings> {
       "Default Marvel Bible",
       "Instant Interlinear",
       "Show Heading Verse No.",
+      "Open Marvel Bible Externally",
     ],
     "TC": [
       "設定",
@@ -70,6 +71,7 @@ class BibleSettingsState extends State<BibleSettings> {
       "預設 Marvel.Bible",
       "即時原文逐字翻譯",
       "在標題前顯示節數",
+      "使用外置瀏覽器開啟 Marvel.Bible",
     ],
     "SC": [
       "设定",
@@ -94,6 +96,7 @@ class BibleSettingsState extends State<BibleSettings> {
       "预设 Marvel.Bible",
       "即时原文逐字翻译",
       "在标题前显示节数",
+      "使用外置浏览器开启 Marvel.Bible",
     ],
   };
 
@@ -167,8 +170,8 @@ class BibleSettingsState extends State<BibleSettings> {
     "900"
   ];
 
-  //bool _bigScreenValue;
   bool _showHeadingVerseNoValue;
+  bool _alwaysOpenMarvelBibleExternallyValue;
   double _speechRateValue;
 
   Map interfaceMap = {"English": "ENG", "繁體中文": "TC", "简体中文": "SC"};
@@ -190,8 +193,8 @@ class BibleSettingsState extends State<BibleSettings> {
     // This allows users to cancel the changes made by pressing the "back" button
     _compareBibleList = List<String>.from(_config.compareBibleList);
 
-    //_bigScreenValue = _config.bigScreen;
     _showHeadingVerseNoValue = _config.showHeadingVerseNo;
+    _alwaysOpenMarvelBibleExternallyValue = _config.alwaysOpenMarvelBibleExternally;
     _fontSizeValue = _config.fontSize
         .toString()
         .substring(0, (_config.fontSize.toString().length - 2));
@@ -347,6 +350,7 @@ class BibleSettingsState extends State<BibleSettings> {
                       _marvelBible,
                       _iBible,
                       _showHeadingVerseNoValue,
+                      _alwaysOpenMarvelBibleExternallyValue,
                     ));
               },
             ),
@@ -831,6 +835,19 @@ class BibleSettingsState extends State<BibleSettings> {
                 }).toList(),
               ),
             ),
+            ListTile(
+              title: Text(_interface[22], style: style),
+              trailing: Switch(
+                  value: _alwaysOpenMarvelBibleExternallyValue,
+                  onChanged: (!_config.plus)
+                      ? null
+                      : (bool value) {
+                    setState(() {
+                      _alwaysOpenMarvelBibleExternallyValue = value;
+                    });
+                  }
+              ),
+            ),
           ],
         ),
       ),
@@ -894,6 +911,7 @@ class BibleSettingsParser {
   String marvelBible;
   String iBible;
   bool showHeadingVerseNo;
+  bool alwaysOpenMarvelBibleExternally;
 
   BibleSettingsParser(
       this.module,
@@ -911,7 +929,7 @@ class BibleSettingsParser {
       this.ttsChinese,
       this.speechRate,
       this.ttsGreek,
-      [this.marvelBible = "Annotated", this.iBible = "OHGBi", this.showHeadingVerseNo = false]) {
+      [this.marvelBible = "Annotated", this.iBible = "OHGBi", this.showHeadingVerseNo = false, this.alwaysOpenMarvelBibleExternally = false]) {
     this.book = int.parse(_book);
     this.chapter = int.parse(_chapter);
     this.verse = int.parse(_verse);

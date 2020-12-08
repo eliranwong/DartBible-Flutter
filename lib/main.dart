@@ -4,6 +4,7 @@
 import 'dart:io';
 import 'package:flutter/services.dart' show Clipboard, ClipboardData;
 import 'package:flutter/material.dart';
+import 'package:simple_permissions/simple_permissions.dart';
 import 'package:share/share.dart';
 import 'package:indexed_list_view/indexed_list_view.dart';
 import 'package:swipedetector/swipedetector.dart';
@@ -30,6 +31,7 @@ import 'Tools.dart';
 import 'MyDrawer.dart';
 import 'TabletDrawer.dart';
 import 'ToolsTablet.dart';
+import 'package:path_provider/path_provider.dart';
 
 void main() => runApp(MyApp());
 
@@ -66,6 +68,7 @@ class UniqueBibleState extends State<UniqueBible> {
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
 
   Database noteDB;
+  String noteDBPath;
   List _noteList = [];
 
   String query = '';
@@ -77,8 +80,10 @@ class UniqueBibleState extends State<UniqueBible> {
       ""
     ]
   ];
+  List<dynamic> _activeVerseData;
   List<int> _currentActiveVerse = [0, 0, 0];
   List<Map> _morphology = [];
+
 
   bool _typing = false;
   bool _display = false;
@@ -135,6 +140,8 @@ class UniqueBibleState extends State<UniqueBible> {
       "' Here",
       "New Verse",
       "Open a Chapter HERE",
+      "Back up ",
+      "Restore ",
     ],
     "TC": [
       "跨平台聖經工具",
@@ -163,6 +170,8 @@ class UniqueBibleState extends State<UniqueBible> {
       "】",
       "新章節",
       "在這裡打開經文",
+      "備份",
+      "還原",
     ],
     "SC": [
       "跨平台圣经工具",
@@ -191,6 +200,8 @@ class UniqueBibleState extends State<UniqueBible> {
       "】",
       "新章节",
       "在这里打开经文",
+      "备份",
+      "还原",
     ],
   };
 
@@ -256,19 +267,25 @@ class UniqueBibleState extends State<UniqueBible> {
       "is selected.\n'Tap' it again to open your 'Favourite Action'.\nOr 'press' & 'hold' it for more actions.",
       "Loading cross-references ...",
       "Loading bibles for comparison ...",
-      "Added to Favourites!"
+      "Added to Favourites!",
+      "Migrating notes ...",
+      "Notes were migrated!",
     ],
     "TC": [
       "被點選。\n再'按'此節可啟動'設定'中的'常用功能'。\n或'長按'可選擇更多功能。",
       "啟動相關經文 ...",
       "啟動版本比較 ...",
-      "已收藏"
+      "已收藏",
+      "正在轉移筆記 ...",
+      "筆記已經轉移到最新版本！",
     ],
     "SC": [
       "被点选。\n再'按'此节可启动'设定'中的'常用功能'。\n或'长按'可选择更多功能。",
       "启动相关经文 ...",
       "啟動版本比较 ...",
-      "已收藏"
+      "已收藏",
+      "正在转移笔记 ...",
+      "笔记已经转移到最新版本！",
     ],
   };
 
@@ -339,6 +356,8 @@ class UniqueBibleState extends State<UniqueBible> {
   initState() {
     super.initState();
     initTts();
+    // Using hybrid composition for webview v1.0.7+; read https://pub.dev/packages/webview_flutter
+    if (Platform.isAndroid) WebView.platform = SurfaceAndroidWebView();
     this.config = Config();
     _setup();
   }
@@ -534,17 +553,85 @@ class UniqueBibleState extends State<UniqueBible> {
     }
   }
 
-  Future _setup() async {
-    // Get a location using getDatabasesPath
-    var databasesPath = await getDatabasesPath();
-    String path = join(databasesPath, "Notes.sqlite");
+  Future _migrateOldNotes() async {
+    // assign the path of user notes database in latest versions
+    final userDirectory = (Platform.isAndroid) ? await getExternalStorageDirectory() : await getApplicationDocumentsDirectory();
+    noteDBPath = join(userDirectory.path, "Notes.sqlite");
+    //print("New path: ${noteDBPath}");
 
-    // open the database
-    noteDB = await openDatabase(path, version: 1,
+    // The path of user notes database in old versions
+    final databasesPath = await getDatabasesPath();
+    String oldNoteDBPath = join(databasesPath, "Notes.sqlite");
+    //print("Old path: ${oldNoteDBPath}");
+
+    // in tested iOS devices, oldNoteDBPath == noteDBPath
+    // in tested Android devices, oldNoteDBPath != noteDBPath
+
+    // Check if an older version of notes exists
+    File oldNoteFile = File(oldNoteDBPath);
+    if ((await oldNoteFile.exists()) && (oldNoteDBPath != noteDBPath)) {
+      File newNoteFile = File(noteDBPath);
+      if (await newNoteFile.exists()) {
+        String alternateOldFilePath = "${noteDBPath}_old";
+        File alternateOldFile = File(alternateOldFilePath);
+        if (!await alternateOldFile.exists()) await _backupNotes(oldNoteDBPath, alternateOldFilePath);
+      } else {
+        await _backupNotes(oldNoteDBPath, noteDBPath);
+      }
+    }
+    // backward compatibility to older version of user notes if permission is not granted by Android users.
+    if (Platform.isAndroid) {
+      PermissionStatus permissionResult = await SimplePermissions.requestPermission(Permission. WriteExternalStorage);
+      if (permissionResult != PermissionStatus.authorized) {
+        noteDBPath = oldNoteDBPath;
+        _noPermissionMessage();
+      }
+    }
+  }
+
+  void _noPermissionMessage() {
+    _stopRunningActions();
+    Map noPermissionMessage = {
+      "ENG": "You can back up your notes by granting permission.",
+      "TC": "通過授予權限您可以備份您的個人筆記。",
+      "SC": "通过授予权限您可以备份您的个人笔记。",
+    };
+    String message = noPermissionMessage[this.abbreviations];
+    final snackBar = SnackBar(
+      content: Text(message),
+      action: SnackBarAction(
+        label: this.config.plusMessage[this.abbreviations].last,
+        onPressed: () {
+          _launchNotesBackupPage();
+        },
+      ),
+    );
+    _scaffoldKey.currentState.showSnackBar(snackBar);
+  }
+
+  Future _launchNotesBackupPage() async {
+    _stopRunningActions();
+    String url = "https://www.uniquebible.app/mobile/user-notes/back-up";
+    if (await canLaunch(url)) {
+      await launch(url);
+    } else {
+      throw 'Could not launch $url';
+    }
+  }
+
+  Future _openNoteDB() async {
+    noteDB = await openDatabase(noteDBPath, version: 1,
         onCreate: (Database db, int version) async {
-      await db.execute(
-          "CREATE TABLE Notes (id INTEGER PRIMARY KEY, book INTEGER, chapter INTEGER, verse INTEGER, content TEXT)");
-    });
+          await db.execute(
+              "CREATE TABLE Notes (id INTEGER PRIMARY KEY, book INTEGER, chapter INTEGER, verse INTEGER, content TEXT)");
+        });
+  }
+
+  Future _setup() async {
+    // migrate notes written with older versions
+    await _migrateOldNotes();
+    // open the database
+    await _openNoteDB();
 
     await this.config.setDefault();
     await flutterTts.setSpeechRate(this.config.speechRate);
@@ -789,46 +876,48 @@ class UniqueBibleState extends State<UniqueBible> {
   }
 
   Future _newVerseSelected(List selected) async {
-    await _loadHeadings();
-    setState(() {
-      _scrollToCurrentActiveVerse();
-    });
+    if (selected.first.isNotEmpty) {
+      await _loadHeadings();
+      setState(() {
+        _scrollToCurrentActiveVerse();
+      });
 
-    List selectedBcvList = List<int>.from(selected.first);
-    String selectedBible = selected.last;
-    if (selectedBible.isEmpty) selectedBible = this.bibles.bible1.module;
+      List selectedBcvList = List<int>.from(selected.first);
+      String selectedBible = selected.last;
+      if (selectedBible.isEmpty) selectedBible = this.bibles.bible1.module;
 
-    if ((selectedBible != this.bibles.bible1.module) &&
-        (selectedBible == this.bibles.bible2.module)) _swapBibles();
+      if ((selectedBible != this.bibles.bible1.module) &&
+          (selectedBible == this.bibles.bible2.module)) _swapBibles();
 
-    if (selectedBcvList != null && selectedBcvList.isNotEmpty) {
-      bool sameVerse =
-          (selectedBcvList.join(".") == _currentActiveVerse.join("."));
-      if ((!sameVerse) ||
-          ((sameVerse) && (selectedBible != this.bibles.bible1.module))) {
-        _noteList = await noteDB.rawQuery(
-            "SELECT verse FROM Notes WHERE book = ? AND chapter = ?",
-            _currentActiveVerse.sublist(0, 2));
-        _noteList = _noteList.map((i) => i["verse"]).toList();
-        if (selectedBible != this.bibles.bible1.module) {
-          this.bibles.bible1 = Bible(selectedBible, this.abbreviations);
-          await this.bibles.bible1.loadData();
-          this.config.bible1 = selectedBible;
-          this.config.save("bible1", selectedBible);
-        }
-        setState(() {
-          _selection = false;
-          _currentActiveVerse = selectedBcvList;
-          updateHistoryActiveVerse();
-          (_parallelBibles) ? _parallelBibles = false : _parallelBibles = true;
-          _parallelBibles = _toggleParallelBibles();
-          _scrollIndex = getScrollIndex();
-          _activeIndex = _scrollIndex;
-          if ((this.config.bigScreen) && (this.config.instantAction == 1)) {
-            if (!_display) _display = true;
-            showInterlinear(_currentActiveVerse);
+      if (selectedBcvList != null && selectedBcvList.isNotEmpty) {
+        bool sameVerse =
+        (selectedBcvList.join(".") == _currentActiveVerse.join("."));
+        if ((!sameVerse) ||
+            ((sameVerse) && (selectedBible != this.bibles.bible1.module))) {
+          _noteList = await noteDB.rawQuery(
+              "SELECT verse FROM Notes WHERE book = ? AND chapter = ?",
+              _currentActiveVerse.sublist(0, 2));
+          _noteList = _noteList.map((i) => i["verse"]).toList();
+          if (selectedBible != this.bibles.bible1.module) {
+            this.bibles.bible1 = Bible(selectedBible, this.abbreviations);
+            await this.bibles.bible1.loadData();
+            this.config.bible1 = selectedBible;
+            this.config.save("bible1", selectedBible);
           }
-        });
+          setState(() {
+            _selection = false;
+            _currentActiveVerse = selectedBcvList;
+            updateHistoryActiveVerse();
+            (_parallelBibles) ? _parallelBibles = false : _parallelBibles = true;
+            _parallelBibles = _toggleParallelBibles();
+            _scrollIndex = getScrollIndex();
+            _activeIndex = _scrollIndex;
+            if ((this.config.bigScreen) && (this.config.instantAction == 1)) {
+              if (!_display) _display = true;
+              showInterlinear(_currentActiveVerse);
+            }
+          });
+        }
       }
     }
   }
@@ -1035,6 +1124,9 @@ class UniqueBibleState extends State<UniqueBible> {
       // Show heading verse no
       this.config.showHeadingVerseNo = newBibleSettings.showHeadingVerseNo;
       this.config.save("showHeadingVerseNo", newBibleSettings.showHeadingVerseNo);
+      // Always open Marvel Bible with external browser
+      this.config.alwaysOpenMarvelBibleExternally = newBibleSettings.alwaysOpenMarvelBibleExternally;
+      this.config.save("alwaysOpenMarvelBibleExternally", newBibleSettings.alwaysOpenMarvelBibleExternally);
       // Bible comparison list
       this.config.compareBibleList = newBibleSettings.compareBibleList;
       this.config.save("compareBibleList", newBibleSettings.compareBibleList);
@@ -1924,6 +2016,21 @@ class UniqueBibleState extends State<UniqueBible> {
           title: Text(this.interfaceApp[this.abbreviations][4]),
         ),
       ),
+      /*
+      PopupMenuItem<String>(
+        value: "BackupNotes",
+        child: ListTile(
+          leading: Icon(Icons.file_download),
+          title: Text("${this.interfaceApp[this.abbreviations][26]}${this.interfaceApp[this.abbreviations][13]}"),
+        ),
+      ),
+      PopupMenuItem<String>(
+        value: "RestoreNotes",
+        child: ListTile(
+          leading: Icon(Icons.restore_page),
+          title: Text("${this.interfaceApp[this.abbreviations][27]}${this.interfaceApp[this.abbreviations][13]}"),
+        ),
+      ),*/
       const PopupMenuDivider(),
       PopupMenuItem<String>(
         value: "Manual",
@@ -2036,6 +2143,12 @@ class UniqueBibleState extends State<UniqueBible> {
               case "Settings":
                 _openBibleSettings(context);
                 break;
+              /*case "BackupNotes":
+                _backupNotes();
+                break;
+              case "RestoreNotes":
+                _restoreNotes();
+                break;*/
               case "Manual":
                 _launchUserManual();
                 break;
@@ -2043,6 +2156,7 @@ class UniqueBibleState extends State<UniqueBible> {
                 _launchContact();
                 break;
               default:
+                break;
             }
           },
           itemBuilder: (BuildContext context) => popupMenu,
@@ -2051,8 +2165,132 @@ class UniqueBibleState extends State<UniqueBible> {
     );
   }
 
-  /*Future _backupNotes() async {
+  Future _backupNotes(String sourceFilePath, String backupPath) async {
+    // references:
+    // https://api.flutter.dev/flutter/dart-io/File/writeAsBytes.html
+    // https://stackoverflow.com/questions/59501445/flutter-how-to-save-a-file-on-ios
+    // https://github.com/tekartik/sqflite/issues/264
+    // https://stackoverflow.com/questions/50561737/getting-permission-to-the-external-storage-file-provider-plugin
+    // https://pub.dev/packages/simple_permissions
+    // https://developer.apple.com/library/archive/documentation/FileManagement/Conceptual/FileSystemProgrammingGuide/FileSystemOverview/FileSystemOverview.html
+    // https://stackoverflow.com/questions/55220612/how-to-save-a-text-file-in-external-storage-in-ios-using-flutter
+    // https://www.evertop.pl/en/how-to-write-a-simple-downloading-app-with-flutter/
+    // https://developer.apple.com/library/archive/documentation/General/Reference/InfoPlistKeyReference/Articles/iPhoneOSKeys.html#//apple_ref/doc/uid/TP40009252-SW10
 
+    bool goAhead = true;
+    if (Platform.isAndroid) {
+      PermissionStatus permissionResult = await SimplePermissions.requestPermission(Permission. WriteExternalStorage);
+      goAhead = (permissionResult == PermissionStatus.authorized);
+    }
+
+    if (goAhead) {
+      // Notify user to wait for the backup
+      _stopRunningActions();
+      SnackBar snackBar = SnackBar(
+        content: Text(this.interfaceMessage[this.abbreviations][4]),
+      );
+      _scaffoldKey.currentState.showSnackBar(snackBar);
+
+      // Close noteDB before backup
+      //await noteDB.execute("VACUUM");
+      //await noteDB.close();
+
+      // Source File: Note Database file
+      File noteDBFile = File(sourceFilePath);
+      List noteDBFileContent = await noteDBFile.readAsBytes();
+
+      // Writing Backup file
+      File backupFile = File(backupPath);
+      await backupFile.writeAsBytes(noteDBFileContent, flush: true);
+
+      // Delete old database
+      await deleteDatabase(sourceFilePath);
+
+      // Open noteDB after backup
+      //await _openNoteDB();
+
+      // Notify user when backup is done.
+      _scaffoldKey.currentState.removeCurrentSnackBar();
+      snackBar = SnackBar(
+        content: Text(this.interfaceMessage[this.abbreviations][5]),
+      );
+      _scaffoldKey.currentState.showSnackBar(snackBar);
+    }
+  }
+
+  /*Future _restoreNotes() async {
+    // references:
+    // https://api.flutter.dev/flutter/dart-io/File/writeAsBytes.html
+    // https://stackoverflow.com/questions/59501445/flutter-how-to-save-a-file-on-ios
+    // https://github.com/tekartik/sqflite/issues/264
+    // https://stackoverflow.com/questions/50561737/getting-permission-to-the-external-storage-file-provider-plugin
+    // https://pub.dev/packages/simple_permissions
+    // https://developer.apple.com/library/archive/documentation/FileManagement/Conceptual/FileSystemProgrammingGuide/FileSystemOverview/FileSystemOverview.html
+    // https://stackoverflow.com/questions/55220612/how-to-save-a-text-file-in-external-storage-in-ios-using-flutter
+    // https://www.evertop.pl/en/how-to-write-a-simple-downloading-app-with-flutter/
+    // https://developer.apple.com/library/archive/documentation/General/Reference/InfoPlistKeyReference/Articles/iPhoneOSKeys.html#//apple_ref/doc/uid/TP40009252-SW10
+
+    bool goAhead;
+    if (Platform.isAndroid) {
+      PermissionStatus permissionResult = await SimplePermissions.requestPermission(Permission. WriteExternalStorage);
+      goAhead = (permissionResult == PermissionStatus.authorized);
+    } else {
+      goAhead = true;
+    }
+
+    if (goAhead){
+      // code of read or write file in external storage (SD card)
+
+      // Backup file
+      // Check first if the backup file exists
+      final backupDirectory = (Platform.isAndroid) ? await getExternalStorageDirectory() : await getApplicationDocumentsDirectory();
+      String backupPath = join(backupDirectory.path, "Notes.sqlite");
+      File backupFile = File(backupPath);
+      if (await backupFile.exists()) {
+        // Notify user to wait for the restoration
+        _scaffoldKey.currentState.removeCurrentSnackBar();
+        SnackBar snackBar = SnackBar(
+          content: Text(this.interfaceMessage[this.abbreviations][6]),
+        );
+        _scaffoldKey.currentState.showSnackBar(snackBar);
+
+        // Close noteDB before restoration
+        await noteDB.close();
+
+        // Read backup file
+        List backupFileContent = await backupFile.readAsBytes();
+
+        // Write Database file
+        File noteDBFile = File(noteDBPath);
+        await noteDBFile.writeAsBytes(backupFileContent, flush: true);
+
+        // Open noteDB after restoration
+        await _openNoteDB();
+
+        // Update the list of available notes for the opened chapter
+        _noteList = await noteDB.rawQuery(
+            "SELECT verse FROM Notes WHERE book = ? AND chapter = ?",
+            _currentActiveVerse.sublist(0, 2));
+        setState(() {
+          _noteList = _noteList.map((i) => i["verse"]).toList();
+        });
+
+        // Notify user when restoration is done.
+        _scaffoldKey.currentState.removeCurrentSnackBar();
+        snackBar = SnackBar(
+          content: Text(this.interfaceMessage[this.abbreviations][7]),
+        );
+        _scaffoldKey.currentState.showSnackBar(snackBar);
+      } else {
+        _scaffoldKey.currentState.removeCurrentSnackBar();
+        final snackBar = SnackBar(
+          content: Text(this.interfaceMessage[this.abbreviations][8]),
+        );
+        _scaffoldKey.currentState.showSnackBar(snackBar);
+      }
+    } else {
+      print("You have to grant permission!");
+    }
   }*/
 
   Future _launchBibleSearch(BuildContext context) async {
@@ -2221,7 +2459,7 @@ class UniqueBibleState extends State<UniqueBible> {
 
   Future _launchMarvelBible() async {
     String marvelLink = 'https://marvel.bible/index.php?text=${this.config.marvelBible}&b=${_currentActiveVerse[0]}&c=${_currentActiveVerse[1]}&v=${_currentActiveVerse[2]}';
-    if (this.config.bigScreen) {
+    if ((!this.config.alwaysOpenMarvelBibleExternally) && (this.config.bigScreen)) {
       setState(() {
         if (!_display) _display = true;
         _changeWorkspace(3);
@@ -2303,6 +2541,7 @@ class UniqueBibleState extends State<UniqueBible> {
       //if (i == _scrollIndex) {
       RichText richText;
       if (bcvList[2] == _currentActiveVerse[2]) {
+        _activeVerseData = verseData;
         if (this.config.interlinearBibles.contains(module)) {
           List<TextSpan> interlinearSpans =
               InterlinearHelper(this.config.verseTextStyle)
@@ -2773,8 +3012,14 @@ class UniqueBibleState extends State<UniqueBible> {
   List _fetch(String query) {
     List<dynamic> fetchResults = [];
 
+    if (query.contains("：：：")) query = query.replaceAll("：：：", ":::");
     try {
-      // search in a book or books, e.g. John:::Jesus Christ or Matthew, John:::Jesus Christ
+      // search the whole bible, e.g. God.*?love
+      // search in a book, e.g. John:::Jesus Christ
+      // search in multiple books, e.g. Matthew, John:::Jesus Christ
+      // search in a book collection, e.g. Torah:::God.*?love
+      // search in multiple book collections, e.g. Moses, Gospels:::God.*?love
+      // search with combination of book collections and individual books, e.g. Torah, Major Prophets, Gospels, Hebrews:::God.*?love
       if (query.contains(":::")) {
         List queryList = query.split(":::");
         if (queryList.length >= 2) {
@@ -2783,7 +3028,8 @@ class UniqueBibleState extends State<UniqueBible> {
             String bookString = "";
             var bookList = queryList[0].split(",");
             for (var book in bookList) {
-              bookString += "${book.trim()} 0; ";
+              String bookTrim = book.trim();
+              bookString += config.bookCollection[bookTrim] ?? "$bookTrim 0; ";
             }
             bookReferenceList = BibleParser(this.abbreviations)
                 .extractAllReferences(bookString);
@@ -2803,8 +3049,11 @@ class UniqueBibleState extends State<UniqueBible> {
       }
 
       // check if the query contains verse references or not.
+      String possibleReference = (query.contains("：")) ? query.replaceAll("：", ":") : query;
+      RegExp irregularHyphen = new RegExp(r"[－─]");
+      if (irregularHyphen.hasMatch(possibleReference)) possibleReference = possibleReference.replaceAll(irregularHyphen, "-");
       var verseReferenceList =
-          BibleParser(this.abbreviations).extractAllReferences(query);
+          BibleParser(this.abbreviations).extractAllReferences(possibleReference);
       (verseReferenceList.isEmpty)
           ? fetchResults = this.bibles.bible1.search(query)
           : fetchResults =
@@ -3118,10 +3367,18 @@ class UniqueBibleState extends State<UniqueBible> {
     return ListTile(
       title: _buildVerseText(context, verseData),
       onTap: () {
-        if (verseData.first.isNotEmpty) _newVerseSelected(verseData);
+        if (verseData.first.isNotEmpty) {
+          _newVerseSelected(verseData);
+        } else {
+          _longPressedActiveVerse(context, _activeVerseData ?? [_currentActiveVerse, "[...]", ""], true);
+        }
       },
       onLongPress: () {
-        if (verseData.first.isNotEmpty) _longPressedActiveVerse(context, verseData, true);
+        if (verseData.first.isNotEmpty) {
+          _longPressedActiveVerse(context, verseData, true);
+        } else {
+          _longPressedActiveVerse(context, _activeVerseData ?? [_currentActiveVerse, "[...]", ""], true);
+        }
       },
     );
   }
