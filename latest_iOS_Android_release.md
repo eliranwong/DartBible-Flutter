@@ -9,11 +9,11 @@ Version: 3.0
 Build: 1
 
 # Unique Bible App (Android)
-flutterVersionCode = '35'
+versionCode 35
 
-flutterVersionName = '4.3'
+versionName "4.3"
 
 # Unique Bible App Plus (Android)
-flutterVersionCode = '41'
+versionCode 41
 
-flutterVersionName = '4.9'
+versionName "4.9"
