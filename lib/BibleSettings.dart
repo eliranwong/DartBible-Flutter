@@ -622,9 +622,7 @@ class BibleSettingsState extends State<BibleSettings> {
               title: Text(_interface[21], style: style),
               trailing: Switch(
                   value: _showHeadingVerseNoValue,
-                  onChanged: (!_config.plus)
-                      ? null
-                      : (bool value) {
+                  onChanged: (bool value) {
                     setState(() {
                       _showHeadingVerseNoValue = value;
                     });
