@@ -18,6 +18,10 @@ Premium version: <a href='https://play.google.com/store/apps/details?id=app.bibl
 FREE version: <a href='https://apps.apple.com/app/unique-bible-app/id1481496200'>https://apps.apple.com/app/unique-bible-app/id1481496200</a><br>
 Premium version: <a href='https://apps.apple.com/app/unique-bible-app-plus/id1480768821?ls=1'>https://apps.apple.com/app/unique-bible-app-plus/id1480768821?ls=1</a>
 
+# Windows / macOS / Chrome OS
+
+Read https://www.uniquebible.app/mobile/tablets-laptops
+
 # ILLUSTRATED User Manual
 
 <a href='https://UniqueBible.app/mobile' target='_blank'>https://UniqueBible.app/mobile</a>
