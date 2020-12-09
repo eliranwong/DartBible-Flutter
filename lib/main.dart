@@ -4,7 +4,7 @@
 import 'dart:io';
 import 'package:flutter/services.dart' show Clipboard, ClipboardData;
 import 'package:flutter/material.dart';
-import 'package:simple_permissions/simple_permissions.dart';
+import 'package:permission_handler/permission_handler.dart';
 import 'package:share/share.dart';
 import 'package:indexed_list_view/indexed_list_view.dart';
 import 'package:swipedetector/swipedetector.dart';
@@ -579,13 +579,70 @@ class UniqueBibleState extends State<UniqueBible> {
         await _backupNotes(oldNoteDBPath, noteDBPath);
       }
     }
-    // backward compatibility to older version of user notes if permission is not granted by Android users.
+
+    final permissionResult = await Permission.storage.request();
+    if (!permissionResult.isGranted) {
+      // backward compatibility to use older path of user notes if permission is not granted by Android users.
+      noteDBPath = oldNoteDBPath;
+      _noPermissionMessage();
+    }
+  }
+
+  Future _backupNotes(String sourceFilePath, String backupPath) async {
+    // references:
+    // https://api.flutter.dev/flutter/dart-io/File/writeAsBytes.html
+    // https://stackoverflow.com/questions/59501445/flutter-how-to-save-a-file-on-ios
+    // https://github.com/tekartik/sqflite/issues/264
+    // https://stackoverflow.com/questions/50561737/getting-permission-to-the-external-storage-file-provider-plugin
+    // https://pub.dev/documentation/permission_handler/latest/
+    // https://developer.apple.com/library/archive/documentation/FileManagement/Conceptual/FileSystemProgrammingGuide/FileSystemOverview/FileSystemOverview.html
+    // https://stackoverflow.com/questions/55220612/how-to-save-a-text-file-in-external-storage-in-ios-using-flutter
+    // https://www.evertop.pl/en/how-to-write-a-simple-downloading-app-with-flutter/
+    // https://developer.apple.com/library/archive/documentation/General/Reference/InfoPlistKeyReference/Articles/iPhoneOSKeys.html#//apple_ref/doc/uid/TP40009252-SW10
+
+    bool goAhead;
     if (Platform.isAndroid) {
-      PermissionStatus permissionResult = await SimplePermissions.requestPermission(Permission. WriteExternalStorage);
-      if (permissionResult != PermissionStatus.authorized) {
-        noteDBPath = oldNoteDBPath;
-        _noPermissionMessage();
+      if (await Permission.storage.request().isGranted) {
+        goAhead = true;
+      } else {
+        goAhead = false;
       }
+    } else {
+      goAhead = true;
+    }
+
+    if (goAhead) {
+      // Notify user to wait for the backup
+      _stopRunningActions();
+      SnackBar snackBar = SnackBar(
+        content: Text(this.interfaceMessage[this.abbreviations][4]),
+      );
+      _scaffoldKey.currentState.showSnackBar(snackBar);
+
+      // Close noteDB before backup
+      //await noteDB.execute("VACUUM");
+      //await noteDB.close();
+
+      // Source File: Note Database file
+      File noteDBFile = File(sourceFilePath);
+      List noteDBFileContent = await noteDBFile.readAsBytes();
+
+      // Writing Backup file
+      File backupFile = File(backupPath);
+      await backupFile.writeAsBytes(noteDBFileContent, flush: true);
+
+      // Delete old database
+      await deleteDatabase(sourceFilePath);
+
+      // Open noteDB after backup
+      //await _openNoteDB();
+
+      // Notify user when backup is done.
+      _scaffoldKey.currentState.removeCurrentSnackBar();
+      snackBar = SnackBar(
+        content: Text(this.interfaceMessage[this.abbreviations][5]),
+      );
+      _scaffoldKey.currentState.showSnackBar(snackBar);
     }
   }
 
@@ -2143,12 +2200,6 @@ class UniqueBibleState extends State<UniqueBible> {
               case "Settings":
                 _openBibleSettings(context);
                 break;
-              /*case "BackupNotes":
-                _backupNotes();
-                break;
-              case "RestoreNotes":
-                _restoreNotes();
-                break;*/
               case "Manual":
                 _launchUserManual();
                 break;
@@ -2164,134 +2215,6 @@ class UniqueBibleState extends State<UniqueBible> {
       ],
     );
   }
-
-  Future _backupNotes(String sourceFilePath, String backupPath) async {
-    // references:
-    // https://api.flutter.dev/flutter/dart-io/File/writeAsBytes.html
-    // https://stackoverflow.com/questions/59501445/flutter-how-to-save-a-file-on-ios
-    // https://github.com/tekartik/sqflite/issues/264
-    // https://stackoverflow.com/questions/50561737/getting-permission-to-the-external-storage-file-provider-plugin
-    // https://pub.dev/packages/simple_permissions
-    // https://developer.apple.com/library/archive/documentation/FileManagement/Conceptual/FileSystemProgrammingGuide/FileSystemOverview/FileSystemOverview.html
-    // https://stackoverflow.com/questions/55220612/how-to-save-a-text-file-in-external-storage-in-ios-using-flutter
-    // https://www.evertop.pl/en/how-to-write-a-simple-downloading-app-with-flutter/
-    // https://developer.apple.com/library/archive/documentation/General/Reference/InfoPlistKeyReference/Articles/iPhoneOSKeys.html#//apple_ref/doc/uid/TP40009252-SW10
-
-    bool goAhead = true;
-    if (Platform.isAndroid) {
-      PermissionStatus permissionResult = await SimplePermissions.requestPermission(Permission. WriteExternalStorage);
-      goAhead = (permissionResult == PermissionStatus.authorized);
-    }
-
-    if (goAhead) {
-      // Notify user to wait for the backup
-      _stopRunningActions();
-      SnackBar snackBar = SnackBar(
-        content: Text(this.interfaceMessage[this.abbreviations][4]),
-      );
-      _scaffoldKey.currentState.showSnackBar(snackBar);
-
-      // Close noteDB before backup
-      //await noteDB.execute("VACUUM");
-      //await noteDB.close();
-
-      // Source File: Note Database file
-      File noteDBFile = File(sourceFilePath);
-      List noteDBFileContent = await noteDBFile.readAsBytes();
-
-      // Writing Backup file
-      File backupFile = File(backupPath);
-      await backupFile.writeAsBytes(noteDBFileContent, flush: true);
-
-      // Delete old database
-      await deleteDatabase(sourceFilePath);
-
-      // Open noteDB after backup
-      //await _openNoteDB();
-
-      // Notify user when backup is done.
-      _scaffoldKey.currentState.removeCurrentSnackBar();
-      snackBar = SnackBar(
-        content: Text(this.interfaceMessage[this.abbreviations][5]),
-      );
-      _scaffoldKey.currentState.showSnackBar(snackBar);
-    }
-  }
-
-  /*Future _restoreNotes() async {
-    // references:
-    // https://api.flutter.dev/flutter/dart-io/File/writeAsBytes.html
-    // https://stackoverflow.com/questions/59501445/flutter-how-to-save-a-file-on-ios
-    // https://github.com/tekartik/sqflite/issues/264
-    // https://stackoverflow.com/questions/50561737/getting-permission-to-the-external-storage-file-provider-plugin
-    // https://pub.dev/packages/simple_permissions
-    // https://developer.apple.com/library/archive/documentation/FileManagement/Conceptual/FileSystemProgrammingGuide/FileSystemOverview/FileSystemOverview.html
-    // https://stackoverflow.com/questions/55220612/how-to-save-a-text-file-in-external-storage-in-ios-using-flutter
-    // https://www.evertop.pl/en/how-to-write-a-simple-downloading-app-with-flutter/
-    // https://developer.apple.com/library/archive/documentation/General/Reference/InfoPlistKeyReference/Articles/iPhoneOSKeys.html#//apple_ref/doc/uid/TP40009252-SW10
-
-    bool goAhead;
-    if (Platform.isAndroid) {
-      PermissionStatus permissionResult = await SimplePermissions.requestPermission(Permission. WriteExternalStorage);
-      goAhead = (permissionResult == PermissionStatus.authorized);
-    } else {
-      goAhead = true;
-    }
-
-    if (goAhead){
-      // code of read or write file in external storage (SD card)
-
-      // Backup file
-      // Check first if the backup file exists
-      final backupDirectory = (Platform.isAndroid) ? await getExternalStorageDirectory() : await getApplicationDocumentsDirectory();
-      String backupPath = join(backupDirectory.path, "Notes.sqlite");
-      File backupFile = File(backupPath);
-      if (await backupFile.exists()) {
-        // Notify user to wait for the restoration
-        _scaffoldKey.currentState.removeCurrentSnackBar();
-        SnackBar snackBar = SnackBar(
-          content: Text(this.interfaceMessage[this.abbreviations][6]),
-        );
-        _scaffoldKey.currentState.showSnackBar(snackBar);
-
-        // Close noteDB before restoration
-        await noteDB.close();
-
-        // Read backup file
-        List backupFileContent = await backupFile.readAsBytes();
-
-        // Write Database file
-        File noteDBFile = File(noteDBPath);
-        await noteDBFile.writeAsBytes(backupFileContent, flush: true);
-
-        // Open noteDB after restoration
-        await _openNoteDB();
-
-        // Update the list of available notes for the opened chapter
-        _noteList = await noteDB.rawQuery(
-            "SELECT verse FROM Notes WHERE book = ? AND chapter = ?",
-            _currentActiveVerse.sublist(0, 2));
-        setState(() {
-          _noteList = _noteList.map((i) => i["verse"]).toList();
-        });
-
-        // Notify user when restoration is done.
-        _scaffoldKey.currentState.removeCurrentSnackBar();
-        snackBar = SnackBar(
-          content: Text(this.interfaceMessage[this.abbreviations][7]),
-        );
-        _scaffoldKey.currentState.showSnackBar(snackBar);
-      } else {
-        _scaffoldKey.currentState.removeCurrentSnackBar();
-        final snackBar = SnackBar(
-          content: Text(this.interfaceMessage[this.abbreviations][8]),
-        );
-        _scaffoldKey.currentState.showSnackBar(snackBar);
-      }
-    } else {
-      print("You have to grant permission!");
-    }
-  }*/
 
   Future _launchBibleSearch(BuildContext context) async {
     _stopRunningActions();
