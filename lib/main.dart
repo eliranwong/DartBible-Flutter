@@ -6,7 +6,7 @@ import 'package:flutter/services.dart' show Clipboard, ClipboardData;
 import 'package:flutter/material.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:share/share.dart';
-import 'package:indexed_list_view/indexed_list_view.dart';
+import 'package:scrollable_positioned_list/scrollable_positioned_list.dart';
 import 'package:swipedetector/swipedetector.dart';
 import 'package:sqflite/sqflite.dart';
 import 'package:flutter_tts/flutter_tts.dart';
@@ -84,13 +84,13 @@ class UniqueBibleState extends State<UniqueBible> {
   List<int> _currentActiveVerse = [0, 0, 0];
   List<Map> _morphology = [];
 
-
   bool _typing = false;
   bool _display = false;
   bool _selection = false;
   List _selectionIndexes = [];
   Bibles bibles;
-  var scrollController;
+  ItemScrollController verseScrollController;
+  ItemPositionsListener versePositionsListener;
   TabController _tabController;
   WebViewController _webViewController;
   int _tabIndex = 0;
@@ -425,6 +425,7 @@ class UniqueBibleState extends State<UniqueBible> {
   }
   */
 
+  // Bible audio
   Future _readVerse() async {
     if ((isStopped) && (_scrollIndex < _data.length)) {
       List item = _data[_scrollIndex];
@@ -454,7 +455,7 @@ class UniqueBibleState extends State<UniqueBible> {
         await flutterTts.setLanguage(this.config.ttsEnglish);
         //en-GB, en-US
       }
-      this.scrollController.jumpToIndex(_scrollIndex);
+      this.verseScrollController.jumpTo(index: _scrollIndex);
       _speak(verse);
     } else {
       _stop();
@@ -794,8 +795,12 @@ class UniqueBibleState extends State<UniqueBible> {
     return 0;
   }
 
-  void _scrollToCurrentActiveVerse() {
-    this.scrollController.jumpToIndex(_scrollIndex);
+  void _scrollToCurrentActiveVerse([bool slowly = false]) {
+    if (slowly) {
+      this.verseScrollController.scrollTo(index: _scrollIndex, duration: Duration(seconds: 2), curve: Curves.easeInOutCubic);
+    } else {
+      this.verseScrollController.jumpTo(index: _scrollIndex);
+    }
   }
 
   void setActiveVerse(BuildContext context, List bcvList) {
@@ -812,6 +817,7 @@ class UniqueBibleState extends State<UniqueBible> {
         instantActions[this.config.instantAction](bcvList, context);
       }
     }
+    _scrollToCurrentActiveVerse();
   }
 
   showTip(List bcvList, [BuildContext context]) {
@@ -973,6 +979,7 @@ class UniqueBibleState extends State<UniqueBible> {
               if (!_display) _display = true;
               showInterlinear(_currentActiveVerse);
             }
+            _scrollToCurrentActiveVerse();
           });
         }
       }
@@ -2408,28 +2415,18 @@ class UniqueBibleState extends State<UniqueBible> {
   }
 
   Widget _buildVerses(BuildContext context) {
-    if (_currentActiveVerse == null) {
-      this.scrollController = IndexedScrollController();
-    } else {
-      this.scrollController = IndexedScrollController(
-        initialIndex: _scrollIndex,
-        initialScrollOffset: 0.0,
-      );
-    }
-    return IndexedListView.builder(
-        padding: EdgeInsets.zero,
-        controller: this.scrollController,
-        // workaround of finite list with IndexedListView:
-        // do not use itemCount in this case
-        // build empty rows with embedded actions
-        // itemCount: _data.length,
-        itemBuilder: (context, i) {
-          return _buildVerseRow(context, i);
-        },
-        emptyItemBuilder: (context, i) {
-          return _buildEmptyVerseRow(i);
-        }
-        );
+    verseScrollController = ItemScrollController();
+    versePositionsListener = ItemPositionsListener.create();
+
+    return ScrollablePositionedList.builder(
+      padding: EdgeInsets.zero,
+      itemCount: _data.length,
+      itemBuilder: (context, i) => _buildVerseRow(context, i),
+      //initialScrollIndex: _scrollIndex,
+      //initialAlignment: 0.0,
+      itemScrollController: verseScrollController,
+      itemPositionsListener: versePositionsListener,
+    );
   }
 
   Widget _buildVerseRow(BuildContext context, int i) {
@@ -2438,159 +2435,141 @@ class UniqueBibleState extends State<UniqueBible> {
     var verseActiveFont = _activeVerseFont;
     var verseNo;
     var verseContent;
-    if ((i >= 0) && (i < _data.length)) {
-      // assign text style here
-      List verseData = _data[i];
-      List bcvList = verseData.first;
-      int book = bcvList.first;
-      String module = verseData.last;
 
-      if ((this.config.hebrewBibles.contains(module)) && (book < 40)) {
-        verseFont = _verseFontHebrew;
-        verseActiveFont = _activeVerseFontHebrew;
-        verseDirection = TextDirection.rtl;
-      } else if (this.config.greekBibles.contains(module)) {
-        verseFont = _verseFontGreek;
-        verseActiveFont = _activeVerseFontGreek;
-      }
-      (_parallelBibles)
-          ? verseNo = "[${bcvList[2]}] [$module] "
-          : verseNo = "[${bcvList[2]}] ";
+    // assign text style here
+    List verseData = _data[i];
+    List bcvList = verseData.first;
+    int book = bcvList.first;
+    String module = verseData.last;
 
-      verseContent = verseData[1];
-      List<TextSpan> wordSpans;
-
-      // check if it is an active verse or not
-      //if (i == _scrollIndex) {
-      RichText richText;
-      if (bcvList[2] == _currentActiveVerse[2]) {
-        _activeVerseData = verseData;
-        if (this.config.interlinearBibles.contains(module)) {
-          List<TextSpan> interlinearSpans =
-              InterlinearHelper(this.config.verseTextStyle)
-                  .getInterlinearSpan(module, verseContent, book, true);
-          wordSpans = <TextSpan>[
-            TextSpan(text: verseNo, style: _activeVerseNoFont),
-            ...interlinearSpans
-          ];
-        } else {
-          wordSpans = <TextSpan>[
-            TextSpan(text: verseNo, style: _activeVerseNoFont),
-            TextSpan(text: verseContent, style: verseActiveFont)
-          ];
-        }
-        richText = RichText(
-          text: TextSpan(
-            style: DefaultTextStyle.of(context).style,
-            children: wordSpans,
-          ),
-          textDirection: verseDirection,
-        );
-        return (_selection)
-            ? CheckboxListTile(
-                title: richText,
-                value: (_selectionIndexes.contains(i)),
-                onChanged: (bool value) => _updateSelection(i, value),
-              )
-            : ListTile(
-                title: richText,
-                onTap: () {
-                  _tapActiveVerse(context, _data[i].first);
-                },
-                onLongPress: () {
-                  _longPressedActiveVerse(context, _data[i]);
-                },
-                trailing: (!this.config.showNotes)
-                    ? null
-                    : IconButton(
-                        tooltip: (_noteList.contains(bcvList[2]))
-                            ? interfaceApp[this.abbreviations][16]
-                            : interfaceApp[this.abbreviations][15],
-                        icon: Icon(
-                          (_noteList.contains(bcvList[2]))
-                              ? Icons.edit
-                              : Icons.note_add,
-                          color: this.config.myColors["blue"],
-                        ),
-                        onPressed: () {
-                          _launchNotePad(context, bcvList);
-                        }),
-              );
-      } else {
-        if (this.config.interlinearBibles.contains(module)) {
-          List<TextSpan> interlinearSpans =
-              InterlinearHelper(this.config.verseTextStyle)
-                  .getInterlinearSpan(module, verseContent, book);
-          wordSpans = <TextSpan>[
-            TextSpan(text: verseNo, style: _verseNoFont),
-            ...interlinearSpans
-          ];
-        } else {
-          wordSpans = <TextSpan>[
-            TextSpan(text: verseNo, style: _verseNoFont),
-            TextSpan(text: verseContent, style: verseFont)
-          ];
-        }
-        richText = RichText(
-          text: TextSpan(
-            style: DefaultTextStyle.of(context).style,
-            children: wordSpans,
-          ),
-          textDirection: verseDirection,
-        );
-        return (_selection)
-            ? CheckboxListTile(
-                title: richText,
-                value: (_selectionIndexes.contains(i)),
-                onChanged: (bool value) => _updateSelection(i, value),
-              )
-            : ListTile(
-                title: richText,
-                trailing: (!this.config.showNotes)
-                    ? null
-                    : IconButton(
-                        tooltip: (_noteList.contains(bcvList[2]))
-                            ? interfaceApp[this.abbreviations][16]
-                            : interfaceApp[this.abbreviations][15],
-                        icon: Icon(
-                          (_noteList.contains(bcvList[2]))
-                              ? Icons.edit
-                              : Icons.note_add,
-                          color: this.config.myColors["blueAccent"],
-                        ),
-                        onPressed: () {
-                          _launchNotePad(context, bcvList);
-                        }),
-                onTap: () {
-                  (module == this.bibles.bible1.module)
-                      ? _scrollIndex = i
-                      : _scrollIndex = (i - 1);
-                  _activeIndex = _scrollIndex;
-                  setActiveVerse(context, _data[i].first);
-                },
-                onLongPress: () {
-                  _longPressedActiveVerse(context, _data[i]);
-                },
-              );
-      }
+    if ((this.config.hebrewBibles.contains(module)) && (book < 40)) {
+      verseFont = _verseFontHebrew;
+      verseActiveFont = _activeVerseFontHebrew;
+      verseDirection = TextDirection.rtl;
+    } else if (this.config.greekBibles.contains(module)) {
+      verseFont = _verseFontGreek;
+      verseActiveFont = _activeVerseFontGreek;
     }
-    return null;
-  }
+    (_parallelBibles)
+        ? verseNo = "[${bcvList[2]}] [$module] "
+        : verseNo = "[${bcvList[2]}] ";
 
-  Widget _buildEmptyVerseRow(int i) {
-    return ListTile(
-      title: Text(
-        "",
-        style: _verseFont,
-      ),
-      onTap: () {
-        if (i < 0) {
-          this.scrollController.jumpToIndex(0);
-        } else if (i > _data.length) {
-          this.scrollController.jumpToIndex(_data.length - 1);
-        }
-      },
-    );
+    verseContent = verseData[1];
+    List<TextSpan> wordSpans;
+
+    // check if it is an active verse or not
+    RichText richText;
+    if (bcvList[2] == _currentActiveVerse[2]) {
+      //_scrollIndex = i;
+      _activeVerseData = verseData;
+      if (this.config.interlinearBibles.contains(module)) {
+        List<TextSpan> interlinearSpans =
+        InterlinearHelper(this.config.verseTextStyle)
+            .getInterlinearSpan(module, verseContent, book, true);
+        wordSpans = <TextSpan>[
+          TextSpan(text: verseNo, style: _activeVerseNoFont),
+          ...interlinearSpans
+        ];
+      } else {
+        wordSpans = <TextSpan>[
+          TextSpan(text: verseNo, style: _activeVerseNoFont),
+          TextSpan(text: verseContent, style: verseActiveFont)
+        ];
+      }
+      richText = RichText(
+        text: TextSpan(
+          style: DefaultTextStyle.of(context).style,
+          children: wordSpans,
+        ),
+        textDirection: verseDirection,
+      );
+      return (_selection)
+          ? CheckboxListTile(
+        title: richText,
+        value: (_selectionIndexes.contains(i)),
+        onChanged: (bool value) => _updateSelection(i, value),
+      )
+          : ListTile(
+        title: richText,
+        onTap: () {
+          _tapActiveVerse(context, _data[i].first);
+        },
+        onLongPress: () {
+          _longPressedActiveVerse(context, _data[i]);
+        },
+        trailing: (!this.config.showNotes)
+            ? null
+            : IconButton(
+            tooltip: (_noteList.contains(bcvList[2]))
+                ? interfaceApp[this.abbreviations][16]
+                : interfaceApp[this.abbreviations][15],
+            icon: Icon(
+              (_noteList.contains(bcvList[2]))
+                  ? Icons.edit
+                  : Icons.note_add,
+              color: this.config.myColors["blue"],
+            ),
+            onPressed: () {
+              _launchNotePad(context, bcvList);
+            }),
+      );
+    } else {
+      if (this.config.interlinearBibles.contains(module)) {
+        List<TextSpan> interlinearSpans =
+        InterlinearHelper(this.config.verseTextStyle)
+            .getInterlinearSpan(module, verseContent, book);
+        wordSpans = <TextSpan>[
+          TextSpan(text: verseNo, style: _verseNoFont),
+          ...interlinearSpans
+        ];
+      } else {
+        wordSpans = <TextSpan>[
+          TextSpan(text: verseNo, style: _verseNoFont),
+          TextSpan(text: verseContent, style: verseFont)
+        ];
+      }
+      richText = RichText(
+        text: TextSpan(
+          style: DefaultTextStyle.of(context).style,
+          children: wordSpans,
+        ),
+        textDirection: verseDirection,
+      );
+      return (_selection)
+          ? CheckboxListTile(
+        title: richText,
+        value: (_selectionIndexes.contains(i)),
+        onChanged: (bool value) => _updateSelection(i, value),
+      )
+          : ListTile(
+        title: richText,
+        trailing: (!this.config.showNotes)
+            ? null
+            : IconButton(
+            tooltip: (_noteList.contains(bcvList[2]))
+                ? interfaceApp[this.abbreviations][16]
+                : interfaceApp[this.abbreviations][15],
+            icon: Icon(
+              (_noteList.contains(bcvList[2]))
+                  ? Icons.edit
+                  : Icons.note_add,
+              color: this.config.myColors["blueAccent"],
+            ),
+            onPressed: () {
+              _launchNotePad(context, bcvList);
+            }),
+        onTap: () {
+          (module == this.bibles.bible1.module)
+              ? _scrollIndex = i
+              : _scrollIndex = (i - 1);
+          _activeIndex = _scrollIndex;
+          setActiveVerse(context, _data[i].first);
+        },
+        onLongPress: () {
+          _longPressedActiveVerse(context, _data[i]);
+        },
+      );
+    }
   }
 
   void _tapActiveVerse(context, bcvList) {
