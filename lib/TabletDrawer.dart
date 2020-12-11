@@ -8,18 +8,20 @@ import 'Tools.dart';
 class TabletDrawer extends StatefulWidget {
   final Config config;
   final Bibles bibles;
+  final List _chapterHeadings;
   final Function onTap;
 
-  TabletDrawer(this.config, this.bibles, this.onTap);
+  TabletDrawer(this.config, this.bibles, this._chapterHeadings, this.onTap);
 
   @override
-  TabletDrawerState createState() => TabletDrawerState(this.config, this.bibles, this.onTap);
+  TabletDrawerState createState() => TabletDrawerState(this.config, this.bibles, this._chapterHeadings, this.onTap);
 }
 
 class TabletDrawerState extends State<TabletDrawer> {
   final Config config;
   final Bibles bibles;
-  Bible bible, headings;
+  Bible bible;
+  final List _chapterHeadings;
 
   Function onTap;
 
@@ -90,11 +92,10 @@ class TabletDrawerState extends State<TabletDrawer> {
     "SC": ["取消", "收藏", "删除", "收藏？", "删除？"],
   };
 
-  TabletDrawerState(this.config, this.bibles, this.onTap);
+  TabletDrawerState(this.config, this.bibles, this._chapterHeadings, this.onTap);
 
   void updateInterface() {
     bible = bibles.bible1;
-    headings = bibles.headings;
 
     this.abbreviations = this.config.abbreviations;
     if (_updateCurrentActiveVerse) {
@@ -197,13 +198,10 @@ class TabletDrawerState extends State<TabletDrawer> {
   Widget _buildHeadingList(BuildContext context) {
     List<Widget> headingRowList;
     if ((_currentActiveVerse.join(".") == "0.0.0") ||
-        (headings?.data == null)) {
+        (_chapterHeadings == null)) {
       headingRowList = [_emptyRow(context)];
     } else {
-      List headingsList =
-      headings.openSingleChapter([headingBook, _selectedChapter, 0]);
-      headingRowList =
-          headingsList.map((i) => _buildHeadingRow(context, i)).toList();
+      headingRowList = _chapterHeadings.map((i) => _buildHeadingRow(context, i)).toList();
     }
     return ExpansionTile(
       title: Text(this.interfaceApp[this.abbreviations][11],

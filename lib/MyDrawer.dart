@@ -7,22 +7,22 @@ import 'Tools.dart';
 
 class MyDrawer extends StatefulWidget {
   final Config config;
-  final Bible _bible, _headings;
-  final List _currentActiveVerse;
+  final Bible _bible;
+  final List _currentActiveVerse, _chapterHeadings;
   final Function onTap;
 
-  MyDrawer(this.config, this._bible, this._headings, this._currentActiveVerse,
+  MyDrawer(this.config, this._bible, this._chapterHeadings, this._currentActiveVerse,
       this.onTap);
 
   @override
   _MyDrawerState createState() => _MyDrawerState(this.config, this._bible,
-      this._headings, this._currentActiveVerse, this.onTap);
+      this._chapterHeadings, this._currentActiveVerse, this.onTap);
 }
 
 class _MyDrawerState extends State<MyDrawer> {
   final Config config;
-  final Bible _bible, _headings;
-  final List _currentActiveVerse;
+  final Bible _bible;
+  final List _currentActiveVerse, _chapterHeadings;
 
   Function onTap;
 
@@ -91,7 +91,7 @@ class _MyDrawerState extends State<MyDrawer> {
     "SC": ["取消", "收藏", "删除", "收藏？", "删除？"],
   };
 
-  _MyDrawerState(this.config, this._bible, this._headings,
+  _MyDrawerState(this.config, this._bible, this._chapterHeadings,
       this._currentActiveVerse, this.onTap) {
     this.abbreviations = this.config.abbreviations;
     this._selectedBook = this._currentActiveVerse.first;
@@ -216,14 +216,14 @@ class _MyDrawerState extends State<MyDrawer> {
 
   Widget _buildHeadingList(BuildContext context) {
     List<Widget> headingRowList;
+    //if ((_currentActiveVerse.join(".") == "0.0.0") ||
+    //         (_headings?.data == null)) {
     if ((_currentActiveVerse.join(".") == "0.0.0") ||
-        (_headings?.data == null)) {
+        (_chapterHeadings == null)) {
       headingRowList = [_emptyRow(context)];
     } else {
-      List headings =
-          _headings.openSingleChapter([_headingBook, _selectedChapter, 0]);
-      headingRowList =
-          headings.map((i) => _buildHeadingRow(context, i)).toList();
+      //List headings = _headings.openSingleChapter([_headingBook, _selectedChapter, 0]);
+      headingRowList = _chapterHeadings.map((i) => _buildHeadingRow(context, i)).toList();
     }
     return ExpansionTile(
       title: Text(this.interfaceApp[this.abbreviations][11],

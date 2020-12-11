@@ -203,17 +203,12 @@ class Config {
     "OHGB"
   ];
 
-  bool bigScreen = false;
-  bool showNotes = false;
-  bool showDrawer = true;
-  bool showHeadingVerseNo = false;
-  bool alwaysOpenMarvelBibleExternally = false;
+  bool bigScreen = false, showNotes = false, showFlags = false, showDrawer = true;
+  bool showHeadingVerseNo = false, alwaysOpenMarvelBibleExternally = false;
   double fontSize = 20.0;
   String abbreviations = "ENG";
-  String bible1 = "KJV";
-  String bible2 = "NET";
-  String marvelBible = "MAB";
-  String iBible = "OHGBi";
+  String bible1 = "KJV", bible2 = "NET", iBible = "OHGBi";
+  String marvelBible = "MAB", marvelCommentary = "cCBSC";
   List<List<int>> historyActiveVerse = [
     [43, 3, 16]
   ];
@@ -227,9 +222,7 @@ class Config {
   int favouriteAction = 1;
   int backgroundColor = 0;
   double speechRate = (Platform.isAndroid) ? 1.0 : 0.5;
-  String ttsChinese = "zh-CN";
-  String ttsEnglish = "en-GB";
-  String ttsGreek = "modern";
+  String ttsChinese = "zh-CN", ttsEnglish = "en-GB", ttsGreek = "modern";
 
   Map myColors;
   Map verseTextStyle;
@@ -313,6 +306,11 @@ class Config {
     } else {
       this.showNotes = prefs.getBool("showNotes");
     }
+    if (prefs.getBool("showFlags") == null) {
+      prefs.setBool("showFlags", this.showFlags);
+    } else {
+      this.showFlags = prefs.getBool("showFlags");
+    }
     if (prefs.getBool("showDrawer") == null) {
       prefs.setBool("showDrawer", this.showDrawer);
     } else {
@@ -352,6 +350,11 @@ class Config {
       prefs.setString("marvelBible", this.marvelBible);
     } else {
       this.marvelBible = prefs.getString("marvelBible");
+    }
+    if (prefs.getString("marvelCommentary") == null) {
+      prefs.setString("marvelCommentary", this.marvelCommentary);
+    } else {
+      this.marvelCommentary = prefs.getString("marvelCommentary");
     }
     if (prefs.getString("iBible") == null) {
       prefs.setString("iBible", this.iBible);
@@ -448,6 +451,8 @@ class Config {
       this.bigScreen = prefs.getBool("bigScreen");
     if (prefs.getBool("showNotes") == null)
       this.showNotes = prefs.getBool("showNotes");
+    if (prefs.getBool("showFlags") == null)
+      this.showFlags = prefs.getBool("showFlags");
     if (prefs.getBool("showDrawer") == null)
       this.showDrawer = prefs.getBool("showDrawer");
     if (prefs.getBool("showHeadingVerseNo") == null)
@@ -464,6 +469,8 @@ class Config {
       this.bible2 = prefs.getString("bible2");
     if (prefs.getString("marvelBible") != null)
       this.marvelBible = prefs.getString("marvelBible");
+    if (prefs.getString("marvelCommentary") != null)
+      this.marvelCommentary = prefs.getString("marvelCommentary");
     if (prefs.getString("iBible") != null)
       this.iBible = prefs.getString("iBible");
     if (prefs.getString("ttsEnglish") != null)
@@ -520,6 +527,9 @@ class Config {
       case "showNotes":
         await prefs.setBool(feature, newSetting as bool);
         break;
+      case "showFlags":
+        await prefs.setBool(feature, newSetting as bool);
+        break;
       case "showDrawer":
         await prefs.setBool(feature, newSetting as bool);
         break;
@@ -542,6 +552,9 @@ class Config {
         await prefs.setString(feature, newSetting as String);
         break;
       case "marvelBible":
+        await prefs.setString(feature, newSetting as String);
+        break;
+      case "marvelCommentary":
         await prefs.setString(feature, newSetting as String);
         break;
       case "iBible":
