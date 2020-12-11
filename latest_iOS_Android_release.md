@@ -1,19 +1,19 @@
 # Unique Bible App (iOS)
-Version: 2.7
+Version: 2.8
 
 Build: 1
 
 # Unique Bible App Plus (iOS)
-Version: 3.1
+Version: 3.2
 
 Build: 1
 
 # Unique Bible App (Android)
-versionCode 36
+versionCode 37
 
-versionName "4.4"
+versionName "4.5"
 
 # Unique Bible App Plus (Android)
-versionCode 42
+versionCode 43
 
-versionName "5.0"
+versionName "5.1"
