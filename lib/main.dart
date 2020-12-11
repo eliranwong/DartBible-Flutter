@@ -7,6 +7,8 @@ import 'package:flutter/services.dart' show Clipboard, ClipboardData;
 import 'package:flutter/material.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:share/share.dart';
+//import 'package:device_info/device_info.dart';
+import 'package:connectivity/connectivity.dart';
 import 'package:scrollable_positioned_list/scrollable_positioned_list.dart';
 import 'package:swipedetector/swipedetector.dart';
 import 'package:sqflite/sqflite.dart';
@@ -358,10 +360,17 @@ class UniqueBibleState extends State<UniqueBible> {
   @override
   initState() {
     super.initState();
+
+    // initiate tts plugin
     initTts();
+
     // Using hybrid composition for webview v1.0.7+; read https://pub.dev/packages/webview_flutter
     if (Platform.isAndroid) WebView.platform = SurfaceAndroidWebView();
+
+    // setup app configurations
     this.config = Config();
+
+    // load data and setup interface
     _setup();
   }
 
@@ -658,6 +667,19 @@ class UniqueBibleState extends State<UniqueBible> {
     _scaffoldKey.currentState.showSnackBar(snackBar);
   }
 
+  Future _checkInternetConnection() async {
+    var connectivityResult = await (Connectivity().checkConnectivity());
+    if (connectivityResult == ConnectivityResult.none) {
+      _stopRunningActions();
+      Map noInternetMessage = {
+        "ENG": "No internet connection is detected!",
+        "TC": "未檢測到互聯網連接！",
+        "SC": "未检测到互联网连接！",
+      };
+      showSnackbarMessage(noInternetMessage[this.abbreviations]);
+    }
+  }
+
   Future _launchNotesBackupPage() async {
     _stopRunningActions();
     String url = "https://www.uniquebible.app/mobile/user-notes/back-up";
@@ -729,7 +751,13 @@ class UniqueBibleState extends State<UniqueBible> {
   }
 
   Future scrollOnLaunch() async {
-    // Wait for 1 second before scrolling.
+    /*DeviceInfoPlugin deviceInfo = DeviceInfoPlugin();
+    AndroidDeviceInfo androidInfo = await deviceInfo.androidInfo;
+    if (int.parse(androidInfo.version.release) >= 10) {
+      WebView.platform = SurfaceAndroidWebView();
+    }*/
+
+    // Wait for 1 second before the app is ready to scroll to the last opened verse.
     await new Future.delayed(const Duration(seconds : 1));
     _scrollToCurrentActiveVerse();
   }
@@ -947,7 +975,9 @@ class UniqueBibleState extends State<UniqueBible> {
   Future _newVerseSelected(List selected) async {
     if (selected.first.isNotEmpty) {
       await _loadHeadings();
-      _scrollToCurrentActiveVerse();
+      setState(() {
+        _scrollToCurrentActiveVerse();
+      });
 
       List selectedBcvList = List<int>.from(selected.first);
       String selectedBible = selected.last;
@@ -2442,6 +2472,7 @@ class UniqueBibleState extends State<UniqueBible> {
   }
 
   Future _launchMarvelBible() async {
+    _checkInternetConnection();
     String marvelLink =
         'https://marvel.bible/index.php?text=${this.config.marvelBible}&b=${_currentActiveVerse[0]}&c=${_currentActiveVerse[1]}&v=${_currentActiveVerse[2]}';
     if ((!this.config.alwaysOpenMarvelBibleExternally) &&
@@ -2463,6 +2494,7 @@ class UniqueBibleState extends State<UniqueBible> {
   }
 
   Future _launchMarvelCommentary() async {
+    _checkInternetConnection();
     String marvelLink =
         'https://marvel.bible/index.php?text=${this.config.marvelCommentary}&b=${_currentActiveVerse[0]}&c=${_currentActiveVerse[1]}&v=${_currentActiveVerse[2]}';
     if ((!this.config.alwaysOpenMarvelBibleExternally) &&

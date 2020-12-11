@@ -47,6 +47,7 @@ class BibleSettingsState extends State<BibleSettings> {
       "Instant Interlinear",
       "Show Heading Verse No.",
       "Open Marvel.Bible Externally",
+      "Default Marvel Commentary", // 23
     ],
     "TC": [
       "設定",
@@ -68,10 +69,11 @@ class BibleSettingsState extends State<BibleSettings> {
       "希臘語發聲",
       "大屏幕模式",
       "次選聖經",
-      "預設 Marvel.Bible",
+      "預設 Marvel 聖經",
       "即時原文逐字翻譯",
       "在標題前顯示節數",
       "使用外置瀏覽器開啟 Marvel.Bible",
+      "預設 Marvel 釋經書", // 23
     ],
     "SC": [
       "设定",
@@ -93,10 +95,11 @@ class BibleSettingsState extends State<BibleSettings> {
       "希腊语发声",
       "大屏幕模式",
       "次选圣经",
-      "预设 Marvel.Bible",
+      "预设 Marvel 圣经",
       "即时原文逐字翻译",
       "在标题前显示节数",
       "使用外置浏览器开启 Marvel.Bible",
+      "预设 Marvel 释经书", // 23
     ],
   };
 
@@ -365,39 +368,8 @@ class BibleSettingsState extends State<BibleSettings> {
   }
 
   Widget _bibleSettings(BuildContext context) {
-    Map<String, String> marvelCommentaries = {
-      "Barnes": "Notes on the Old and New Testaments (Barnes) [26 vol.]",
-      "Benson": "Commentary on the Old and New Testaments (Benson) [5 vol.]",
-      "BI": "Biblical Illustrator (Exell) [58 vol.]",
-      "Brooks": "Complete Summary of the Bible (Brooks) [2 vol.]",
-      "Calvin": "John Calvin's Commentaries (Calvin) [22 vol.]",
-      "Clarke": "Commentary on the Bible (Clarke) [6 vol.]",
-      "CBSC": "Cambridge Bible for Schools and Colleges (Cambridge) [57 vol.]",
-      "CECNT": "Critical And Exegetical Commentary on the NT (Meyer) [20 vol.]",
-      "CGrk": "Cambridge Greek Testament for Schools and Colleges (Cambridge) [21 vol.]",
-      "CHP": "Church Pulpit Commentary (Nisbet) [12 vol.]",
-      "CPBST": "College Press Bible Study Textbook Series (College) [59 vol.]",
-      "EBC": "Expositor's Bible Commentary (Nicoll) [49 vol.]",
-      "ECER": "Commentary for English Readers (Ellicott) [8 vol.]",
-      "EGNT": "Expositor's Greek New Testament (Nicoll) [5 vol.]",
-      "GCT": "Greek Testament Commentary (Alford) [4 vol.]",
-      "Gill": "Exposition of the Entire Bible (Gill) [9 vol.]",
-      "Henry": "Exposition of the Old and New Testaments (Henry) [6 vol.]",
-      "HH": "Horæ Homileticæ (Simeon) [21 vol.]",
-      "ICCNT": "International Critical Commentary, NT (1896-1929) [16 vol.]",
-      "JFB": "Jamieson, Fausset, and Brown Commentary (JFB) [6 vol.]",
-      "KD": "Commentary on the Old Testament (Keil & Delitzsch) [10 vol.]",
-      "Lange": "Commentary on the Holy Scriptures: Critical, Doctrinal, and Homiletical (Lange) [25 vol.]",
-      "MacL": "Expositions of Holy Scripture (MacLaren) [32 vol.]",
-      "PHC": "Preacher's Complete Homiletical Commentary (Exell) [37 vol.]",
-      "Pulpit": "Pulpit Commentary (Spence) [23 vol.]",
-      "Rob": "Word Pictures in the New Testament (Robertson) [6 vol.]",
-      "Spur": "Spurgeon's Expositions on the Bible (Spurgeon) [3 vol.]",
-      "Vincent": "Word Studies in the New Testament (Vincent) [4 vol.]",
-      "Wesley": "John Wesley's Notes on the Whole Bible (Wesley) [3 vol.]",
-      "Whedon": "Commentary on the Old and New Testaments (Whedon) [14 vol.]",
-    };
-    List<String> commentaryAbb = marvelCommentaries.keys.toList()..sort();
+
+    List<String> commentaryAbb = _config.marvelCommentaries.keys.toList()..sort();
 
     TextStyle style = (int.parse(_colorDegreeValue) >= 500)
         ? TextStyle(color: Colors.grey[300])
@@ -521,6 +493,7 @@ class BibleSettingsState extends State<BibleSettings> {
             ),
             ListTile(
               title: Text(_interface[2], style: style),
+              subtitle: Text(_config.allBibleMap[_moduleValue], style: subtitleStyle),
               trailing: DropdownButton<String>(
                 style: style,
                 underline: dropdownUnderline,
@@ -543,6 +516,7 @@ class BibleSettingsState extends State<BibleSettings> {
             ),
             ListTile(
               title: Text(_interface[18], style: style),
+              subtitle: Text(_config.allBibleMap[_moduleValue2], style: subtitleStyle),
               trailing: DropdownButton<String>(
                 style: style,
                 underline: dropdownUnderline,
@@ -670,6 +644,7 @@ class BibleSettingsState extends State<BibleSettings> {
             ),
             ListTile(
               title: Text(_interface[20], style: style),
+              subtitle: Text(_config.allBibleMap[_iBible], style: subtitleStyle),
               trailing: DropdownButton<String>(
                 style: style,
                 underline: dropdownUnderline,
@@ -874,8 +849,8 @@ class BibleSettingsState extends State<BibleSettings> {
               ),
             ),
             ListTile(
-              title: Text(_interface[19], style: style),
-              subtitle: Text(marvelCommentaries[_marvelCommentary], style: subtitleStyle),
+              title: Text(_interface[23], style: style),
+              subtitle: Text(_config.marvelCommentaries[_marvelCommentary], style: subtitleStyle),
               trailing: DropdownButton<String>(
                 style: style,
                 underline: dropdownUnderline,
