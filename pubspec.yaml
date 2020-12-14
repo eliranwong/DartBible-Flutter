@@ -54,6 +54,9 @@ dependencies:
   permission_handler: ^5.0.1+1
   #device_info: ^1.0.0
   connectivity: ^2.0.2
+  lpinyin: ^1.1.0
+  #pinyinizer: ^1.0.2
+  lemmatizer: ^0.0.1
 
 # Run the following command:
 # flutter pub run flutter_launcher_icons:main
