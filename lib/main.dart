@@ -9,6 +9,9 @@ import 'package:permission_handler/permission_handler.dart';
 import 'package:share/share.dart';
 //import 'package:device_info/device_info.dart';
 import 'package:connectivity/connectivity.dart';
+import 'package:lpinyin/lpinyin.dart';
+//import 'package:pinyinizer/pinyinizer.dart';
+import 'package:lemmatizer/lemmatizer.dart';
 import 'package:scrollable_positioned_list/scrollable_positioned_list.dart';
 import 'package:swipedetector/swipedetector.dart';
 import 'package:sqflite/sqflite.dart';
@@ -18,6 +21,7 @@ import 'package:path/path.dart';
 import 'package:flutter/gestures.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 import 'config.dart';
+import 'appTranslation.dart';
 import 'Bibles.dart';
 import 'BibleSearchDelegate.dart';
 import 'TopicSearchDelegate.dart';
@@ -64,9 +68,14 @@ class UniqueBibleState extends State<UniqueBible> {
   List _noteList = [];
   // Headings on opened chapter
   List chapterHeadings = [], chapterHeadingsList = [];
-
+  // search query
   String query = '';
+
+  // Container for active bible data
+  Bibles bibles;
+  // option of having the primary and the secondary bible displayed in parallel mode
   bool _parallelBibles = false;
+  // Bible chapter data; each item is a list containing [bcvList, verseText, moduleText]
   List<dynamic> _data = [
     [
       [0, 0, 0],
@@ -74,24 +83,30 @@ class UniqueBibleState extends State<UniqueBible> {
       ""
     ]
   ];
+  // Variables to work with previous search interface
+  final _pageSize = 20;
+  List _displayData = [
+    ["", "[...]", ""]
+  ];
+  List _displayChapter = [
+    ["", "[Open a Chapter HERE]", ""]
+  ];
+  List _rawData = [];
+  // Data of actively selected verse, it is a list [bcvList, verseText, moduleText]
   List<dynamic> _activeVerseData;
+  // A list of book, chapter and verse numbers of the actively selected verse.
   List<int> _currentActiveVerse = [0, 0, 0];
+  // List containing morphology data
   List<Map> _morphology = [];
 
-  bool _typing = false;
-  bool _display = false;
-  bool _selection = false;
+  bool _typing = false, _display = false, _selection = false;
   List _selectionIndexes = [];
-  Bibles bibles;
   ItemScrollController verseScrollController;
   ItemPositionsListener versePositionsListener;
   TabController _tabController;
-  WebViewController _webViewController1;
-  WebViewController _webViewController2;
-  int _tabIndex = 0;
-  int _scrollIndex = 0;
-  int _activeIndex = 0;
-  Config config;
+  WebViewController _webViewController1, _webViewController2;
+  int _tabIndex = 0, _scrollIndex = 0, _activeIndex = 0;
+  Config config = Config();
   var _verseNoFont, _verseFont, _verseFontHebrew, _verseFontGreek;
   var _activeVerseNoFont,
       _activeVerseFont,
@@ -109,266 +124,47 @@ class UniqueBibleState extends State<UniqueBible> {
     color: Colors.blue,
   );
 
+  // variable to work with translations
   String abbreviations = "ENG";
-  Map interfaceApp = {
-    "ENG": [
-      "Unique Bible App",
-      "Navigation menu",
-      "Search",
-      "Quick swap",
-      "Settings",
-      "Parallel mode",
-      "Favourites",
-      "History",
-      "Books",
-      "Chapters",
-      "Timelines",
-      "Big Screen Layout",
-      "Small Screen Layout",
-      "Notes",
-      "Contact",
-      "New Note",
-      "Edit Note",
-      "Big Screen",
-      "Small Screen",
-      "Show ",
-      "Hide ",
-      "Menu",
-      "Open '",
-      "' Here",
-      "New Verse",
-      "Open a Chapter HERE",
-      "Back up ",
-      "Restore ",
-      "Flags", //28
-    ],
-    "TC": [
-      "跨平台聖經工具",
-      "菜單",
-      "搜索",
-      "快速轉換",
-      "設定",
-      "平衡模式",
-      "收藏",
-      "歷史",
-      "書卷",
-      "章",
-      "時序圖",
-      "大屏幕設定",
-      "小屏幕設定",
-      "筆記",
-      "聯絡",
-      "新增筆記",
-      "修改筆記",
-      "大屏幕設定",
-      "小屏幕設定",
-      "顯示",
-      "隱藏",
-      "菜單",
-      "在這裡打開【",
-      "】",
-      "新章節",
-      "在這裡打開經文",
-      "備份",
-      "還原",
-      "標題提示", //28
-    ],
-    "SC": [
-      "跨平台圣经工具",
-      "菜单",
-      "搜索",
-      "快速转换",
-      "设定",
-      "平衡模式",
-      "收藏",
-      "历史",
-      "书卷",
-      "章",
-      "时序图",
-      "大屏幕设定",
-      "小屏幕设定",
-      "笔记",
-      "联络",
-      "新增笔记",
-      "修改笔记",
-      "大屏幕设定",
-      "小屏幕设定",
-      "显示",
-      "隐藏",
-      "菜单",
-      "在这里打开【",
-      "】",
-      "新章节",
-      "在这里打开经文",
-      "备份",
-      "还原",
-      "标题提示", //28
-    ],
-  };
+  final Map interfaceApp = AppTranslation().interfaceApp,
+      interfaceBottom = AppTranslation().interfaceBottom,
+      interfaceMessage = AppTranslation().interfaceMessage,
+      interfaceDialog = AppTranslation().interfaceDialog,
+      interfaceBibleSearch = AppTranslation().interfaceBibleSearch;
 
-  Map interfaceBottom = {
-    "ENG": [
-      "Instant Interlinear",
-      "Bible Topics",
-      "Bible Promises",
-      "Harmonies & Parallels",
-      "Bible People",
-      "Bible Locations",
-      "Share",
-      "Bible Audio",
-      "User Manual",
-      "Workspace",
-      "Back",
-      "Multiple Selection",
-      "Select / Clear All",
-      "Text copied to clipboard.",
-      "You have to select at least a verse for this action.",
-      "Marvel.Bible",
-    ],
-    "TC": [
-      "即時原文逐字翻譯",
-      "聖經主題",
-      "聖經應許",
-      "對觀經文",
-      "聖經人物",
-      "聖經地點",
-      "分享",
-      "聖經語音",
-      "使用手册",
-      "工作間",
-      "回去",
-      "選擇經文",
-      "選擇／清除所有",
-      "文字已複製",
-      "你必須選擇至少一節經文才能啟動此功能。",
-      "Marvel.Bible",
-    ],
-    "SC": [
-      "即时原文逐字翻译",
-      "圣经主题",
-      "圣经应许",
-      "对观经文",
-      "圣经人物",
-      "圣经地点",
-      "分享",
-      "圣经语音",
-      "使用手册",
-      "工作间",
-      "回去",
-      "选择经文",
-      "选择／清除所有",
-      "文字已拷贝",
-      "你必须选择至少一节经文才能启动此功能。",
-      "Marvel.Bible",
-    ],
-  };
-
-  Map interfaceMessage = {
-    "ENG": [
-      "is selected.\n'Tap' it again to open your 'Favourite Action'.\nOr 'press' & 'hold' it for more actions.",
-      "Loading cross-references ...",
-      "Loading bibles for comparison ...",
-      "Added to Favourites!",
-      "Migrating notes ...",
-      "Notes were migrated!",
-    ],
-    "TC": [
-      "被點選。\n再'按'此節可啟動'設定'中的'常用功能'。\n或'長按'可選擇更多功能。",
-      "啟動相關經文 ...",
-      "啟動版本比較 ...",
-      "已收藏",
-      "正在轉移筆記 ...",
-      "筆記已經轉移到最新版本！",
-    ],
-    "SC": [
-      "被点选。\n再'按'此节可启动'设定'中的'常用功能'。\n或'长按'可选择更多功能。",
-      "启动相关经文 ...",
-      "啟動版本比较 ...",
-      "已收藏",
-      "正在转移笔记 ...",
-      "笔记已经转移到最新版本！",
-    ],
-  };
-
-  Map interfaceDialog = {
-    "ENG": [
-      "Select an action:",
-      "Share",
-      "Copy",
-      "Add to Copied Text",
-      "Add to Favourites",
-      "Cross-references",
-      "Version Comparison",
-      "Interlinear",
-      "Morphology",
-    ],
-    "TC": [
-      "功能選項：",
-      "分享",
-      "複製",
-      "增補複製內容",
-      "收藏",
-      "相關經文",
-      "比較版本",
-      "原文逐字翻譯",
-      "原文形態學",
-    ],
-    "SC": [
-      "功能选项：",
-      "分享",
-      "拷贝",
-      "增补拷贝内容",
-      "收藏",
-      "相关经文",
-      "比较版本",
-      "原文逐字翻译",
-      "原文形态学",
-    ],
-  };
-
+  // Variables to work with 3rd party plugin
   // Variables to work with TTS
   FlutterTts flutterTts;
-  dynamic languages;
-  dynamic voices;
+  dynamic languages, voices;
   TtsState ttsState = TtsState.stopped;
   get isPlaying => ttsState == TtsState.playing;
   get isStopped => ttsState == TtsState.stopped;
   Icon _ttsIcon = Icon(Icons.volume_up);
   bool _speakOneVerse = false;
   bool _toolOpened = false;
-
-  // Variables to work with previous search interface
-  final _pageSize = 20;
-  List _displayData = [
-    ["", "[...]", ""]
-  ];
-  List _displayChapter = [
-    ["", "[Open a Chapter HERE]", ""]
-  ];
-  List _rawData = [];
-  Map interfaceBibleSearch = {
-    "ENG": [
-      "is not properly formatted for search. Please correct and try again.",
-      "Clear",
-      "More ...",
-      "Search"
-    ],
-    "TC": ["組成的格式不正確，請更正然後再嘗試", "清空", "更多 …", "搜索"],
-    "SC": ["组成的格式不正确，请更正然后再尝试", "清空", "更多 …", "搜索"],
-  };
+  // Piyinizer
+  //Pinyinizer pinyinizer;
+  // Lemmatizer
+  Lemmatizer lemmatizer;
 
   @override
   initState() {
     super.initState();
 
+    // Initiation for some plugins
+    // Using hybrid composition for webview v1.0.7+; read https://pub.dev/packages/webview_flutter
+    /*DeviceInfoPlugin deviceInfo = DeviceInfoPlugin();
+    AndroidDeviceInfo androidInfo = await deviceInfo.androidInfo;
+    if (int.parse(androidInfo.version.release) >= 10) {
+      WebView.platform = SurfaceAndroidWebView();
+    }*/
+    if (Platform.isAndroid) WebView.platform = SurfaceAndroidWebView();
     // initiate tts plugin
     initTts();
-
-    // Using hybrid composition for webview v1.0.7+; read https://pub.dev/packages/webview_flutter
-    if (Platform.isAndroid) WebView.platform = SurfaceAndroidWebView();
-
-    // setup app configurations
-    this.config = Config();
+    // Pinyinizer
+    //pinyinizer = Pinyinizer();
+    //lemmatizer =  Lemmatizer();
+    // _text = lemmatizer.lemma(_controller.text);
 
     // load data and setup interface
     _setup();
@@ -381,181 +177,63 @@ class UniqueBibleState extends State<UniqueBible> {
     noteDB.close();
   }
 
-  initTts() {
-    flutterTts = FlutterTts();
+  Future _setup() async {
+    // migrate notes written with older versions
+    await _migrateOldNotes();
+    // open the database
+    await _openNoteDB();
 
-    /*
-    if (Platform.isAndroid) {
-      flutterTts.ttsInitHandler(() {
-        _getLanguages();
-        _getVoices();
-      });
-    } else if (Platform.isIOS) {
-      _getLanguages();
-      _getVoices();
-    }
-    */
+    await this.config.setDefault();
+    await flutterTts.setSpeechRate(this.config.speechRate);
 
-    flutterTts.setStartHandler(() {
-      setState(() {
-        ttsState = TtsState.playing;
-      });
-    });
+    this.abbreviations = this.config.abbreviations;
+    this.bibles = Bibles(this.abbreviations);
 
-    flutterTts.setCompletionHandler(() {
-      setState(() {
-        //print("Complete");
-        ttsState = TtsState.stopped;
-        _ttsIcon = Icon(Icons.volume_up);
-      });
-      if (_speakOneVerse) {
-        _speakOneVerse = false;
-      } else if (!_toolOpened) {
-        _scrollIndex += 1;
-        _readVerse();
-      }
-    });
+    // pre-load bible1 data
+    this.bibles.bible1 = Bible(this.config.bible1, this.abbreviations);
+    await this.bibles.bible1.loadData();
 
-    flutterTts.setErrorHandler((msg) {
-      setState(() {
-        ttsState = TtsState.stopped;
-      });
-    });
-  }
+    // pre-load bible headings
+    await _loadHeadings();
 
-  /*
-  Future _getLanguages() async {
-    languages = await flutterTts.getLanguages;
-    //print(languages);
-    if (languages != null) setState(() => languages);
-  }
+    // pre-load bible2 data
+    this.bibles.bible2 = Bible(this.config.bible2, this.abbreviations);
+    ((this.config.bigScreen) && (this.config.instantAction == 1))
+        ? await this.bibles.bible2.loadData()
+        : this.bibles.bible2.loadData();
 
-  Future _getVoices() async {
-    voices = await flutterTts.getVoices;
-    //print(voices);
-    if (voices != null) setState(() => voices);
-  }
-  */
+    // pre-load interlinear bible
+    this.bibles.iBible = Bible(this.config.iBible, this.abbreviations);
+    ((this.config.bigScreen) && (this.config.instantAction == 1))
+        ? await this.bibles.iBible.loadData()
+        : this.bibles.iBible.loadData();
 
-  // Bible audio
-  Future _readVerse() async {
-    if ((isStopped) && (_scrollIndex < _data.length)) {
-      List item = _data[_scrollIndex];
-      List bcvList = item.first;
-      String module = item.last;
-      String verse;
-      bool isHebrew =
-          ((this.config.hebrewBibles.contains(module)) && (bcvList.first < 40));
-      if ((Platform.isAndroid) && isHebrew) {
-        verse = TtsHelper()
-            .workaroundHebrew(this.bibles.tBible.openSingleVerse(bcvList));
-      } else if (this.config.interlinearBibles.contains(module)) {
-        verse = "${item[1]} ｜";
-        verse = verse.replaceAll(RegExp("｜＠.*? ｜"), "");
-      } else {
-        verse = item[1];
-      }
-      if (this.config.chineseBibles.contains(module)) {
-        await flutterTts.setLanguage(this.config.ttsChinese);
-        //zh-CN, yue-HK (Android), zh-HK (iOS)
-      } else if (isHebrew) {
-        (Platform.isAndroid)
-            ? await flutterTts.setLanguage("el-GR")
-            : await flutterTts.setLanguage("he-IL");
-      } else if (this.config.greekBibles.contains(module)) {
-        verse = TtsHelper().removeGreekAccents(verse);
-        await flutterTts.setLanguage("el-GR");
-      } else {
-        await flutterTts.setLanguage(this.config.ttsEnglish);
-        //en-GB, en-US
-      }
-      this.verseScrollController.jumpTo(index: _scrollIndex);
-      _speak(verse);
-    } else {
-      _stop();
-    }
-  }
+    // pre-load transliteration bible
+    this.bibles.tBible = Bible("OHGBt", this.abbreviations);
+    ((this.config.bigScreen) && (this.config.instantAction == 1))
+        ? await this.bibles.tBible.loadData()
+        : this.bibles.tBible.loadData();
 
-  Future _speak(String message) async {
-    if (message != null) {
-      if ((message.isNotEmpty) && (isAllBiblesReady())) {
-        var result = await flutterTts.speak(message);
-        if (result == 1)
-          setState(() {
-            ttsState = TtsState.playing;
-            _ttsIcon = Icon(Icons.stop);
-          });
-      }
-    }
-  }
+    _currentActiveVerse = List<int>.from(this.config.historyActiveVerse.first);
+    await updateChapterFeatures();
 
-  Future _stop() async {
-    var result = await flutterTts.stop();
-    if (result == 1)
-      setState(() {
-        _speakOneVerse = false;
-        ttsState = TtsState.stopped;
-        _ttsIcon = Icon(Icons.volume_up);
-        _scrollIndex = _activeIndex;
-      });
-  }
-
-  void _startSelection() {
-    _stopRunningActions();
     setState(() {
-      _selection = true;
-      _selectionIndexes = List<int>.generate(_data.length, (i) => i);
-    });
-  }
-
-  void _stopSelection() {
-    setState(() {
-      _selection = false;
-    });
-  }
-
-  void _allSelection() {
-    setState(() {
-      if (_selectionIndexes.isNotEmpty) {
-        _selectionIndexes = [];
-      } else {
-        _selectionIndexes = List<int>.generate(_data.length, (i) => i);
+      _data = this.bibles.bible1.openSingleChapter(_currentActiveVerse);
+      _scrollIndex = getScrollIndex();
+      _activeIndex = _scrollIndex;
+      if ((this.config.bigScreen) && (this.config.instantAction == 1)) {
+        if (!_display) _display = true;
+        showInterlinear(_currentActiveVerse);
       }
     });
+    scrollOnLaunch();
   }
 
-  void _updateSelection(int i, bool value) {
-    setState(() {
-      if (value) {
-        _selectionIndexes.add(i);
-        _selectionIndexes.sort();
-      } else {
-        int index = _selectionIndexes.indexOf(i);
-        _selectionIndexes.removeAt(index);
-      }
-    });
-  }
-
-  void _runSelection([bool share = false]) {
-    if (_selectionIndexes.isNotEmpty) {
-      String chapterReference = BibleParser(this.abbreviations)
-          .bcvToChapterReference(_data.first.first);
-      List copyList = _selectionIndexes
-          .map((i) => (_parallelBibles)
-              ? "[${_data[i].first.last}] [${_data[i].last}] ${_data[i][1]}"
-              : "[${_data[i].first.last}] ${_data[i][1]}")
-          .toList();
-      String content = "$chapterReference\n${copyList.join("\n")}";
-      if (share) {
-        Share.share(content);
-      } else {
-        Clipboard.setData(ClipboardData(text: content));
-        showSnackbarMessage(this.interfaceBottom[this.abbreviations][13]);
-      }
-      _stopSelection();
-    } else {
-      showSnackbarMessage(this.interfaceBottom[this.abbreviations][14]);
-    }
+  bool isAllBiblesReady() {
+    return ((this.bibles?.bible1?.data != null) &&
+        (this.bibles?.bible2?.data != null) &&
+        (this.bibles?.iBible?.data != null) &&
+        (this.bibles?.tBible?.data != null));
   }
 
   Future _migrateOldNotes() async {
@@ -698,75 +376,10 @@ class UniqueBibleState extends State<UniqueBible> {
     });
   }
 
-  Future _setup() async {
-    // migrate notes written with older versions
-    await _migrateOldNotes();
-    // open the database
-    await _openNoteDB();
-
-    await this.config.setDefault();
-    await flutterTts.setSpeechRate(this.config.speechRate);
-
-    this.abbreviations = this.config.abbreviations;
-    this.bibles = Bibles(this.abbreviations);
-
-    // pre-load bible1 data
-    this.bibles.bible1 = Bible(this.config.bible1, this.abbreviations);
-    await this.bibles.bible1.loadData();
-
-    // pre-load bible headings
-    await _loadHeadings();
-
-    // pre-load bible2 data
-    this.bibles.bible2 = Bible(this.config.bible2, this.abbreviations);
-    ((this.config.bigScreen) && (this.config.instantAction == 1))
-        ? await this.bibles.bible2.loadData()
-        : this.bibles.bible2.loadData();
-
-    // pre-load interlinear bible
-    this.bibles.iBible = Bible(this.config.iBible, this.abbreviations);
-    ((this.config.bigScreen) && (this.config.instantAction == 1))
-        ? await this.bibles.iBible.loadData()
-        : this.bibles.iBible.loadData();
-
-    // pre-load transliteration bible
-    this.bibles.tBible = Bible("OHGBt", this.abbreviations);
-    ((this.config.bigScreen) && (this.config.instantAction == 1))
-        ? await this.bibles.tBible.loadData()
-        : this.bibles.tBible.loadData();
-
-    _currentActiveVerse = List<int>.from(this.config.historyActiveVerse.first);
-    await updateChapterFeatures();
-
-    setState(() {
-      _data = this.bibles.bible1.openSingleChapter(_currentActiveVerse);
-      _scrollIndex = getScrollIndex();
-      _activeIndex = _scrollIndex;
-      if ((this.config.bigScreen) && (this.config.instantAction == 1)) {
-        if (!_display) _display = true;
-        showInterlinear(_currentActiveVerse);
-      }
-    });
-    scrollOnLaunch();
-  }
-
   Future scrollOnLaunch() async {
-    /*DeviceInfoPlugin deviceInfo = DeviceInfoPlugin();
-    AndroidDeviceInfo androidInfo = await deviceInfo.androidInfo;
-    if (int.parse(androidInfo.version.release) >= 10) {
-      WebView.platform = SurfaceAndroidWebView();
-    }*/
-
     // Wait for 1 second before the app is ready to scroll to the last opened verse.
-    await new Future.delayed(const Duration(seconds : 1));
+    await new Future.delayed(const Duration(seconds: 1));
     _scrollToCurrentActiveVerse();
-  }
-
-  bool isAllBiblesReady() {
-    return ((this.bibles?.bible1?.data != null) &&
-        (this.bibles?.bible2?.data != null) &&
-        (this.bibles?.iBible?.data != null) &&
-        (this.bibles?.tBible?.data != null));
   }
 
   void _nonPlusMessage(String feature) {
@@ -1303,486 +916,6 @@ class UniqueBibleState extends State<UniqueBible> {
     this.bibles.bible2.abbreviations = abbreviations;
   }
 
-  Future _loadXRef(BuildContext context, List bcvList) async {
-    _stopRunningActions();
-    showSnackbarMessage(this.interfaceMessage[this.abbreviations][1]);
-
-    var xRefData = await this.bibles.crossReference(bcvList);
-    _scaffoldKey.currentState.removeCurrentSnackBar();
-
-    if (this.config.bigScreen) {
-      setState(() {
-        if (!_display) _display = true;
-        _rawData = [];
-        _displayData = xRefData;
-        _changeWorkspace(1);
-      });
-    } else {
-      final List selected = await showSearch(
-          context: context,
-          delegate: BibleSearchDelegate(context, this.bibles.bible1,
-              this.interfaceDialog, this.config, xRefData));
-      if (selected != null) {
-        this._displayData = selected.first;
-        _newVerseSelected(this._displayData[selected.last]);
-      }
-    }
-  }
-
-  Future _loadCompare(BuildContext context, List bcvList) async {
-    _stopRunningActions();
-    showSnackbarMessage(this.interfaceMessage[this.abbreviations][2]);
-
-    var compareData =
-        await this.bibles.compareBibles(this.config.compareBibleList, bcvList);
-    _scaffoldKey.currentState.removeCurrentSnackBar();
-
-    if (this.config.bigScreen) {
-      setState(() {
-        if (!_display) _display = true;
-        _rawData = [];
-        _displayData = compareData;
-        _changeWorkspace(1);
-      });
-    } else {
-      final List selected = await showSearch(
-          context: context,
-          delegate: BibleSearchDelegate(
-            context,
-            this.bibles.bible1,
-            this.interfaceDialog,
-            this.config,
-            compareData,
-          ));
-      if (selected != null) {
-        this._displayData = selected.first;
-        _newVerseSelected(this._displayData[selected.last]);
-      }
-    }
-  }
-
-  Future _loadOriginalWord(BuildContext context, List bcvList,
-      [String module, int wordIndex]) async {
-    if (isAllBiblesReady()) {
-      _toolOpened = true;
-      _stopRunningActions();
-      String table = module ?? "OHGB";
-      final List<Map> morphology =
-          await SqliteHelper(this.config).getMorphology(bcvList, table);
-      final selected = await Navigator.push(
-        context,
-        MaterialPageRoute(
-            builder: (context) => OriginalWord(morphology, table, this.config,
-                this.bibles, this.flutterTts, wordIndex)),
-      );
-      if (selected != null) _newVerseSelected(selected);
-      _toolOpened = false;
-    }
-  }
-
-  Future _loadInterlinearView(BuildContext context, List bcvList,
-      [String module]) async {
-    if (isAllBiblesReady()) {
-      _toolOpened = true;
-      _stopRunningActions();
-      String table = module ?? "OHGB";
-      final List<Map> morphology =
-          await SqliteHelper(this.config).getMorphology(bcvList, table);
-      final selected = await Navigator.push(
-        context,
-        MaterialPageRoute(
-            builder: (context) => InterlinearView(morphology, true, table,
-                this.config, this.bibles, this.flutterTts)),
-      );
-      if (selected != null) _newVerseSelected(selected);
-      _toolOpened = false;
-    }
-  }
-
-  Future _loadMorphologyView(BuildContext context, List bcvList,
-      [String module]) async {
-    if (isAllBiblesReady()) {
-      _toolOpened = true;
-      _stopRunningActions();
-      String table = module ?? "OHGB";
-      final List<Map> morphology =
-          await SqliteHelper(this.config).getMorphology(bcvList, table);
-      final selected = await Navigator.push(
-        context,
-        MaterialPageRoute(
-            builder: (context) => MorphologyView(morphology, true, table,
-                this.config, this.bibles, this.flutterTts)),
-      );
-      if (selected != null) _newVerseSelected(selected);
-      _toolOpened = false;
-    }
-  }
-
-  Future _launchNotePad(BuildContext context, List bcvList) async {
-    if (isAllBiblesReady()) {
-      _stopRunningActions();
-
-      if (bcvList.length > 3) bcvList = bcvList.sublist(0, 3);
-
-      List<Map> savedContent = await noteDB.rawQuery(
-          "SELECT * FROM Notes WHERE book = ? AND chapter = ? AND verse = ?",
-          bcvList);
-      String content =
-          (savedContent.isEmpty) ? "" : savedContent.first["content"];
-
-      final selected = await Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (context) =>
-              NotePad(this.config, this.bibles, bcvList, noteDB, content),
-        ),
-      );
-      if (selected != null) _newVerseSelected(selected);
-      await updateChapterFeatures();
-      setState(() {
-        //
-      });
-    }
-  }
-
-  void _launchPromises(BuildContext context) {
-    Map title = {
-      "ENG": this.interfaceBottom["ENG"][2],
-      "TC": this.interfaceBottom["TC"][2],
-      "SC": this.interfaceBottom["SC"][2],
-    };
-    List menuENG = [
-      "Precious Bible Promises I",
-      "Precious Bible Promises II",
-      "Precious Bible Promises III",
-      "Precious Bible Promises IV",
-      "Take Words with You",
-      "Index",
-      "When you ...",
-    ];
-    List menuZh = [
-      "當你 ……",
-      "当你 ……",
-    ];
-    List menu = (this.config.abbreviations == "ENG")
-        ? menuENG
-        : [...menuENG, ...menuZh];
-    _loadTools(
-        context,
-        title,
-        "PROMISES",
-        menu,
-        Icon(
-          Icons.games,
-          color: this.config.myColors["black"],
-        ));
-  }
-
-  void _launchHarmonies(BuildContext context) {
-    Map title = {
-      "ENG": this.interfaceBottom["ENG"][3],
-      "TC": this.interfaceBottom["TC"][3],
-      "SC": this.interfaceBottom["SC"][3],
-    };
-    List menuENG = [
-      "History of Israel I",
-      "History of Israel II",
-      "Gospels I",
-      "Gospels II",
-      "Book of Moses",
-      "Samuel, Kings, Chronicles",
-      "Psalms",
-      "Gospels - (Mark, Matthew, Luke [ordered] + John) x 54",
-      "Gospels - (Mark, Matthew, Luke [unordered]) x 14",
-      "Gospels - (Mark & Matthew ONLY) x 11",
-      "Gospels - (Mark, Matthew & John ONLY) x 4",
-      "Gospels - (Mark & Luke ONLY) x 7",
-      "Gospels - (Mathhew & Luke ONLY) x 32",
-      "Gospels - (Mark ONLY) x 5",
-      "Gospels - (Matthew ONLY) x 30",
-      "Gospels - (Luke ONLY) x 39",
-      "Gospels - (John ONLY) x 61",
-    ];
-    List menuZh = [
-      "摩西五經",
-      "撒母耳記，列王紀，歷代志",
-      "詩篇",
-      "福音書（可，太，路〔順序〕＋ 約） x 54",
-      "福音書（可，太，路〔不順序〕） x 14",
-      "福音書（可，太） x 11",
-      "福音書（可，太，約） x 4",
-      "福音書（可，路） x 7",
-      "福音書（太，路） x 32",
-      "福音書（可〔獨家記載〕） x 5",
-      "福音書（太〔獨家記載〕） x 30",
-      "福音書（路〔獨家記載〕） x 39",
-      "福音書（約〔獨家記載〕） x 61",
-    ];
-    List menu = (this.config.abbreviations == "ENG")
-        ? menuENG
-        : [...menuENG, ...menuZh];
-    _loadTools(
-        context,
-        title,
-        "PARALLEL",
-        menu,
-        Icon(
-          Icons.compare,
-          color: this.config.myColors["black"],
-        ));
-  }
-
-  Future _loadTools(BuildContext context, Map title, String table, List menu,
-      Icon icon) async {
-    if (this.bibles?.bible1?.data != null) {
-      _stopRunningActions();
-      final selected = await Navigator.push(
-        context,
-        MaterialPageRoute(
-            builder: (context) => (this.config.bigScreen)
-                ? Tool(title, table, menu, this.config, this.bibles.bible1,
-                    icon, this.interfaceDialog)
-                : ToolMenu(title, table, menu, this.config, this.bibles.bible1,
-                    icon, this.interfaceDialog)),
-      );
-      if (selected != null) {
-        if (this.config.bigScreen) {
-          if (selected.last == "open") {
-            _newVerseSelected(selected.first);
-          } else {
-            setState(() {
-              if (!_display) _display = true;
-              _rawData = [];
-              _displayData = selected.first;
-              _changeWorkspace(1);
-            });
-          }
-        } else {
-          _rawData = [];
-          _displayData = selected.first;
-          _newVerseSelected(selected.first[selected.last]);
-        }
-      }
-    }
-  }
-
-  Future _loadLocation(BuildContext context, List bcvList,
-      [String module]) async {
-    if (this.bibles?.bible1?.data != null) {
-      _stopRunningActions();
-      String table = module ?? "EXLBL";
-      final List<Map> tools =
-          await SqliteHelper(this.config).getTools(bcvList, table);
-      if (this.config.bigScreen) {
-        final List<Map> tools2 =
-            await SqliteHelper(this.config).getBookTools(bcvList, table);
-
-        final selected = await Navigator.push(
-          context,
-          MaterialPageRoute(
-              builder: (context) => LocationTablet(tools, tools2, this.config)),
-        );
-        if ((selected != null) && (selected.isNotEmpty))
-          _loadLocationVerses(context, selected.first);
-      } else {
-        final List selected = await showSearch(
-          context: context,
-          delegate: LocationSearchDelegate(context, tools, this.config),
-        );
-        if ((selected != null) && (selected.isNotEmpty))
-          _loadLocationVerses(context, selected.first);
-      }
-    }
-  }
-
-  Future _loadLocationVerses(BuildContext context, String locationID) async {
-    _stopRunningActions();
-    final Database db = await SqliteHelper(this.config).initToolsDb();
-    var statement =
-        "SELECT Book, Chapter, Verse FROM EXLBL WHERE LocationID = ? ORDER BY Number";
-    List<Map> tools = await db.rawQuery(statement, [locationID]);
-    db.close();
-    List<List> bcvLists =
-        tools.map((i) => [i["Book"], i["Chapter"], i["Verse"]]).toList();
-    if (this.config.bigScreen) {
-      setState(() {
-        if (!_display) _display = true;
-        _loadRawData(bcvLists);
-        _changeWorkspace(1);
-      });
-    } else {
-      final List selected = await showSearch(
-          context: context,
-          delegate: BibleSearchDelegate(context, this.bibles.bible1,
-              this.interfaceDialog, this.config, [], bcvLists));
-      if (selected != null) {
-        this._displayData = selected.first;
-        _newVerseSelected(this._displayData[selected.last]);
-      }
-    }
-  }
-
-  Future _loadPeople(BuildContext context, List bcvList,
-      [String module]) async {
-    if (this.bibles?.bible1?.data != null) {
-      _stopRunningActions();
-      String table = module ?? "PEOPLE";
-      final List<Map> tools =
-          await SqliteHelper(this.config).getTools(bcvList, table);
-
-      if (this.config.bigScreen) {
-        final selected = await Navigator.push(
-          context,
-          MaterialPageRoute(
-              builder: (context) => PeopleTablet(tools, this.config)),
-        );
-        if (selected != null) _loadPeopleVerses(context, selected);
-      } else {
-        final List selected = await showSearch(
-          context: context,
-          delegate: PeopleSearchDelegate(context, tools, this.config),
-        );
-        if ((selected != null) && (selected.isNotEmpty)) {
-          if (selected.first == 1) {
-            _loadPeopleVerses(context, selected[1]);
-          } else if (selected.first == 0) {
-            _loadRelationship(context, selected[1], selected[2]);
-          }
-        }
-      }
-    }
-  }
-
-  Future _loadPeopleVerses(BuildContext context, int personID) async {
-    _stopRunningActions();
-    final Database db = await SqliteHelper(this.config).initToolsDb();
-    var statement =
-        "SELECT Book, Chapter, Verse FROM PEOPLE WHERE PersonID = ?";
-    List<Map> tools = await db.rawQuery(statement, [personID]);
-    db.close();
-    List<List> bcvLists =
-        tools.map((i) => [i["Book"], i["Chapter"], i["Verse"]]).toList();
-    if (this.config.bigScreen) {
-      setState(() {
-        if (!_display) _display = true;
-        _loadRawData(bcvLists);
-        _changeWorkspace(1);
-      });
-    } else {
-      final List selected = await showSearch(
-          context: context,
-          delegate: BibleSearchDelegate(context, this.bibles.bible1,
-              this.interfaceDialog, this.config, [], bcvLists));
-      if (selected != null) {
-        this._displayData = selected.first;
-        _newVerseSelected(this._displayData[selected.last]);
-      }
-    }
-  }
-
-  Future _loadRelationship(
-      BuildContext context, int personID, String name) async {
-    _stopRunningActions();
-    final Database db = await SqliteHelper(this.config).initToolsDb();
-    var statement =
-        "SELECT PersonID, Name, Sex, Relationship FROM PEOPLERELATIONSHIP WHERE RelatedPersonID = ? AND Relationship != '[Reference]' ORDER BY RelationshipOrder";
-    List<Map> tools = await db.rawQuery(statement, [personID]);
-    db.close();
-    final selected = await Navigator.push(
-      context,
-      MaterialPageRoute(
-          builder: (context) => Relationship(name, tools, this.config,
-              this.bibles.bible1, this.interfaceDialog, _currentActiveVerse)),
-    );
-    if (selected != null) {
-      _loadPeopleVerses(context, selected);
-    }
-  }
-
-  Future _loadTopics(BuildContext context, List bcvList,
-      [String module]) async {
-    if (this.bibles?.bible1?.data != null) {
-      _stopRunningActions();
-      String table = module ?? "EXLBT";
-      final List<Map> tools =
-          await SqliteHelper(this.config).getTopics(bcvList, table);
-
-      if (this.config.bigScreen) {
-        final selected = await Navigator.push(
-          context,
-          MaterialPageRoute(
-              builder: (context) =>
-                  TopicTablet(tools, this.config, this.bibles)),
-        );
-        if ((selected != null) && (selected.isNotEmpty)) {
-          (selected[1] == "search")
-              ? _loadTopicVerses(context, selected.first)
-              : _newVerseSelected(selected);
-        }
-      } else {
-        final List selected = await showSearch(
-          context: context,
-          delegate: TopicSearchDelegate(context, tools, this.config),
-        );
-        if ((selected != null) && (selected.isNotEmpty)) {
-          String entry = selected.first;
-          (selected[1] == "open")
-              ? _loadTopicView(context, entry)
-              : _loadTopicVerses(context, entry);
-        }
-      }
-    }
-  }
-
-  Future _loadTopicView(BuildContext context, String entry) async {
-    _stopRunningActions();
-    List topic = await SqliteHelper(this.config).getTopic(entry);
-    final selected = await Navigator.push(
-      context,
-      MaterialPageRoute(
-          builder: (context) => TopicView(this.config, topic, this.bibles)),
-    );
-    if (selected != null) _newVerseSelected(selected);
-  }
-
-  Future _loadTopicVerses(BuildContext context, String entry) async {
-    _stopRunningActions();
-    final Database db = await SqliteHelper(this.config).initToolsDb();
-    var statement =
-        "SELECT Book, Chapter, Verse, toVerse FROM EXLBT WHERE Entry = ?";
-    List<Map> tools = await db.rawQuery(statement, [entry]);
-    db.close();
-    List<String> bcvStrings = tools
-        .map((i) {
-          if (i["Verse"] == i["toVerse"]) {
-            return "${i["Book"]}.${i["Chapter"]}.${i["Verse"]}";
-          } else {
-            return "${i["Book"]}.${i["Chapter"]}.${i["Verse"]}.${i["Chapter"]}.${i["toVerse"]}";
-          }
-        })
-        .toSet()
-        .toList();
-    List<List> bcvLists = bcvStrings
-        .map((i) => i.split(".").map((i) => int.parse(i)).toList())
-        .toList();
-    if (this.config.bigScreen) {
-      setState(() {
-        if (!_display) _display = true;
-        _loadRawData(bcvLists);
-        _changeWorkspace(1);
-      });
-    } else {
-      final List selected = await showSearch(
-          context: context,
-          delegate: BibleSearchDelegate(context, this.bibles.bible1,
-              this.interfaceDialog, this.config, [], bcvLists));
-      if (selected != null) {
-        this._displayData = selected.first;
-        _newVerseSelected(this._displayData[selected.last]);
-      }
-    }
-  }
-
   bool _toggleParallelBibles() {
     _stopRunningActions();
     if ((_parallelBibles) && (this.bibles?.bible1?.data != null)) {
@@ -1983,6 +1116,7 @@ class UniqueBibleState extends State<UniqueBible> {
               _scrollIndex = getScrollIndex();
               _activeIndex = _scrollIndex;
             });
+            _scrollToCurrentActiveVerse();
           },
           tooltip: this.interfaceApp[this.abbreviations][5],
           child: Icon(Icons.add),
@@ -2143,6 +1277,26 @@ class UniqueBibleState extends State<UniqueBible> {
               "${(this.config.showNotes) ? this.interfaceApp[this.abbreviations][20] : this.interfaceApp[this.abbreviations][19]}${this.interfaceApp[this.abbreviations][13]}"),
         ),
       ),
+      PopupMenuItem<String>(
+        value: "showTransliteration",
+        child: ListTile(
+          leading: Icon((this.config.showTransliteration)
+              ? Icons.visibility_off
+              : Icons.visibility),
+          title: Text(
+              "${(this.config.showTransliteration) ? this.interfaceApp[this.abbreviations][20] : this.interfaceApp[this.abbreviations][19]}${this.interfaceApp[this.abbreviations][30]}"),
+        ),
+      ),
+      PopupMenuItem<String>(
+        value: "Pinyin",
+        child: ListTile(
+          leading: Icon((this.config.showPinyin)
+              ? Icons.visibility_off
+              : Icons.visibility),
+          title: Text(
+              "${(this.config.showPinyin) ? this.interfaceApp[this.abbreviations][20] : this.interfaceApp[this.abbreviations][19]}${this.interfaceApp[this.abbreviations][29]}"),
+        ),
+      ),
       const PopupMenuDivider(),
       PopupMenuItem<String>(
         value: "Settings",
@@ -2276,6 +1430,20 @@ class UniqueBibleState extends State<UniqueBible> {
                 setState(() {
                   this.config.showFlags = !this.config.showFlags;
                   this.config.save("showFlags", this.config.showFlags);
+                });
+                break;
+              case "Pinyin":
+                setState(() {
+                  this.config.showPinyin = !this.config.showPinyin;
+                  this.config.save("showPinyin", this.config.showPinyin);
+                  print(this.config.showPinyin);
+                });
+                break;
+              case "showTransliteration":
+                setState(() {
+                  this.config.showTransliteration = !this.config.showTransliteration;
+                  this.config.save("showTransliteration", this.config.showTransliteration);
+                  print(this.config.showTransliteration);
                 });
                 break;
               case "Verse":
@@ -2524,6 +1692,14 @@ class UniqueBibleState extends State<UniqueBible> {
     }
   }
 
+  String _toPinyin(String text) {
+    String pinyinText;
+    // 3 PinyinFormat are available: PinyinFormat.WITH_TONE_MARK, PinyinFormat.WITH_TONE_NUMBER, PinyinFormat.WITHOUT_TONE
+    return PinyinHelper.getPinyin(text, format: PinyinFormat.WITH_TONE_MARK);
+    //pinyinText = pinyinText.replaceAll("5", "");
+    //return pinyinizer.pinyinize(pinyinText);
+  }
+
   Widget _buildVerses(BuildContext context) {
     verseScrollController = ItemScrollController();
     versePositionsListener = ItemPositionsListener.create();
@@ -2538,6 +1714,16 @@ class UniqueBibleState extends State<UniqueBible> {
       itemScrollController: verseScrollController,
       itemPositionsListener: versePositionsListener,
     );
+  }
+
+  Text _buildVerseSubtitle(String subtitleText) {
+    TextStyle subtitleStyle = TextStyle(
+      fontSize: (this.config.fontSize - 4),
+      color: (config.backgroundColor >= 700)
+          ? Colors.grey[400]
+          : config.myColors["grey"],
+    );
+    return Text(subtitleText, style: subtitleStyle);
   }
 
   Widget _buildVerseRow(BuildContext context, int i) {
@@ -2566,6 +1752,20 @@ class UniqueBibleState extends State<UniqueBible> {
         : verseNo = "[${bcvList[2]}] ";
 
     verseContent = verseData[1];
+
+    // Subtitle for non-English text
+    Text nonEnglishSubtitle;
+    // check if it is a chinese verse
+    if ((this.config.chineseBibles.contains(module)) &&
+        this.config.showPinyin) {
+      nonEnglishSubtitle = _buildVerseSubtitle(_toPinyin(verseContent));
+    }
+    // check if it is a OSHB / OSHBi verse
+    if ((this.config.hebrewBibles.contains(module)) && this.config.showTransliteration) {
+      nonEnglishSubtitle =
+          _buildVerseSubtitle(this.bibles.tBible.openSingleVerse(bcvList));
+    }
+
     List<TextSpan> wordSpans;
 
     // check if it is an active verse or not
@@ -2601,13 +1801,15 @@ class UniqueBibleState extends State<UniqueBible> {
             )
           : ListTile(
               title: richText,
+              subtitle: nonEnglishSubtitle,
               onTap: () {
                 _tapActiveVerse(context, _data[i].first);
               },
               onLongPress: () {
                 _longPressedActiveVerse(context, _data[i]);
               },
-              leading: ((this.config.showFlags) && (chapterHeadingsList.contains(bcvList[2])))
+              leading: ((this.config.showFlags) &&
+                      (chapterHeadingsList.contains(bcvList[2])))
                   ? IconButton(
                       tooltip: chapterHeadings[
                           chapterHeadingsList.indexOf(bcvList[2])][1],
@@ -2666,7 +1868,9 @@ class UniqueBibleState extends State<UniqueBible> {
             )
           : ListTile(
               title: richText,
-              leading: ((this.config.showFlags) && (chapterHeadingsList.contains(bcvList[2])))
+              subtitle: nonEnglishSubtitle,
+              leading: ((this.config.showFlags) &&
+                      (chapterHeadingsList.contains(bcvList[2])))
                   ? IconButton(
                       tooltip: chapterHeadings[
                           chapterHeadingsList.indexOf(bcvList[2])][1],
@@ -3379,28 +2583,6 @@ class UniqueBibleState extends State<UniqueBible> {
     if (selected != null) _newVerseSelected(selected);
   }
 
-  Future _loadMorphologySearchView(
-      BuildContext context, lexemeText, lexicalEntry, morphology) async {
-    _toolOpened = true;
-    List searchData = await searchMorphology(
-        lexicalEntry.split(",").first, morphology.split(", "));
-    final selected = await Navigator.push(
-      context,
-      MaterialPageRoute(
-          builder: (context) => MorphologySearchTablet(
-              lexemeText,
-              lexicalEntry,
-              morphology,
-              "OHGB",
-              this.config,
-              this.bibles,
-              searchData,
-              this.flutterTts)),
-    );
-    if (selected != null) _newVerseSelected(selected);
-    _toolOpened = false;
-  }
-
   Future searchMorphology(
       String lexicalEntry, List selectedMorphologyItems) async {
     if (lexicalEntry.isNotEmpty) {
@@ -3423,26 +2605,6 @@ class UniqueBibleState extends State<UniqueBible> {
       return morphology;
     }
     return [];
-  }
-
-  Future _speakWord(String message, bool isHebrew) async {
-    if (isPlaying) await _stop();
-    if ((message != null) && (message.isNotEmpty)) {
-      if (isHebrew) {
-        (Platform.isAndroid)
-            ? await flutterTts.setLanguage("el-GR")
-            : await flutterTts.setLanguage("he-IL");
-      } else {
-        message = TtsHelper().removeGreekAccents(message);
-        await flutterTts.setLanguage("el-GR");
-      }
-      var result = await flutterTts.speak(message);
-      if (result == 1)
-        setState(() {
-          _speakOneVerse = true;
-          ttsState = TtsState.playing;
-        });
-    }
   }
 
   Widget _buildMoreDisplayVerseRow(BuildContext context, int i) {
@@ -3636,4 +2798,714 @@ class UniqueBibleState extends State<UniqueBible> {
 
     return words;
   }
+
+
+  // Functions to work with features
+
+  Future _loadXRef(BuildContext context, List bcvList) async {
+    _stopRunningActions();
+    showSnackbarMessage(this.interfaceMessage[this.abbreviations][1]);
+
+    var xRefData = await this.bibles.crossReference(bcvList);
+    _scaffoldKey.currentState.removeCurrentSnackBar();
+
+    if (this.config.bigScreen) {
+      setState(() {
+        if (!_display) _display = true;
+        _rawData = [];
+        _displayData = xRefData;
+        _changeWorkspace(1);
+      });
+    } else {
+      final List selected = await showSearch(
+          context: context,
+          delegate: BibleSearchDelegate(context, this.bibles.bible1,
+              this.interfaceDialog, this.config, xRefData));
+      if (selected != null) {
+        this._displayData = selected.first;
+        _newVerseSelected(this._displayData[selected.last]);
+      }
+    }
+  }
+
+  Future _loadCompare(BuildContext context, List bcvList) async {
+    _stopRunningActions();
+    showSnackbarMessage(this.interfaceMessage[this.abbreviations][2]);
+
+    var compareData =
+    await this.bibles.compareBibles(this.config.compareBibleList, bcvList);
+    _scaffoldKey.currentState.removeCurrentSnackBar();
+
+    if (this.config.bigScreen) {
+      setState(() {
+        if (!_display) _display = true;
+        _rawData = [];
+        _displayData = compareData;
+        _changeWorkspace(1);
+      });
+    } else {
+      final List selected = await showSearch(
+          context: context,
+          delegate: BibleSearchDelegate(
+            context,
+            this.bibles.bible1,
+            this.interfaceDialog,
+            this.config,
+            compareData,
+          ));
+      if (selected != null) {
+        this._displayData = selected.first;
+        _newVerseSelected(this._displayData[selected.last]);
+      }
+    }
+  }
+
+  Future _launchNotePad(BuildContext context, List bcvList) async {
+    if (isAllBiblesReady()) {
+      _stopRunningActions();
+
+      if (bcvList.length > 3) bcvList = bcvList.sublist(0, 3);
+
+      List<Map> savedContent = await noteDB.rawQuery(
+          "SELECT * FROM Notes WHERE book = ? AND chapter = ? AND verse = ?",
+          bcvList);
+      String content =
+      (savedContent.isEmpty) ? "" : savedContent.first["content"];
+
+      final selected = await Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) =>
+              NotePad(this.config, this.bibles, bcvList, noteDB, content),
+        ),
+      );
+      if (selected != null) _newVerseSelected(selected);
+      await updateChapterFeatures();
+      setState(() {
+        //
+      });
+    }
+  }
+
+  void _launchPromises(BuildContext context) {
+    Map title = {
+      "ENG": this.interfaceBottom["ENG"][2],
+      "TC": this.interfaceBottom["TC"][2],
+      "SC": this.interfaceBottom["SC"][2],
+    };
+    List menuENG = [
+      "Precious Bible Promises I",
+      "Precious Bible Promises II",
+      "Precious Bible Promises III",
+      "Precious Bible Promises IV",
+      "Take Words with You",
+      "Index",
+      "When you ...",
+    ];
+    List menuZh = [
+      "當你 ……",
+      "当你 ……",
+    ];
+    List menu = (this.config.abbreviations == "ENG")
+        ? menuENG
+        : [...menuENG, ...menuZh];
+    _loadTools(
+        context,
+        title,
+        "PROMISES",
+        menu,
+        Icon(
+          Icons.games,
+          color: this.config.myColors["black"],
+        ));
+  }
+
+  void _launchHarmonies(BuildContext context) {
+    Map title = {
+      "ENG": this.interfaceBottom["ENG"][3],
+      "TC": this.interfaceBottom["TC"][3],
+      "SC": this.interfaceBottom["SC"][3],
+    };
+    List menuENG = [
+      "History of Israel I",
+      "History of Israel II",
+      "Gospels I",
+      "Gospels II",
+      "Book of Moses",
+      "Samuel, Kings, Chronicles",
+      "Psalms",
+      "Gospels - (Mark, Matthew, Luke [ordered] + John) x 54",
+      "Gospels - (Mark, Matthew, Luke [unordered]) x 14",
+      "Gospels - (Mark & Matthew ONLY) x 11",
+      "Gospels - (Mark, Matthew & John ONLY) x 4",
+      "Gospels - (Mark & Luke ONLY) x 7",
+      "Gospels - (Mathhew & Luke ONLY) x 32",
+      "Gospels - (Mark ONLY) x 5",
+      "Gospels - (Matthew ONLY) x 30",
+      "Gospels - (Luke ONLY) x 39",
+      "Gospels - (John ONLY) x 61",
+    ];
+    List menuZh = [
+      "摩西五經",
+      "撒母耳記，列王紀，歷代志",
+      "詩篇",
+      "福音書（可，太，路〔順序〕＋ 約） x 54",
+      "福音書（可，太，路〔不順序〕） x 14",
+      "福音書（可，太） x 11",
+      "福音書（可，太，約） x 4",
+      "福音書（可，路） x 7",
+      "福音書（太，路） x 32",
+      "福音書（可〔獨家記載〕） x 5",
+      "福音書（太〔獨家記載〕） x 30",
+      "福音書（路〔獨家記載〕） x 39",
+      "福音書（約〔獨家記載〕） x 61",
+    ];
+    List menu = (this.config.abbreviations == "ENG")
+        ? menuENG
+        : [...menuENG, ...menuZh];
+    _loadTools(
+        context,
+        title,
+        "PARALLEL",
+        menu,
+        Icon(
+          Icons.compare,
+          color: this.config.myColors["black"],
+        ));
+  }
+
+  Future _loadTools(BuildContext context, Map title, String table, List menu,
+      Icon icon) async {
+    if (this.bibles?.bible1?.data != null) {
+      _stopRunningActions();
+      final selected = await Navigator.push(
+        context,
+        MaterialPageRoute(
+            builder: (context) => (this.config.bigScreen)
+                ? Tool(title, table, menu, this.config, this.bibles.bible1,
+                icon, this.interfaceDialog)
+                : ToolMenu(title, table, menu, this.config, this.bibles.bible1,
+                icon, this.interfaceDialog)),
+      );
+      if (selected != null) {
+        if (this.config.bigScreen) {
+          if (selected.last == "open") {
+            _newVerseSelected(selected.first);
+          } else {
+            setState(() {
+              if (!_display) _display = true;
+              _rawData = [];
+              _displayData = selected.first;
+              _changeWorkspace(1);
+            });
+          }
+        } else {
+          _rawData = [];
+          _displayData = selected.first;
+          _newVerseSelected(selected.first[selected.last]);
+        }
+      }
+    }
+  }
+
+  Future _loadLocation(BuildContext context, List bcvList,
+      [String module]) async {
+    if (this.bibles?.bible1?.data != null) {
+      _stopRunningActions();
+      String table = module ?? "EXLBL";
+      final List<Map> tools =
+      await SqliteHelper(this.config).getTools(bcvList, table);
+      if (this.config.bigScreen) {
+        final List<Map> tools2 =
+        await SqliteHelper(this.config).getBookTools(bcvList, table);
+
+        final selected = await Navigator.push(
+          context,
+          MaterialPageRoute(
+              builder: (context) => LocationTablet(tools, tools2, this.config)),
+        );
+        if ((selected != null) && (selected.isNotEmpty))
+          _loadLocationVerses(context, selected.first);
+      } else {
+        final List selected = await showSearch(
+          context: context,
+          delegate: LocationSearchDelegate(context, tools, this.config),
+        );
+        if ((selected != null) && (selected.isNotEmpty))
+          _loadLocationVerses(context, selected.first);
+      }
+    }
+  }
+
+  Future _loadLocationVerses(BuildContext context, String locationID) async {
+    _stopRunningActions();
+    final Database db = await SqliteHelper(this.config).initToolsDb();
+    var statement =
+        "SELECT Book, Chapter, Verse FROM EXLBL WHERE LocationID = ? ORDER BY Number";
+    List<Map> tools = await db.rawQuery(statement, [locationID]);
+    db.close();
+    List<List> bcvLists =
+    tools.map((i) => [i["Book"], i["Chapter"], i["Verse"]]).toList();
+    if (this.config.bigScreen) {
+      setState(() {
+        if (!_display) _display = true;
+        _loadRawData(bcvLists);
+        _changeWorkspace(1);
+      });
+    } else {
+      final List selected = await showSearch(
+          context: context,
+          delegate: BibleSearchDelegate(context, this.bibles.bible1,
+              this.interfaceDialog, this.config, [], bcvLists));
+      if (selected != null) {
+        this._displayData = selected.first;
+        _newVerseSelected(this._displayData[selected.last]);
+      }
+    }
+  }
+
+  Future _loadPeople(BuildContext context, List bcvList,
+      [String module]) async {
+    if (this.bibles?.bible1?.data != null) {
+      _stopRunningActions();
+      String table = module ?? "PEOPLE";
+      final List<Map> tools =
+      await SqliteHelper(this.config).getTools(bcvList, table);
+
+      if (this.config.bigScreen) {
+        final selected = await Navigator.push(
+          context,
+          MaterialPageRoute(
+              builder: (context) => PeopleTablet(tools, this.config)),
+        );
+        if (selected != null) _loadPeopleVerses(context, selected);
+      } else {
+        final List selected = await showSearch(
+          context: context,
+          delegate: PeopleSearchDelegate(context, tools, this.config),
+        );
+        if ((selected != null) && (selected.isNotEmpty)) {
+          if (selected.first == 1) {
+            _loadPeopleVerses(context, selected[1]);
+          } else if (selected.first == 0) {
+            _loadRelationship(context, selected[1], selected[2]);
+          }
+        }
+      }
+    }
+  }
+
+  Future _loadPeopleVerses(BuildContext context, int personID) async {
+    _stopRunningActions();
+    final Database db = await SqliteHelper(this.config).initToolsDb();
+    var statement =
+        "SELECT Book, Chapter, Verse FROM PEOPLE WHERE PersonID = ?";
+    List<Map> tools = await db.rawQuery(statement, [personID]);
+    db.close();
+    List<List> bcvLists =
+    tools.map((i) => [i["Book"], i["Chapter"], i["Verse"]]).toList();
+    if (this.config.bigScreen) {
+      setState(() {
+        if (!_display) _display = true;
+        _loadRawData(bcvLists);
+        _changeWorkspace(1);
+      });
+    } else {
+      final List selected = await showSearch(
+          context: context,
+          delegate: BibleSearchDelegate(context, this.bibles.bible1,
+              this.interfaceDialog, this.config, [], bcvLists));
+      if (selected != null) {
+        this._displayData = selected.first;
+        _newVerseSelected(this._displayData[selected.last]);
+      }
+    }
+  }
+
+  Future _loadRelationship(
+      BuildContext context, int personID, String name) async {
+    _stopRunningActions();
+    final Database db = await SqliteHelper(this.config).initToolsDb();
+    var statement =
+        "SELECT PersonID, Name, Sex, Relationship FROM PEOPLERELATIONSHIP WHERE RelatedPersonID = ? AND Relationship != '[Reference]' ORDER BY RelationshipOrder";
+    List<Map> tools = await db.rawQuery(statement, [personID]);
+    db.close();
+    final selected = await Navigator.push(
+      context,
+      MaterialPageRoute(
+          builder: (context) => Relationship(name, tools, this.config,
+              this.bibles.bible1, this.interfaceDialog, _currentActiveVerse)),
+    );
+    if (selected != null) {
+      _loadPeopleVerses(context, selected);
+    }
+  }
+
+  Future _loadTopics(BuildContext context, List bcvList,
+      [String module]) async {
+    if (this.bibles?.bible1?.data != null) {
+      _stopRunningActions();
+      String table = module ?? "EXLBT";
+      final List<Map> tools =
+      await SqliteHelper(this.config).getTopics(bcvList, table);
+
+      if (this.config.bigScreen) {
+        final selected = await Navigator.push(
+          context,
+          MaterialPageRoute(
+              builder: (context) =>
+                  TopicTablet(tools, this.config, this.bibles)),
+        );
+        if ((selected != null) && (selected.isNotEmpty)) {
+          (selected[1] == "search")
+              ? _loadTopicVerses(context, selected.first)
+              : _newVerseSelected(selected);
+        }
+      } else {
+        final List selected = await showSearch(
+          context: context,
+          delegate: TopicSearchDelegate(context, tools, this.config),
+        );
+        if ((selected != null) && (selected.isNotEmpty)) {
+          String entry = selected.first;
+          (selected[1] == "open")
+              ? _loadTopicView(context, entry)
+              : _loadTopicVerses(context, entry);
+        }
+      }
+    }
+  }
+
+  Future _loadTopicView(BuildContext context, String entry) async {
+    _stopRunningActions();
+    List topic = await SqliteHelper(this.config).getTopic(entry);
+    final selected = await Navigator.push(
+      context,
+      MaterialPageRoute(
+          builder: (context) => TopicView(this.config, topic, this.bibles)),
+    );
+    if (selected != null) _newVerseSelected(selected);
+  }
+
+  Future _loadTopicVerses(BuildContext context, String entry) async {
+    _stopRunningActions();
+    final Database db = await SqliteHelper(this.config).initToolsDb();
+    var statement =
+        "SELECT Book, Chapter, Verse, toVerse FROM EXLBT WHERE Entry = ?";
+    List<Map> tools = await db.rawQuery(statement, [entry]);
+    db.close();
+    List<String> bcvStrings = tools
+        .map((i) {
+      if (i["Verse"] == i["toVerse"]) {
+        return "${i["Book"]}.${i["Chapter"]}.${i["Verse"]}";
+      } else {
+        return "${i["Book"]}.${i["Chapter"]}.${i["Verse"]}.${i["Chapter"]}.${i["toVerse"]}";
+      }
+    })
+        .toSet()
+        .toList();
+    List<List> bcvLists = bcvStrings
+        .map((i) => i.split(".").map((i) => int.parse(i)).toList())
+        .toList();
+    if (this.config.bigScreen) {
+      setState(() {
+        if (!_display) _display = true;
+        _loadRawData(bcvLists);
+        _changeWorkspace(1);
+      });
+    } else {
+      final List selected = await showSearch(
+          context: context,
+          delegate: BibleSearchDelegate(context, this.bibles.bible1,
+              this.interfaceDialog, this.config, [], bcvLists));
+      if (selected != null) {
+        this._displayData = selected.first;
+        _newVerseSelected(this._displayData[selected.last]);
+      }
+    }
+  }
+
+  // To work with tools opened on new pages
+
+  Future _loadOriginalWord(BuildContext context, List bcvList,
+      [String module, int wordIndex]) async {
+    if (isAllBiblesReady()) {
+      _toolOpened = true;
+      _stopRunningActions();
+      String table = module ?? "OHGB";
+      final List<Map> morphology =
+      await SqliteHelper(this.config).getMorphology(bcvList, table);
+      final selected = await Navigator.push(
+        context,
+        MaterialPageRoute(
+            builder: (context) => OriginalWord(morphology, table, this.config,
+                this.bibles, this.flutterTts, wordIndex)),
+      );
+      if (selected != null) _newVerseSelected(selected);
+      _toolOpened = false;
+    }
+  }
+
+  Future _loadInterlinearView(BuildContext context, List bcvList,
+      [String module]) async {
+    if (isAllBiblesReady()) {
+      _toolOpened = true;
+      _stopRunningActions();
+      String table = module ?? "OHGB";
+      final List<Map> morphology =
+      await SqliteHelper(this.config).getMorphology(bcvList, table);
+      final selected = await Navigator.push(
+        context,
+        MaterialPageRoute(
+            builder: (context) => InterlinearView(morphology, true, table,
+                this.config, this.bibles, this.flutterTts)),
+      );
+      if (selected != null) _newVerseSelected(selected);
+      _toolOpened = false;
+    }
+  }
+
+  Future _loadMorphologyView(BuildContext context, List bcvList,
+      [String module]) async {
+    if (isAllBiblesReady()) {
+      _toolOpened = true;
+      _stopRunningActions();
+      String table = module ?? "OHGB";
+      final List<Map> morphology =
+      await SqliteHelper(this.config).getMorphology(bcvList, table);
+      final selected = await Navigator.push(
+        context,
+        MaterialPageRoute(
+            builder: (context) => MorphologyView(morphology, true, table,
+                this.config, this.bibles, this.flutterTts)),
+      );
+      if (selected != null) _newVerseSelected(selected);
+      _toolOpened = false;
+    }
+  }
+
+  Future _loadMorphologySearchView(
+      BuildContext context, lexemeText, lexicalEntry, morphology) async {
+    _toolOpened = true;
+    List searchData = await searchMorphology(
+        lexicalEntry.split(",").first, morphology.split(", "));
+    final selected = await Navigator.push(
+      context,
+      MaterialPageRoute(
+          builder: (context) => MorphologySearchTablet(
+              lexemeText,
+              lexicalEntry,
+              morphology,
+              "OHGB",
+              this.config,
+              this.bibles,
+              searchData,
+              this.flutterTts)),
+    );
+    if (selected != null) _newVerseSelected(selected);
+    _toolOpened = false;
+  }
+
+  // To work with multiple selection
+
+  void _startSelection() {
+    _stopRunningActions();
+    setState(() {
+      _selection = true;
+      _selectionIndexes = List<int>.generate(_data.length, (i) => i);
+    });
+  }
+
+  void _stopSelection() {
+    setState(() {
+      _selection = false;
+    });
+  }
+
+  void _allSelection() {
+    setState(() {
+      if (_selectionIndexes.isNotEmpty) {
+        _selectionIndexes = [];
+      } else {
+        _selectionIndexes = List<int>.generate(_data.length, (i) => i);
+      }
+    });
+  }
+
+  void _updateSelection(int i, bool value) {
+    setState(() {
+      if (value) {
+        _selectionIndexes.add(i);
+        _selectionIndexes.sort();
+      } else {
+        int index = _selectionIndexes.indexOf(i);
+        _selectionIndexes.removeAt(index);
+      }
+    });
+  }
+
+  void _runSelection([bool share = false]) {
+    if (_selectionIndexes.isNotEmpty) {
+      String chapterReference = BibleParser(this.abbreviations)
+          .bcvToChapterReference(_data.first.first);
+      List copyList = _selectionIndexes
+          .map((i) => (_parallelBibles)
+          ? "[${_data[i].first.last}] [${_data[i].last}] ${_data[i][1]}"
+          : "[${_data[i].first.last}] ${_data[i][1]}")
+          .toList();
+      String content = "$chapterReference\n${copyList.join("\n")}";
+      if (share) {
+        Share.share(content);
+      } else {
+        Clipboard.setData(ClipboardData(text: content));
+        showSnackbarMessage(this.interfaceBottom[this.abbreviations][13]);
+      }
+      _stopSelection();
+    } else {
+      showSnackbarMessage(this.interfaceBottom[this.abbreviations][14]);
+    }
+  }
+
+  // Functions to work with 3rd party plugins
+
+  // To work with plugin "flutter_tts"
+  initTts() {
+    flutterTts = FlutterTts();
+
+    /*
+    if (Platform.isAndroid) {
+      flutterTts.ttsInitHandler(() {
+        _getLanguages();
+        _getVoices();
+      });
+    } else if (Platform.isIOS) {
+      _getLanguages();
+      _getVoices();
+    }
+    */
+
+    flutterTts.setStartHandler(() {
+      setState(() {
+        ttsState = TtsState.playing;
+      });
+    });
+
+    flutterTts.setCompletionHandler(() {
+      setState(() {
+        //print("Complete");
+        ttsState = TtsState.stopped;
+        _ttsIcon = Icon(Icons.volume_up);
+      });
+      if (_speakOneVerse) {
+        _speakOneVerse = false;
+      } else if (!_toolOpened) {
+        _scrollIndex += 1;
+        _readVerse();
+      }
+    });
+
+    flutterTts.setErrorHandler((msg) {
+      setState(() {
+        ttsState = TtsState.stopped;
+      });
+    });
+  }
+
+  /*
+  Future _getLanguages() async {
+    languages = await flutterTts.getLanguages;
+    //print(languages);
+    if (languages != null) setState(() => languages);
+  }
+
+  Future _getVoices() async {
+    voices = await flutterTts.getVoices;
+    //print(voices);
+    if (voices != null) setState(() => voices);
+  }
+  */
+
+  // Bible audio
+  Future _readVerse() async {
+    if ((isStopped) && (_scrollIndex < _data.length)) {
+      List item = _data[_scrollIndex];
+      List bcvList = item.first;
+      String module = item.last;
+      String verse;
+      bool isHebrew =
+      ((this.config.hebrewBibles.contains(module)) && (bcvList.first < 40));
+      if ((Platform.isAndroid) && isHebrew) {
+        verse = TtsHelper()
+            .workaroundHebrew(this.bibles.tBible.openSingleVerse(bcvList));
+      } else if (this.config.interlinearBibles.contains(module)) {
+        verse = "${item[1]} ｜";
+        verse = verse.replaceAll(RegExp("｜＠.*? ｜"), "");
+      } else {
+        verse = item[1];
+      }
+      if (this.config.chineseBibles.contains(module)) {
+        await flutterTts.setLanguage(this.config.ttsChinese);
+        //zh-CN, yue-HK (Android), zh-HK (iOS)
+      } else if (isHebrew) {
+        (Platform.isAndroid)
+            ? await flutterTts.setLanguage("el-GR")
+            : await flutterTts.setLanguage("he-IL");
+      } else if (this.config.greekBibles.contains(module)) {
+        verse = TtsHelper().removeGreekAccents(verse);
+        await flutterTts.setLanguage("el-GR");
+      } else {
+        await flutterTts.setLanguage(this.config.ttsEnglish);
+        //en-GB, en-US
+      }
+      this.verseScrollController.jumpTo(index: _scrollIndex);
+      _speak(verse);
+    } else {
+      _stop();
+    }
+  }
+
+  Future _speak(String message) async {
+    if (message != null) {
+      if ((message.isNotEmpty) && (isAllBiblesReady())) {
+        var result = await flutterTts.speak(message);
+        if (result == 1)
+          setState(() {
+            ttsState = TtsState.playing;
+            _ttsIcon = Icon(Icons.stop);
+          });
+      }
+    }
+  }
+
+  Future _stop() async {
+    var result = await flutterTts.stop();
+    if (result == 1)
+      setState(() {
+        _speakOneVerse = false;
+        ttsState = TtsState.stopped;
+        _ttsIcon = Icon(Icons.volume_up);
+        _scrollIndex = _activeIndex;
+      });
+  }
+
+  Future _speakWord(String message, bool isHebrew) async {
+    if (isPlaying) await _stop();
+    if ((message != null) && (message.isNotEmpty)) {
+      if (isHebrew) {
+        (Platform.isAndroid)
+            ? await flutterTts.setLanguage("el-GR")
+            : await flutterTts.setLanguage("he-IL");
+      } else {
+        message = TtsHelper().removeGreekAccents(message);
+        await flutterTts.setLanguage("el-GR");
+      }
+      var result = await flutterTts.speak(message);
+      if (result == 1)
+        setState(() {
+          _speakOneVerse = true;
+          ttsState = TtsState.playing;
+        });
+    }
+  }
+
 }

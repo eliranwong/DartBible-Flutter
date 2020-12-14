@@ -236,7 +236,7 @@ class Config {
     "Whedon": "Commentary on the Old and New Testaments (Whedon) [14 vol.]",
   };
 
-  bool bigScreen = false, showNotes = false, showFlags = false, showDrawer = true;
+  bool bigScreen = false, showNotes = false, showFlags = false, showPinyin = false, showTransliteration = false, showDrawer = true;
   bool showHeadingVerseNo = false, alwaysOpenMarvelBibleExternally = false;
   double fontSize = 20.0;
   String abbreviations = "ENG";
@@ -338,6 +338,16 @@ class Config {
       prefs.setBool("showNotes", this.showNotes);
     } else {
       this.showNotes = prefs.getBool("showNotes");
+    }
+    if (prefs.getBool("showPinyin") == null) {
+      prefs.setBool("showPinyin", this.showPinyin);
+    } else {
+      this.showPinyin = prefs.getBool("showPinyin");
+    }
+    if (prefs.getBool("showTransliteration") == null) {
+      prefs.setBool("showTransliteration", this.showTransliteration);
+    } else {
+      this.showTransliteration = prefs.getBool("showTransliteration");
     }
     if (prefs.getBool("showFlags") == null) {
       prefs.setBool("showFlags", this.showFlags);
@@ -484,6 +494,10 @@ class Config {
       this.bigScreen = prefs.getBool("bigScreen");
     if (prefs.getBool("showNotes") == null)
       this.showNotes = prefs.getBool("showNotes");
+    if (prefs.getBool("showPinyin") == null)
+      this.showPinyin = prefs.getBool("showPinyin");
+    if (prefs.getBool("showTransliteration") == null)
+      this.showTransliteration = prefs.getBool("showTransliteration");
     if (prefs.getBool("showFlags") == null)
       this.showFlags = prefs.getBool("showFlags");
     if (prefs.getBool("showDrawer") == null)
@@ -558,6 +572,12 @@ class Config {
         await prefs.setBool(feature, newSetting as bool);
         break;
       case "showNotes":
+        await prefs.setBool(feature, newSetting as bool);
+        break;
+      case "showPinyin":
+        await prefs.setBool(feature, newSetting as bool);
+        break;
+      case "showTransliteration":
         await prefs.setBool(feature, newSetting as bool);
         break;
       case "showFlags":
