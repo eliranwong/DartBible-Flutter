@@ -185,6 +185,9 @@ flutter:
   # 3) flutter run --profile
   # 4) flutter build apk
 
+  # Troubleshooting: key.properties' storefile path in different platforms:
+  # read https://medium.com/codechai/flutter-andorid-keystore-path-on-different-os-d0fc30a24d4f
+
   # Troubleshooting iOS: build/ios/Release-iphoneos/Runner.app/Frameworks/App.framework/App: errSecInternalComponent
   # xcode -> preferences -> accounts -> select the account -> manage certificate -> click on the (+) icon in the bottom left side of the popup window -> ios development / distribution
 
