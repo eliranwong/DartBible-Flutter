@@ -152,7 +152,7 @@ flutter:
   # Put file "sileot.ttf" in the folder "fonts".
 
   # To work with flutter_tts, e.g. on Mac
-  # In "android/app/src/build.gradle", set "minSdkVersion 21" or higher.
+  # In "android/app/build.gradle", set "minSdkVersion 21" or higher.
 
   # Troubleshooting: Migrate to AndroidX (the quickest way tested):
   # 1) Create a new project and copy all essential files from old project.
